@@ -1,0 +1,13 @@
+projectName = "微盛北京"
+
+
+[nacos]
+server = "http://172.17.20.10:30007"
+username = "nacos"
+password = "nacos"
+
+
+[tenant]
+
+
+[inspection]
