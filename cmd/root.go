@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"vhagar/common"
+	"vhagar/cofing"
 
 	"github.com/spf13/cobra"
 )
@@ -17,21 +17,19 @@ var rootCmd = &cobra.Command{
 		fmt.Println("程序开始启动！！！")
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		common.PreFunc()
+		cofing.PreFunc()
 	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
 func init() {
-
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cobra.yaml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

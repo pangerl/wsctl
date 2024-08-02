@@ -5,7 +5,7 @@ projectName = "微盛北京"
 server = "http://172.17.20.10:30007"
 username = "nacos"
 password = "nacos"
-
+namespace = "qw-uat"
 
 [tenant]
 

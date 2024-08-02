@@ -1,19 +1,18 @@
-// Package common @Author lanpang
+// Package cofing @Author lanpang
 // @Date 2024/8/1 下午5:52:00
 // @Desc
-package common
+package cofing
 
 import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"os"
 	"path/filepath"
-	"vhagar/config"
 )
 
-type NewConfig struct {
+type Config struct {
 	ProjectName string
-	Nacos       config.Nacos
+	Nacos       NacosConfig
 }
 
 func PreFunc() {
@@ -32,14 +31,15 @@ func PreFunc() {
 			return
 		}
 	} else {
-		var newConfig NewConfig
-		if _, err := toml.DecodeFile("config.toml", &newConfig); err != nil {
+		var newconfig Config
+		if _, err := toml.DecodeFile("config.toml", &newconfig); err != nil {
 			fmt.Println("配置文件格式错误", configfile)
 			return
 		}
-		config.PROJECTNAME = newConfig.ProjectName
-		fmt.Printf("全局信息: %+v\n\n", newConfig.ProjectName)
-		fmt.Printf("全局信息: %+v\n\n", config.PROJECTNAME)
-		fmt.Printf("全局信息: %+v\n\n", newConfig.Nacos.Server)
+		PROJECTNAME = newconfig.ProjectName
+		NACOSCONFIG = newconfig.Nacos
+		//fmt.Printf("全局信息: %+v\n\n", config.CONFIG.ProjectName)
+		//fmt.Printf("全局信息: %+v\n\n", config.CONFIG)
+		//fmt.Printf("全局信息: %+v\n\n", config.CONFIG.Nacos.Server)
 	}
 }
