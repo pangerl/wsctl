@@ -15,19 +15,26 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"vhagar/cofing"
 )
 
-var conf = &cofing.NACOSCONFIG
 var cidrs []*net.IPNet
 var tablerow []string
 
+func NewNacos(c Config, web bool, webport, writefile string) *Nacos {
+	return &Nacos{
+		Config:    c,
+		Web:       web,
+		Webport:   webport,
+		Writefile: writefile,
+	}
+}
+
 func (d *Nacos) WithAuth() {
 	fmt.Println("开始获取 token")
-	_url := fmt.Sprintf("%s/nacos/v1/auth/login", conf.Server)
+	_url := fmt.Sprintf("%s/nacos/v1/auth/login", d.Config.Server)
 	formData := map[string]string{
-		"username": conf.Username,
-		"password": conf.Password,
+		"username": d.Config.Username,
+		"password": d.Config.Password,
 	}
 	res := d.post(_url, formData)
 	if len(gjson.GetBytes(res, "accessToken").String()) != 0 {
@@ -104,9 +111,9 @@ func (d *Nacos) GetNacosInstance() {
 	d.Clusterdata = make(map[string]ClusterStatus)
 	var ser Service
 	var cluster ClusterStatus
-	_url := conf.Server
-	cluster = d.Clusterdata[conf.Server]
-	namespace := conf.Namespace
+	_url := d.Config.Server
+	cluster = d.Clusterdata[d.Config.Server]
+	namespace := d.Config.Namespace
 	group := "DEFAULT_GROUP"
 	res := d.GetService(_url, namespace, group)
 	err := json.Unmarshal(res, &ser)
@@ -146,13 +153,13 @@ func (d *Nacos) GetNacosInstance() {
 			} else {
 				cluster.UnHealthInstance = append(cluster.UnHealthInstance, instance)
 			}
-			d.Clusterdata[conf.Server] = cluster
+			d.Clusterdata[d.Config.Server] = cluster
 		}
 	}
 }
-func (d *Nacos) GetJson(resultType string, web bool) (result interface{}, err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
+	//mutex.Lock()
+	//defer mutex.Unlock()
 	defer func() {
 		if funcErr := recover(); funcErr != nil {
 			result = []byte("[]")
@@ -162,15 +169,12 @@ func (d *Nacos) GetJson(resultType string, web bool) (result interface{}, err er
 	//if web {
 	//	d.GetNacosInstance()
 	//}
-	var nacos NacosFile
+	var nacos Nacosfile
 	for _, nacosServer := range d.Clusterdata {
 		if len(nacosServer.HealthInstance) != 0 {
 			for _, na := range nacosServer.HealthInstance {
-				var ta NacosTarget
+				var ta Nacostarget
 				ta.Labels = make(map[string]string)
-				for key, value := range ADDLABEL {
-					ta.Labels[key] = value
-				}
 				ta.Targets = append(ta.Targets, na.IpAddr)
 				ta.Labels["namespace"] = na.NamespaceName
 				ta.Labels["service"] = na.ServiceName
@@ -204,8 +208,8 @@ func (d *Nacos) GetJson(resultType string, web bool) (result interface{}, err er
 func (d *Nacos) WriteFile() {
 	var basedir string
 	var filename string
-	basedir = path.Dir(cofing.WRITEFILE)
-	filename = path.Base(cofing.WRITEFILE)
+	basedir = path.Dir(d.Writefile)
+	filename = path.Base(d.Writefile)
 	if err := os.MkdirAll(basedir, os.ModePerm); err != nil {
 		os.Exit(1)
 	}
@@ -220,7 +224,7 @@ func (d *Nacos) WriteFile() {
 			fmt.Println(err)
 		}
 	}(file)
-	jsondata, err := d.GetJson("byte", false)
+	jsondata, err := d.GetJson("byte")
 	data := make([]byte, 0)
 	var check bool
 	if data, check = jsondata.([]byte); !check {
@@ -228,9 +232,12 @@ func (d *Nacos) WriteFile() {
 	}
 	if _, err := file.Write(data); err != nil {
 		fmt.Println("写入失败", err)
-		os.Exit(EXITCODE)
+		os.Exit(1)
 	}
-	file.Close()
+	err = file.Close()
+	if err != nil {
+		return
+	}
 	if err := os.Rename(basedir+"/.nacos_tmp.json", basedir+"/"+filename); err != nil {
 		fmt.Println("写入失败:", basedir+"/"+filename)
 	} else {

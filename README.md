@@ -28,4 +28,5 @@ go build -o vhagar
 go get github.com/BurntSushi/toml
 go get github.com/tidwall/gjson
 go get github.com/olekukonko/tablewriter
+go get github.com/gin-gonic/gin
 ```

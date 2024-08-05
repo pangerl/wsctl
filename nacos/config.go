@@ -5,11 +5,26 @@ package nacos
 
 import "net/http"
 
+//type Nacos interface {
+//	WithAuth()
+//}
+
 type Nacos struct {
+	Config      Config
+	Web         bool
+	Webport     string
+	Writefile   string
 	Client      http.Client
 	Host        string
 	Token       string
 	Clusterdata map[string]ClusterStatus
+}
+
+type Config struct {
+	Server    string
+	Username  string
+	Password  string
+	Namespace string
 }
 
 type ClusterStatus struct {
@@ -68,4 +83,13 @@ type ServerInstance struct {
 	Ip            string `json:"ip"`
 	Port          string `json:"port"`
 	GroupName     string `json:"groupName"`
+}
+
+type Nacostarget struct {
+	Targets []string          `json:"targets"`
+	Labels  map[string]string `json:"labels"`
+}
+
+type Nacosfile struct {
+	Data []Nacostarget
 }

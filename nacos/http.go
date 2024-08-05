@@ -15,7 +15,7 @@ func (d *Nacos) get(apiurl string) []byte {
 	if err != nil {
 		panic(err)
 	}
-	if len(conf.Username) != 0 && len(conf.Password) != 0 {
+	if len(d.Config.Username) != 0 && len(d.Config.Password) != 0 {
 		if len(u.RawQuery) == 0 {
 			apiurl += "?accessToken=" + url.QueryEscape(d.Token)
 		} else {

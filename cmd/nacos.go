@@ -7,12 +7,14 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"vhagar/cofing"
 	"vhagar/nacos"
 )
 
-var Nacos nacos.Nacos
-var conf = &cofing.NACOSCONFIG
+var (
+	web       bool
+	webport   string
+	writefile string
+)
 
 // versionCmd represents the version command
 var nacosCmd = &cobra.Command{
@@ -20,18 +22,18 @@ var nacosCmd = &cobra.Command{
 	Short: "nacos",
 	Long:  `nacos`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(conf.Username) != 0 && len(conf.Password) != 0 {
-			Nacos.WithAuth()
-		}
-		fmt.Println("获取服务信息")
-		Nacos.GetNacosInstance()
+		nacos := nacos.NewNacos(CONFIG.Nacos, web, webport, writefile)
+		fmt.Println("获取nacos认证信息")
+		nacos.WithAuth()
+		fmt.Println("获取注册服务信息")
+		nacos.GetNacosInstance()
 		switch {
-		case cofing.WATCH:
-			//
-		case cofing.WRITEFILE != "":
-			Nacos.WriteFile()
+		case web:
+			//nacos.Webserver()
+		case writefile != "":
+			nacos.WriteFile()
 		default:
-			Nacos.TableRender()
+			nacos.TableRender()
 			//fmt.Println("x", Nacos)
 		}
 	},
@@ -39,6 +41,8 @@ var nacosCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(nacosCmd)
-	rootCmd.Flags().StringVarP(&cofing.WRITEFILE, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
-	rootCmd.Flags().BoolVarP(&cofing.WATCH, "watch", "w", false, "监控服务")
+	nacosCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
+	nacosCmd.Flags().BoolVarP(&web, "web", "w", false, "监控服务")
+	nacosCmd.Flags().StringVarP(&webport, "port", "p", ":8099", "web 端口")
+
 }
