@@ -108,6 +108,7 @@ func (d *Nacos) TableRender() {
 }
 
 func (d *Nacos) GetNacosInstance() {
+	fmt.Println("获取注册服务信息")
 	d.Clusterdata = make(map[string]ClusterStatus)
 	var ser Service
 	var cluster ClusterStatus
@@ -166,9 +167,9 @@ func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 			err = errors.New("error")
 		}
 	}()
-	//if web {
-	//	d.GetNacosInstance()
-	//}
+	if d.Web {
+		d.GetNacosInstance()
+	}
 	var nacos Nacosfile
 	for _, nacosServer := range d.Clusterdata {
 		if len(nacosServer.HealthInstance) != 0 {

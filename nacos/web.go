@@ -1,15 +1,13 @@
 package nacos
 
-//
-//import (
-//	"fmt"
-//	"github.com/gin-gonic/gin"
-//	"time"
-//	"vhagar/cmd"
-//)
-//
-////var Refreshtime time.Duration
-//
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"time"
+)
+
+//var Refreshtime time.Duration
+
 //func response(c *gin.Context) {
 //	if c.Request.RequestURI == "/health" {
 //		c.JSON(200, gin.H{"status": true})
@@ -26,29 +24,36 @@ package nacos
 //	}
 //	c.JSON(200, result)
 //}
-//
-//func Webserver() {
-//	fmt.Println("Start Nacos check web")
-//	gin.SetMode(gin.DebugMode)
-//	RefreshToken()
-//	r := gin.Default()
-//	v1 := r.Group("/")
-//	{
-//		v1.GET("/*route", response)
-//	}
-//	err := r.Run(cmd.WEBPORT)
-//	if err != nil {
-//		fmt.Println(err)
-//	}
-//}
-//
-//func RefreshToken() {
-//	if len(cmd.NACOSCONFIG.Username) != 0 && len(cmd.NACOSCONFIG.Password) != 0 {
-//		go func() {
-//			for {
-//				config.NACOS.WithAuth()
-//				time.Sleep(time.Second * 3600)
-//			}
-//		}()
-//	}
-//}
+
+func Webserver(nacos *Nacos) {
+	fmt.Println("Start Nacos check web")
+	gin.SetMode(gin.DebugMode)
+	RefreshToken(nacos)
+	r := gin.Default()
+	v1 := r.Group("/")
+	{
+		v1.GET("/*route", func(c *gin.Context) {
+			result, err := nacos.GetJson("json")
+			if err != nil {
+				c.JSON(500, []string{})
+				return
+			}
+			c.JSON(200, result)
+		})
+	}
+	err := r.Run(nacos.Webport)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func RefreshToken(nacos *Nacos) {
+	if len(nacos.Config.Username) != 0 && len(nacos.Config.Password) != 0 {
+		go func() {
+			for {
+				nacos.WithAuth()
+				time.Sleep(time.Second * 3600)
+			}
+		}()
+	}
+}
