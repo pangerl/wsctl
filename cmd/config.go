@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"vhagar/inspect"
 	"vhagar/nacos"
 )
 
@@ -14,4 +15,7 @@ var (
 type Config struct {
 	ProjectName string
 	Nacos       nacos.Config
+	Tenant      inspect.Tenant
+	PG          inspect.Db
+	ES          inspect.Db
 }

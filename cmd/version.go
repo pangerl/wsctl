@@ -16,7 +16,7 @@ const version = "v1.0"
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "version",
-	Long:  `version`,
+	Long:  `查看版本`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("vhagar version: ", version)
 	},

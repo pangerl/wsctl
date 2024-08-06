@@ -24,7 +24,7 @@ func NewNacos(c Config, web bool, webport, writefile string) *Nacos {
 	return &Nacos{
 		Config:    c,
 		Web:       web,
-		Webport:   webport,
+		Webport:   ":" + webport,
 		Writefile: writefile,
 	}
 }

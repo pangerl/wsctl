@@ -21,8 +21,8 @@ var (
 // versionCmd represents the version command
 var nacosCmd = &cobra.Command{
 	Use:   "nacos",
-	Short: "nacos",
-	Long:  `nacos`,
+	Short: "服务健康检查工具",
+	Long:  `通过 nacos 的服务注册信息，统计微服务的信息`,
 	Run: func(cmd *cobra.Command, args []string) {
 		_nacos := nacos.NewNacos(CONFIG.Nacos, web, webport, writefile)
 		fmt.Println("获取nacos认证信息")
@@ -50,7 +50,7 @@ var nacosCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(nacosCmd)
 	nacosCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
-	nacosCmd.Flags().BoolVarP(&web, "web", "w", false, "监控服务")
+	nacosCmd.Flags().BoolVarP(&web, "web", "w", false, "开启web api Prometheus http_sd_configs")
 	nacosCmd.Flags().StringVarP(&webport, "port", "p", ":8099", "web 端口")
-	nacosCmd.Flags().BoolVarP(&watch, "watch", "d", false, "监控服务")
+	nacosCmd.Flags().BoolVarP(&watch, "watch", "d", false, "监控服务，定时刷新")
 }

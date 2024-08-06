@@ -25,8 +25,10 @@ go build -o vhagar
 
 ```bash
 # 安装第三方库
-go get github.com/BurntSushi/toml
+go get github.com/BurntSushi/to
+ml
 go get github.com/tidwall/gjson
 go get github.com/olekukonko/tablewriter
 go get github.com/gin-gonic/gin
+go get github.com/olivere/elastic/v7
 ```

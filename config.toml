@@ -1,15 +1,41 @@
-projectName = "微盛北京"
-
+projectname = "千金药业"
+# 可配置网络代理：172.18.0.17:9255
+# 支持账号密码：user:password@172.18.0.17:9255
+proxyurl = ""
 
 [nacos]
-server = "http://172.17.20.10:30007"
+server = "http://192.9.253.198:8848"
 username = "nacos"
 password = "nacos"
 namespace = "qw-uat"
 
-
-
 [tenant]
-
+[[tenant.corp]]
+corpid = "wxbe45d6b56a61e293"
+convenabled = true
+[[tenant.corp]]
+corpid = "ww70adef74dc10951c"
+convenabled = false
+[[tenant.corp]]
+corpid = "wwd4fc7dcb8f5a0d99"
+convenabled = true
 
 [inspection]
+# 配置定时任务，每日巡检的发送时间：09:30 - 10:00
+scheducron = "48 9 * * *"
+# 测试-每日巡检机器人
+robotkey = "296fce0d-6d8d-4ade-bbc9-816adc0ca6c3"
+
+[pg]
+ip = "192.9.253.195"
+port = 5432
+username = "postgres"
+password = "wshoto@2022"
+ssl = false
+
+[es]
+ip = "192.9.253.197"
+port = 9200
+username = "elastic"
+password = "wshoto@2022"
+ssl = false
