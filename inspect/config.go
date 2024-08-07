@@ -7,9 +7,13 @@ import (
 	"github.com/olivere/elastic/v7"
 )
 
-type Tenant struct {
+type Inspect struct {
 	Corp     []Corp
-	ESclient *elastic.Client
+	EsClient *elastic.Client
+}
+
+type Tenant struct {
+	Corp []Corp
 }
 
 type Corp struct {
@@ -29,5 +33,5 @@ type Db struct {
 	Port     int
 	Username string
 	Password string
-	Ssl      bool
+	Sslmode  bool
 }

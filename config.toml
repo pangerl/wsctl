@@ -31,11 +31,11 @@ ip = "192.9.253.195"
 port = 5432
 username = "postgres"
 password = "wshoto@2022"
-ssl = false
+sslmode = false
 
 [es]
 ip = "192.9.253.197"
 port = 9200
 username = "elastic"
 password = "wshoto@2022"
-ssl = false
+sslmode = false

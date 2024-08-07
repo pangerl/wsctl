@@ -3,16 +3,24 @@
 // @Desc
 package inspect
 
-import "github.com/olivere/elastic/v7"
+import (
+	"github.com/olivere/elastic/v7"
+	"strconv"
+)
 
-func NewESClient() *elastic.Client {
+func NewESClient(conf Db) (*elastic.Client, string) {
+	scheme := map[bool]string{true: "https", false: "http"}[conf.Sslmode]
+	esurl := scheme + "://" + conf.Ip + ":" + strconv.Itoa(conf.Port)
 	client, err := elastic.NewClient(
 		elastic.SetSniff(false),
-		elastic.SetURL("http://localhost:9200"),
-		elastic.SetBasicAuth("user", "secret"))
+		elastic.SetScheme(scheme),
+		elastic.SetURL(esurl),
+		elastic.SetBasicAuth(conf.Username, conf.Password),
+		elastic.SetHealthcheck(false))
 
 	if err != nil {
 		panic(err)
 	}
-	return client
+
+	return client, esurl
 }
