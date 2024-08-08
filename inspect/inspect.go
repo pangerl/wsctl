@@ -12,12 +12,14 @@ import (
 	"time"
 )
 
-func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2 *pgx.Conn) *Inspect {
+func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2 *pgx.Conn, name, version string) *Inspect {
 	return &Inspect{
-		Corp:      corp,
-		EsClient:  es,
-		PgClient1: conn1,
-		PgClient2: conn2,
+		ProjectName: name,
+		Version:     version,
+		Corp:        corp,
+		EsClient:    es,
+		PgClient1:   conn1,
+		PgClient2:   conn2,
 	}
 }
 

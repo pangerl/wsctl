@@ -9,10 +9,12 @@ import (
 )
 
 type Inspect struct {
-	Corp      []*Corp
-	EsClient  *elastic.Client
-	PgClient1 *pgx.Conn
-	PgClient2 *pgx.Conn
+	ProjectName string
+	Version     string
+	Corp        []*Corp
+	EsClient    *elastic.Client
+	PgClient1   *pgx.Conn
+	PgClient2   *pgx.Conn
 }
 
 type Tenant struct {
@@ -37,4 +39,19 @@ type DB struct {
 	Username string
 	Password string
 	Sslmode  bool
+}
+
+type Config struct {
+	Scheducron string
+	Robotkey   string
+	Userlist   []string
+}
+
+type WeChatMarkdown struct {
+	MsgType  string    `json:"msgtype"`
+	Markdown *Markdown `json:"markdown"`
+}
+
+type Markdown struct {
+	Content string `json:"content"`
 }

@@ -18,13 +18,15 @@ corpid = "ww70adef74dc10951c"
 convenabled = false
 [[tenant.corp]]
 corpid = "wwd4fc7dcb8f5a0d99"
-convenabled = false
+convenabled = true
 
 [inspection]
 # 配置定时任务，每日巡检的发送时间：09:30 - 10:00
 scheducron = "48 9 * * *"
 # 测试-每日巡检机器人
-robotkey = "296fce0d-6d8d-4ade-bbc9-816adc0ca6c3"
+robotkey = "8ab989f5-d86f-4c99-b95f-5d23a30eb351"
+# 告警@人 ["lanpang", "mark"]
+userlist = []
 
 [pg]
 ip = "192.9.253.195"

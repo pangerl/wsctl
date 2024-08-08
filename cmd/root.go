@@ -35,7 +35,7 @@ func init() {
 }
 
 func PreFunc() {
-	fmt.Println("读取配置文件！！！")
+	fmt.Println("读取配置文件！")
 	homedir := "."
 	configfile := filepath.Join(homedir, "config.toml")
 	defer func() {

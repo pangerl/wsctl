@@ -44,7 +44,7 @@ func inspectTask() {
 	}()
 
 	// 创建 inspect 对象
-	_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2)
+	_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, CONFIG.ProjectName, VERSION)
 	//inspect.GetVersion(url)
 	for _, corp := range _inspect.Corp {
 		//fmt.Println(corp.Corpid)
@@ -60,13 +60,12 @@ func inspectTask() {
 		if corp.Convenabled {
 			_inspect.SetMessageNum(corp.Corpid, dateNow)
 		}
-		fmt.Println(*corp)
+		//fmt.Println(*corp)
 	}
-}
-
-func connStr(conf inspect.DB, db string) string {
-	scheme := map[bool]string{true: "require", false: "disable"}[conf.Sslmode]
-	str := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		conf.Username, conf.Password, conf.Ip, conf.Port, db, scheme)
-	return str
+	// 发送巡检报告
+	markdown, _ := inspect.TransformToMarkdown(_inspect, CONFIG.Inspection.Userlist, dateNow)
+	err := inspect.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.Proxyurl)
+	if err != nil {
+		return
+	}
 }
