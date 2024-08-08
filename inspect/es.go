@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func NewESClient(conf Db) (*elastic.Client, string) {
+func NewESClient(conf DB) (*elastic.Client, string) {
 	scheme := map[bool]string{true: "https", false: "http"}[conf.Sslmode]
 	esurl := scheme + "://" + conf.Ip + ":" + strconv.Itoa(conf.Port)
 	client, err := elastic.NewClient(
@@ -18,9 +18,6 @@ func NewESClient(conf Db) (*elastic.Client, string) {
 		elastic.SetBasicAuth(conf.Username, conf.Password),
 		elastic.SetHealthcheck(false))
 
-	if err != nil {
-		panic(err)
-	}
-
+	CheckErr(err)
 	return client, esurl
 }

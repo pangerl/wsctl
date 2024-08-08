@@ -54,9 +54,8 @@ func PreFunc() {
 			fmt.Println("配置文件格式错误", configfile)
 			return
 		}
-		fmt.Printf("租户信息: %+v\n\n", CONFIG.PG)
-		fmt.Printf("租户信息: %+v\n\n", CONFIG.ES)
-		//fmt.Printf("全局信息: %+v\n\n", config.CONFIG)
-		//fmt.Printf("全局信息: %+v\n\n", config.CONFIG.Nacos.Server)
+		//fmt.Printf("租户信息: %+v\n", CONFIG.PG)
+		//fmt.Printf("租户信息: %+v\n", CONFIG.ES)
+
 	}
 }

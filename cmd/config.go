@@ -16,6 +16,6 @@ type Config struct {
 	ProjectName string
 	Nacos       nacos.Config
 	Tenant      inspect.Tenant
-	PG          inspect.Db
-	ES          inspect.Db
+	PG          inspect.DB
+	ES          inspect.DB
 }

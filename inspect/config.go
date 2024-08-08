@@ -4,31 +4,34 @@
 package inspect
 
 import (
+	"github.com/jackc/pgx/v5"
 	"github.com/olivere/elastic/v7"
 )
 
 type Inspect struct {
-	Corp     []Corp
-	EsClient *elastic.Client
+	Corp      []*Corp
+	EsClient  *elastic.Client
+	PgClient1 *pgx.Conn
+	PgClient2 *pgx.Conn
 }
 
 type Tenant struct {
-	Corp []Corp
+	Corp []*Corp
 }
 
 type Corp struct {
 	Corpid      string
 	Convenabled bool
 	CorpName    string
-	MessageNum  int
+	MessageNum  int64
 	UserNum     int
-	CustomerNum int
-	DauNum      int
-	WauNum      int
-	MauNum      int
+	CustomerNum int64
+	DauNum      int64
+	WauNum      int64
+	MauNum      int64
 }
 
-type Db struct {
+type DB struct {
 	Ip       string
 	Port     int
 	Username string
