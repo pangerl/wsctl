@@ -51,6 +51,7 @@ func inspectTask() {
 		// 获取租户名
 		_inspect.SetCorpName(corp.Corpid)
 		// 获取用户数
+		_inspect.SetUserNum(corp.Corpid)
 		// 获取客户数
 		_inspect.SetCustomerNum(corp.Corpid)
 		// 获取活跃数

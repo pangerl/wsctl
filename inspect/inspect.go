@@ -60,6 +60,16 @@ func (i *Inspect) SetCorpName(corpid string) {
 	}
 }
 
+func (i *Inspect) SetUserNum(corpid string) {
+	userNum := queryUserNum(i.PgClient2, corpid)
+	for _, corp := range i.Corp {
+		if corp.Corpid == corpid {
+			corp.UserNum = userNum
+			return
+		}
+	}
+}
+
 func (i *Inspect) SetActiveNum(corpid string, dateNow time.Time) {
 	dateDau := dateNow.AddDate(0, 0, -1)
 	dateWau := dateNow.AddDate(0, 0, -7)
@@ -146,4 +156,11 @@ func queryCorpName(conn *pgx.Conn, corpid string) string {
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&corpName)
 	CheckErr(err)
 	return corpName
+}
+func queryUserNum(conn *pgx.Conn, corpid string) int {
+	var userNum int
+	query := "SELECT count(*) from qw_user WHERE deleted=0 AND tenant_id=$1 LIMIT 1"
+	err := conn.QueryRow(context.Background(), query, corpid).Scan(&userNum)
+	CheckErr(err)
+	return userNum
 }
