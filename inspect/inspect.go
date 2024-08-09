@@ -6,11 +6,16 @@ package inspect
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/olivere/elastic/v7"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 )
+
+var isalert = false
 
 func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2 *pgx.Conn, name, version string) *Inspect {
 	return &Inspect{
@@ -30,6 +35,35 @@ func (i *Inspect) GetVersion(url string) {
 		log.Println("查询es版本错误", err)
 	}
 	log.Println("Elasticsearch version: ", version)
+}
+
+func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) (markdown *WeChatMarkdown, err error) {
+
+	var builder strings.Builder
+	isalert = false
+
+	// 组装巡检内容
+	builder.WriteString("# 每日巡检报告 " + i.Version + "\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + i.ProjectName + "</font>\n")
+	builder.WriteString("**巡检时间：**<font color='info'>" + dateNow.Format("2006-01-02") + "</font>\n")
+	builder.WriteString("**巡检内容：**\n")
+
+	for _, corp := range i.Corp {
+
+		builder.WriteString(generateCorpString(corp))
+	}
+	if isalert {
+		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + calluser(users))
+	}
+
+	markdown = &WeChatMarkdown{
+		MsgType: "markdown",
+		Markdown: &Markdown{
+			Content: builder.String(),
+		},
+	}
+
+	return
 }
 
 func (i *Inspect) SetCustomerNum(corpid string) {
@@ -165,4 +199,47 @@ func queryUserNum(conn *pgx.Conn, corpid string) int {
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&userNum)
 	CheckErr(err)
 	return userNum
+}
+
+func calluser(users []string) string {
+	var result string
+	if len(users) == 0 {
+		return result
+	}
+	for _, user := range users {
+		result += fmt.Sprintf("<@%s>", user)
+	}
+	return result
+}
+
+func getcolor(num int64, ignore bool) string {
+	color := "info"
+	if num == 0 {
+		if ignore {
+			color = "warning"
+		} else {
+			color = "red"
+		}
+	}
+	return color
+}
+
+func generateCorpString(corp *Corp) string {
+	var builder strings.Builder
+
+	builder.WriteString("> 企业名称：<font color='info'>" + corp.CorpName + "</font>\n")
+	if corp.Convenabled {
+		builder.WriteString("> 昨天拉取会话数：<font color='info'>" + strconv.FormatInt(corp.MessageNum, 10) + "</font>\n")
+		if corp.MessageNum == 0 {
+			isalert = true
+		}
+	}
+	builder.WriteString("> 员工数统计：<font color='info'>" + strconv.Itoa(corp.UserNum) + "</font>\n")
+	builder.WriteString("> 客户数统计：<font color='info'>" + strconv.FormatInt(corp.CustomerNum, 10) + "</font>\n")
+	builder.WriteString("> 日活数统计：<font color='info'>" + strconv.FormatInt(corp.DauNum, 10) + "</font>\n")
+	builder.WriteString("> 周活数统计：<font color='info'>" + strconv.FormatInt(corp.WauNum, 10) + "</font>\n")
+	builder.WriteString("> 月活数统计：<font color='info'>" + strconv.FormatInt(corp.MauNum, 10) + "</font>\n")
+	builder.WriteString("==================\n")
+
+	return builder.String()
 }

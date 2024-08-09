@@ -16,7 +16,7 @@ const VERSION = "v1.0"
 
 type Config struct {
 	ProjectName string
-	Proxyurl    string
+	ProxyURL    string
 	Nacos       nacos.Config
 	Tenant      inspect.Tenant
 	PG          inspect.DB

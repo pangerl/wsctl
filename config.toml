@@ -1,7 +1,7 @@
 projectname = "千金药业"
-# 可配置网络代理：172.18.0.17:9255
-# 支持账号密码：user:password@172.18.0.17:9255
-proxyurl = ""
+# 可配置网络代理，支持 http/https 协议
+# proxyURL := "http://proxyuser:proxypassword@proxy_ip:proxy_port"
+proxyurl = "http://wshoto:123qazwsx@172.18.0.17:9253"
 
 [nacos]
 server = "http://192.9.253.198:8848"
@@ -15,7 +15,7 @@ corpid = "wxbe45d6b56a61e293"
 convenabled = true
 [[tenant.corp]]
 corpid = "ww70adef74dc10951c"
-convenabled = false
+convenabled = true
 [[tenant.corp]]
 corpid = "wwd4fc7dcb8f5a0d99"
 convenabled = true
