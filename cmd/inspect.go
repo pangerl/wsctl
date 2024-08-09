@@ -18,6 +18,7 @@ var inspectCmd = &cobra.Command{
 	Long:  `获取项目的企业数据，活跃数，会话数`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("开始项目巡检")
+		// 初始化 inspect 对象
 		esclient, _ := inspect.NewESClient(CONFIG.ES)
 		pgclient1, pgclient2 := inspect.NewPGClient(CONFIG.PG)
 		defer func() {
@@ -37,9 +38,8 @@ var inspectCmd = &cobra.Command{
 				esclient.Stop()
 			}
 		}()
-
-		// 创建 inspect 对象
 		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, CONFIG.ProjectName, VERSION)
+		// 执行巡检 job
 		inspectTask(_inspect)
 	},
 }

@@ -6,7 +6,6 @@ package inspect
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/olivere/elastic/v7"
 	"log"
@@ -142,8 +141,8 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 
 func countMessageNum(client *elastic.Client, corpid string, dateNow time.Time) (int64, error) {
 	t := dateNow.AddDate(0, 0, -1)
-	startTime := GetZeroTime(t).UnixNano() / 1e6
-	endTime := GetZeroTime(dateNow).UnixNano() / 1e6
+	startTime := getZeroTime(t).UnixNano() / 1e6
+	endTime := getZeroTime(dateNow).UnixNano() / 1e6
 
 	// Define the query
 	query := elastic.NewBoolQuery().
@@ -165,8 +164,8 @@ func countMessageNum(client *elastic.Client, corpid string, dateNow time.Time) (
 }
 
 func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate time.Time) (int64, error) {
-	startTime := GetZeroTime(startDate).UnixNano() / 1e6
-	endTime := GetZeroTime(endDate).UnixNano() / 1e6
+	startTime := getZeroTime(startDate).UnixNano() / 1e6
+	endTime := getZeroTime(endDate).UnixNano() / 1e6
 	// 创建 bool 查询
 	query := elastic.NewBoolQuery().
 		Must(
@@ -217,17 +216,6 @@ func queryUserNum(conn *pgx.Conn, corpid string) (int, error) {
 		return -1, err
 	}
 	return userNum, nil
-}
-
-func calluser(users []string) string {
-	var result string
-	if len(users) == 0 {
-		return result
-	}
-	for _, user := range users {
-		result += fmt.Sprintf("<@%s>", user)
-	}
-	return result
 }
 
 func generateCorpString(corp *Corp) string {

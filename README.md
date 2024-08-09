@@ -31,4 +31,5 @@ go get github.com/olekukonko/tablewriter
 go get github.com/gin-gonic/gin
 go get github.com/olivere/elastic/v7
 go get github.com/jackc/pgx/v5
+go get github.com/robfig/cron/v3
 ```

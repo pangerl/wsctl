@@ -28,11 +28,15 @@ convenabled = false
 
 [inspection]
 # 配置定时任务，每日巡检的发送时间：09:30 - 10:00
-scheducron = "48 9 * * *"
+scheducron = "*/5 * * * *"
 # 测试-每日巡检机器人
 robotkey = "8ab989f5-d86f-4c99-b95f-5d23a30eb351"
 # 告警@人 ["lanpang", "mark"]
 userlist = []
+
+[crontab]
+inspectjob = true
+testjob = false
 
 [pg]
 ip = "192.9.253.195"

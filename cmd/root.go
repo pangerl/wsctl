@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 		log.Println("程序开始启动！！！")
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		PreFunc()
+		preFunc()
 	},
 }
 
@@ -34,7 +34,7 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func PreFunc() {
+func preFunc() {
 	homedir := "."
 	configfile := filepath.Join(homedir, "config.toml")
 	log.Printf("Info: 读取配置文件 %s \n", configfile)
@@ -51,6 +51,7 @@ func PreFunc() {
 		if _, err := toml.DecodeFile("config.toml", &CONFIG); err != nil {
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
+		//fmt.Println(CONFIG.Crontab)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.PG)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.ES)
 	}

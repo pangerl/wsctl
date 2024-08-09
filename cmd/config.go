@@ -17,6 +17,7 @@ const VERSION = "v1.0"
 type Config struct {
 	ProjectName string
 	ProxyURL    string
+	Crontab     Crontab
 	Nacos       nacos.Config
 	Tenant      inspect.Tenant
 	PG          inspect.DB
@@ -27,4 +28,9 @@ type Config struct {
 type Inspection struct {
 	Scheducron string
 	Robotkey   string
+}
+
+type Crontab struct {
+	Inspectjob bool
+	Testjob    bool
 }
