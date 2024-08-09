@@ -5,8 +5,8 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
+	"log"
 	"time"
 	"vhagar/nacos"
 )
@@ -25,7 +25,7 @@ var nacosCmd = &cobra.Command{
 	Long:  `通过 nacos 的服务注册信息，统计微服务的信息`,
 	Run: func(cmd *cobra.Command, args []string) {
 		_nacos := nacos.NewNacos(CONFIG.Nacos, web, webport, writefile)
-		fmt.Println("获取nacos认证信息")
+		log.Println("获取nacos认证信息")
 		_nacos.WithAuth()
 		_nacos.GetNacosInstance()
 		switch {
@@ -35,7 +35,7 @@ var nacosCmd = &cobra.Command{
 			_nacos.WriteFile()
 		default:
 			if watch {
-				fmt.Printf("监控模式 刷新时间:%s/次\n", 5*time.Second)
+				log.Printf("监控模式 刷新时间:%s/次\n", 5*time.Second)
 				for {
 					_nacos.GetNacosInstance()
 					_nacos.TableRender()

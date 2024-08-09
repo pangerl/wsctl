@@ -18,7 +18,10 @@ func SendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 	wechatRobotURL := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + robotKey
 
 	req, err := http.NewRequest("POST", wechatRobotURL, bytes.NewBuffer(jsonStr))
-	CheckErr(err)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return err
+	}
 
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
@@ -37,11 +40,14 @@ func SendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("Failed info: %s \n", err)
 		return err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
-		CheckErr(err)
+		if err != nil {
+			log.Printf("Failed info: %s \n", err)
+		}
 	}(resp.Body)
 	log.Print("推送企微机器人 response Status:", resp.Status)
 	//log.Print("response Headers:", resp.Header)

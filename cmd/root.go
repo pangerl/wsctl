@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/spf13/cobra"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -14,7 +14,7 @@ var rootCmd = &cobra.Command{
 	Short: "A brief description of vhagar",
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("程序开始启动！！！")
+		log.Println("程序开始启动！！！")
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		PreFunc()
@@ -24,7 +24,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 }
@@ -35,27 +35,23 @@ func init() {
 }
 
 func PreFunc() {
-	fmt.Println("读取配置文件！")
 	homedir := "."
 	configfile := filepath.Join(homedir, "config.toml")
+	log.Printf("Info: 读取配置文件 %s \n", configfile)
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("配置文件格式错误", configfile, err)
-			os.Exit(2)
+			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
 	}()
 	if _, err := os.Stat(configfile); err != nil {
 		if !os.IsExist(err) {
-			fmt.Println("读取配置文件报错", configfile, err)
-			return
+			log.Fatalf("Failed Info: 读取配置文件报错 %s", err)
 		}
 	} else {
 		if _, err := toml.DecodeFile("config.toml", &CONFIG); err != nil {
-			fmt.Println("配置文件格式错误", configfile)
-			return
+			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
 		//fmt.Printf("租户信息: %+v\n", CONFIG.PG)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.ES)
-
 	}
 }

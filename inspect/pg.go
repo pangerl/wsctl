@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
+	"log"
 )
 
 func NewPGClient(conf DB) (*pgx.Conn, *pgx.Conn) {
@@ -14,7 +15,10 @@ func NewPGClient(conf DB) (*pgx.Conn, *pgx.Conn) {
 	connString2 := connStr(conf, "user")
 	conn1, err := pgx.Connect(context.Background(), connString1)
 	conn2, _ := pgx.Connect(context.Background(), connString2)
-	CheckErr(err)
+	if err != nil {
+		log.Printf("Failed to create PG client: %s \n", err)
+		return nil, nil
+	}
 	return conn1, conn2
 }
 

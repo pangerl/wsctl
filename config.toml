@@ -19,6 +19,12 @@ convenabled = true
 [[tenant.corp]]
 corpid = "wwd4fc7dcb8f5a0d99"
 convenabled = true
+[[tenant.corp]]
+corpid = "ww6b882761610096ad"
+convenabled = true
+[[tenant.corp]]
+corpid = "wwe2007d5a571677f3"
+convenabled = false
 
 [inspection]
 # 配置定时任务，每日巡检的发送时间：09:30 - 10:00

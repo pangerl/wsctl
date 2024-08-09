@@ -4,7 +4,9 @@
 package inspect
 
 import (
+	"context"
 	"github.com/olivere/elastic/v7"
+	"log"
 	"strconv"
 )
 
@@ -18,6 +20,16 @@ func NewESClient(conf DB) (*elastic.Client, string) {
 		elastic.SetBasicAuth(conf.Username, conf.Password),
 		elastic.SetHealthcheck(false))
 
-	CheckErr(err)
+	if err != nil {
+		log.Printf("Failed to create ES client: %s \n", err)
+		return nil, esurl
+	}
+
+	// 在创建客户端后立即执行一次Ping操作，检查连接是否正常
+	_, _, err = client.Ping(esurl).Do(context.Background())
+	if err != nil {
+		log.Printf("Failed to connect to ES: %s \n", err)
+		return nil, esurl
+	}
 	return client, esurl
 }

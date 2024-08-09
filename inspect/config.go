@@ -13,8 +13,8 @@ type Inspect struct {
 	Version     string
 	Corp        []*Corp
 	EsClient    *elastic.Client
-	PgClient1   *pgx.Conn
-	PgClient2   *pgx.Conn
+	PgClient1   *pgx.Conn //"qv30"
+	PgClient2   *pgx.Conn //"user"
 }
 
 type Tenant struct {

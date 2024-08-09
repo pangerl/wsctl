@@ -37,7 +37,7 @@ func (i *Inspect) GetVersion(url string) {
 	log.Println("Elasticsearch version: ", version)
 }
 
-func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) (markdown *WeChatMarkdown, err error) {
+func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) *WeChatMarkdown {
 
 	var builder strings.Builder
 	isalert = false
@@ -49,25 +49,24 @@ func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) (markdo
 	builder.WriteString("**巡检内容：**\n")
 
 	for _, corp := range i.Corp {
-
 		builder.WriteString(generateCorpString(corp))
 	}
 	if isalert {
 		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + calluser(users))
 	}
 
-	markdown = &WeChatMarkdown{
+	markdown := &WeChatMarkdown{
 		MsgType: "markdown",
 		Markdown: &Markdown{
 			Content: builder.String(),
 		},
 	}
 
-	return
+	return markdown
 }
 
 func (i *Inspect) SetCustomerNum(corpid string) {
-	customernum := searchCustomerNum(i.EsClient, corpid)
+	customernum, _ := searchCustomerNum(i.EsClient, corpid)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerNum = customernum
@@ -77,7 +76,7 @@ func (i *Inspect) SetCustomerNum(corpid string) {
 }
 
 func (i *Inspect) SetMessageNum(corpid string, dateNow time.Time) {
-	messagenum := countMessageNum(i.EsClient, corpid, dateNow)
+	messagenum, _ := countMessageNum(i.EsClient, corpid, dateNow)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.MessageNum = messagenum
@@ -87,7 +86,7 @@ func (i *Inspect) SetMessageNum(corpid string, dateNow time.Time) {
 }
 
 func (i *Inspect) SetCorpName(corpid string) {
-	corpName := queryCorpName(i.PgClient1, corpid)
+	corpName, _ := queryCorpName(i.PgClient1, corpid)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.CorpName = corpName
@@ -97,7 +96,7 @@ func (i *Inspect) SetCorpName(corpid string) {
 }
 
 func (i *Inspect) SetUserNum(corpid string) {
-	userNum := queryUserNum(i.PgClient2, corpid)
+	userNum, _ := queryUserNum(i.PgClient2, corpid)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.UserNum = userNum
@@ -112,15 +111,15 @@ func (i *Inspect) SetActiveNum(corpid string, dateNow time.Time) {
 	dateMau := dateNow.AddDate(0, -1, 0)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
-			corp.DauNum = searchActiveNum(i.EsClient, corpid, dateDau, dateNow)
-			corp.WauNum = searchActiveNum(i.EsClient, corpid, dateWau, dateNow)
-			corp.MauNum = searchActiveNum(i.EsClient, corpid, dateMau, dateNow)
+			corp.DauNum, _ = searchActiveNum(i.EsClient, corpid, dateDau, dateNow)
+			corp.WauNum, _ = searchActiveNum(i.EsClient, corpid, dateWau, dateNow)
+			corp.MauNum, _ = searchActiveNum(i.EsClient, corpid, dateMau, dateNow)
 			return
 		}
 	}
 }
 
-func searchCustomerNum(client *elastic.Client, corpid string) int64 {
+func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 	// 创建 bool 查询
 	query := elastic.NewBoolQuery().
 		Filter(
@@ -133,12 +132,15 @@ func searchCustomerNum(client *elastic.Client, corpid string) int64 {
 		Query(query).                // 设置查询条件
 		TrackTotalHits(true).
 		Do(context.Background()) // 执行
-	CheckErr(err)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
 	//fmt.Printf("总客户数: %d\n", searchResult.TotalHits())
-	return searchResult.TotalHits()
+	return searchResult.TotalHits(), nil
 }
 
-func countMessageNum(client *elastic.Client, corpid string, dateNow time.Time) int64 {
+func countMessageNum(client *elastic.Client, corpid string, dateNow time.Time) (int64, error) {
 	t := dateNow.AddDate(0, 0, -1)
 	startTime := GetZeroTime(t).UnixNano() / 1e6
 	endTime := GetZeroTime(dateNow).UnixNano() / 1e6
@@ -154,11 +156,15 @@ func countMessageNum(client *elastic.Client, corpid string, dateNow time.Time) i
 		Index("conversation_" + corpid).
 		Query(query).
 		Do(context.Background())
-	CheckErr(err)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
 	//fmt.Printf("昨天消息数: %d\n", countResult)
-	return countResult
+	return countResult, nil
 }
-func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate time.Time) int64 {
+
+func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate time.Time) (int64, error) {
 	startTime := GetZeroTime(startDate).UnixNano() / 1e6
 	endTime := GetZeroTime(endDate).UnixNano() / 1e6
 	// 创建 bool 查询
@@ -175,30 +181,42 @@ func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate t
 		Aggregation("dau", elastic.NewCardinalityAggregation().Field("who.id.keyword")).
 		Size(0).
 		Do(context.Background()) // 执行
-	CheckErr(err)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
 	dauAgg, _ := searchResult.Aggregations["dau"]
 	cardinalityAgg := &struct {
 		Value int64 `json:"value"`
 	}{}
 	err = json.Unmarshal(dauAgg, cardinalityAgg)
-	CheckErr(err)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
 	//fmt.Println("活跃数：", cardinalityAgg.Value)
-	return cardinalityAgg.Value
+	return cardinalityAgg.Value, nil
 }
 
-func queryCorpName(conn *pgx.Conn, corpid string) string {
+func queryCorpName(conn *pgx.Conn, corpid string) (string, error) {
 	var corpName string
 	query := "SELECT corp_name FROM qw_base_tenant_corp_info WHERE tenant_id=$1 LIMIT 1"
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&corpName)
-	CheckErr(err)
-	return corpName
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return "-1", err
+	}
+	return corpName, nil
 }
-func queryUserNum(conn *pgx.Conn, corpid string) int {
+func queryUserNum(conn *pgx.Conn, corpid string) (int, error) {
 	var userNum int
 	query := "SELECT count(*) from qw_user WHERE deleted=0 AND tenant_id=$1 LIMIT 1"
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&userNum)
-	CheckErr(err)
-	return userNum
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
+	return userNum, nil
 }
 
 func calluser(users []string) string {
@@ -212,25 +230,13 @@ func calluser(users []string) string {
 	return result
 }
 
-func getcolor(num int64, ignore bool) string {
-	color := "info"
-	if num == 0 {
-		if ignore {
-			color = "warning"
-		} else {
-			color = "red"
-		}
-	}
-	return color
-}
-
 func generateCorpString(corp *Corp) string {
 	var builder strings.Builder
 
 	builder.WriteString("> 企业名称：<font color='info'>" + corp.CorpName + "</font>\n")
 	if corp.Convenabled {
 		builder.WriteString("> 昨天拉取会话数：<font color='info'>" + strconv.FormatInt(corp.MessageNum, 10) + "</font>\n")
-		if corp.MessageNum == 0 {
+		if corp.MessageNum <= 0 {
 			isalert = true
 		}
 	}

@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"time"
@@ -18,18 +17,24 @@ var inspectCmd = &cobra.Command{
 	Short: "项目巡检",
 	Long:  `获取项目的企业数据，活跃数，会话数`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("开始项目巡检")
+		log.Println("开始项目巡检")
 		esclient, _ := inspect.NewESClient(CONFIG.ES)
 		pgclient1, pgclient2 := inspect.NewPGClient(CONFIG.PG)
 		defer func() {
-			esclient.Stop()
-			err := pgclient1.Close(context.Background())
-			if err != nil {
-				return
+			if pgclient1 != nil {
+				err := pgclient1.Close(context.Background())
+				if err != nil {
+					return
+				}
 			}
-			err = pgclient2.Close(context.Background())
-			if err != nil {
-				return
+			if pgclient1 != nil {
+				err := pgclient2.Close(context.Background())
+				if err != nil {
+					return
+				}
+			}
+			if esclient != nil {
+				esclient.Stop()
 			}
 		}()
 
@@ -50,22 +55,28 @@ func inspectTask(_inspect *inspect.Inspect) {
 	//inspect.GetVersion(url)
 	for _, corp := range _inspect.Corp {
 		//fmt.Println(corp.Corpid)
-		// 获取租户名
-		_inspect.SetCorpName(corp.Corpid)
-		// 获取用户数
-		_inspect.SetUserNum(corp.Corpid)
-		// 获取客户数
-		_inspect.SetCustomerNum(corp.Corpid)
-		// 获取活跃数
-		_inspect.SetActiveNum(corp.Corpid, dateNow)
-		// 获取会话数
-		if corp.Convenabled {
-			_inspect.SetMessageNum(corp.Corpid, dateNow)
+		if _inspect.PgClient1 != nil {
+			// 获取租户名
+			_inspect.SetCorpName(corp.Corpid)
+		}
+		if _inspect.PgClient2 != nil {
+			// 获取用户数
+			_inspect.SetUserNum(corp.Corpid)
+		}
+		if _inspect.EsClient != nil {
+			// 获取客户数
+			_inspect.SetCustomerNum(corp.Corpid)
+			// 获取活跃数
+			_inspect.SetActiveNum(corp.Corpid, dateNow)
+			// 获取会话数
+			if corp.Convenabled {
+				_inspect.SetMessageNum(corp.Corpid, dateNow)
+			}
 		}
 		//fmt.Println(*corp)
 	}
 	// 发送巡检报告
-	markdown, _ := _inspect.TransformToMarkdown(CONFIG.Inspection.Userlist, dateNow)
+	markdown := _inspect.TransformToMarkdown(CONFIG.Inspection.Userlist, dateNow)
 	err := inspect.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
 	if err != nil {
 		return
