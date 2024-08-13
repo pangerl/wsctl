@@ -72,6 +72,6 @@ func Monitor(nacos *Nacos) {
 
 	// 设置 HTTP 服务器并暴露 /metrics 端点
 	http.Handle("/metrics", promhttp.Handler())
-	fmt.Println("Starting server at :2112")
-	log.Fatal(http.ListenAndServe(":2112", nil))
+	log.Printf("Starting server at %s\n", nacos.Webport)
+	log.Fatal(http.ListenAndServe(nacos.Webport, nil))
 }

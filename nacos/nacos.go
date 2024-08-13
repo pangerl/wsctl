@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/tidwall/gjson"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -29,7 +30,7 @@ func NewNacos(c Config, web bool, webport, writefile string) *Nacos {
 }
 
 func (d *Nacos) WithAuth() {
-	fmt.Println("开始获取 token")
+	log.Println("更新 token")
 	_url := fmt.Sprintf("%s/nacos/v1/auth/login", d.Config.Server)
 	formData := map[string]string{
 		"username": d.Config.Username,
@@ -37,10 +38,10 @@ func (d *Nacos) WithAuth() {
 	}
 	res := d.post(_url, formData)
 	if len(gjson.GetBytes(res, "accessToken").String()) != 0 {
-		fmt.Println("Authentication successful...")
+		log.Println("Authentication successful...")
 		d.Token = gjson.GetBytes(res, "accessToken").String()
 	} else {
-		fmt.Println("Authentication failed!")
+		log.Println("Authentication failed!")
 	}
 }
 func ContainerdIPCheck(ip string) bool {
@@ -105,7 +106,7 @@ func (d *Nacos) TableRender() {
 }
 
 func (d *Nacos) GetNacosInstance() {
-	fmt.Println("获取注册服务信息")
+	log.Println("更新服务数据")
 	var ser Service
 	var cluster ClusterStatus
 	_url := d.Config.Server
@@ -204,7 +205,7 @@ func (d *Nacos) WriteFile() {
 	}
 	file, err := os.OpenFile(basedir+"/.nacos_tmp.json", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Printf("创建文件失败 %s", err)
+		log.Printf("创建文件失败 %s", err)
 		os.Exit(2)
 	}
 	defer func(file *os.File) {
@@ -217,10 +218,10 @@ func (d *Nacos) WriteFile() {
 	data := make([]byte, 0)
 	var check bool
 	if data, check = jsondata.([]byte); !check {
-		fmt.Println("转换失败")
+		log.Println("转换失败")
 	}
 	if _, err := file.Write(data); err != nil {
-		fmt.Println("写入失败", err)
+		log.Println("写入失败", err)
 		os.Exit(1)
 	}
 	err = file.Close()
@@ -228,8 +229,8 @@ func (d *Nacos) WriteFile() {
 		return
 	}
 	if err := os.Rename(basedir+"/.nacos_tmp.json", basedir+"/"+filename); err != nil {
-		fmt.Println("写入失败:", basedir+"/"+filename)
+		log.Println("写入失败:", basedir+"/"+filename)
 	} else {
-		fmt.Println("写入成功:", basedir+"/"+filename)
+		log.Println("写入成功:", basedir+"/"+filename)
 	}
 }

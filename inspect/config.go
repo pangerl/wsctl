@@ -9,12 +9,13 @@ import (
 )
 
 type Inspect struct {
-	ProjectName string
-	Version     string
-	Corp        []*Corp
-	EsClient    *elastic.Client
-	PgClient1   *pgx.Conn //"qv30"
-	PgClient2   *pgx.Conn //"user"
+	ProjectName  string
+	Version      string
+	Corp         []*Corp
+	EsClient     *elastic.Client
+	PgClient1    *pgx.Conn //"qv30"
+	PgClient2    *pgx.Conn //"user"
+	BrokerServer map[string]map[string]BrokerData
 }
 
 type Tenant struct {
