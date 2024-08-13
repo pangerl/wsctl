@@ -5,10 +5,6 @@ package nacos
 
 import "net/http"
 
-//type Nacos interface {
-//	WithAuth()
-//}
-
 type Nacos struct {
 	Config      Config
 	Web         bool
@@ -17,7 +13,7 @@ type Nacos struct {
 	Client      http.Client
 	Host        string
 	Token       string
-	Clusterdata map[string]ClusterStatus
+	Clusterdata ClusterStatus
 }
 
 type Config struct {
@@ -28,11 +24,6 @@ type Config struct {
 }
 
 type ClusterStatus struct {
-	Ip               string
-	Port             string
-	State            string
-	Version          string
-	LastRefreshTime  string
 	HealthInstance   []ServerInstance
 	UnHealthInstance []ServerInstance
 }
@@ -78,7 +69,6 @@ type ServerInstance struct {
 	Health        string `json:"health"`
 	Hostname      string `json:"hostname"`
 	Weight        string `json:"weight"`
-	Pid           string `json:"pid"`
 	Container     string `json:"container"`
 	Ip            string `json:"ip"`
 	Port          string `json:"port"`

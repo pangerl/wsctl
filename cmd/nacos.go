@@ -16,6 +16,7 @@ var (
 	webport   string
 	writefile string
 	watch     bool
+	monitor   bool
 )
 
 // versionCmd represents the version command
@@ -33,13 +34,15 @@ var nacosCmd = &cobra.Command{
 			nacos.Webserver(_nacos)
 		case writefile != "":
 			_nacos.WriteFile()
+		case monitor:
+			nacos.Monitor(_nacos)
 		default:
 			if watch {
-				log.Printf("监控模式 刷新时间:%s/次\n", 5*time.Second)
+				log.Printf("监控模式 刷新时间:%s/次\n", 10*time.Second)
 				for {
 					_nacos.GetNacosInstance()
 					_nacos.TableRender()
-					time.Sleep(5 * time.Second)
+					time.Sleep(10 * time.Second)
 				}
 			}
 			_nacos.TableRender()
@@ -53,4 +56,6 @@ func init() {
 	nacosCmd.Flags().BoolVarP(&web, "web", "w", false, "开启web api Prometheus http_sd_configs")
 	nacosCmd.Flags().StringVarP(&webport, "port", "p", "8099", "web 端口")
 	nacosCmd.Flags().BoolVarP(&watch, "watch", "d", false, "监控服务，定时刷新")
+	nacosCmd.Flags().BoolVarP(&monitor, "monitor", "m", false, "服务接口探活")
+
 }

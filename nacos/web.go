@@ -57,3 +57,12 @@ func RefreshToken(nacos *Nacos) {
 		}()
 	}
 }
+
+func RefreshNacosInstance(nacos *Nacos, interval time.Duration) {
+	go func() {
+		for {
+			nacos.GetNacosInstance()
+			time.Sleep(interval)
+		}
+	}()
+}

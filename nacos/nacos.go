@@ -12,7 +12,6 @@ import (
 	"net"
 	"os"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -83,15 +82,13 @@ func (d *Nacos) tableAppend(table *tablewriter.Table, data []string) {
 }
 func (d *Nacos) TableRender() {
 	tablerow = []string{}
-	nacosServer := d.Clusterdata[d.Host]
+	nacosServer := d.Clusterdata
 	tabletitle := []string{"命名空间", "服务名称", "实例", "健康状态", "主机名", "权重", "容器", "组"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
-	for _, nacosServer := range d.Clusterdata {
-		for _, v := range nacosServer.HealthInstance {
-			tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.Container, v.GroupName}
-			d.tableAppend(table, tabledata)
-		}
+	for _, v := range nacosServer.HealthInstance {
+		tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.Container, v.GroupName}
+		d.tableAppend(table, tabledata)
 	}
 	fmt.Printf("健康实例:(%d 个)\n", table.NumLines())
 	table.Render()
@@ -109,11 +106,9 @@ func (d *Nacos) TableRender() {
 
 func (d *Nacos) GetNacosInstance() {
 	fmt.Println("获取注册服务信息")
-	d.Clusterdata = make(map[string]ClusterStatus)
 	var ser Service
 	var cluster ClusterStatus
 	_url := d.Config.Server
-	cluster = d.Clusterdata[d.Config.Server]
 	namespace := d.Config.Namespace
 	group := "DEFAULT_GROUP"
 	res := d.GetService(_url, namespace, group)
@@ -129,13 +124,6 @@ func (d *Nacos) GetNacosInstance() {
 			fmt.Printf("json序列化错误:%s\n", err)
 		}
 		for _, host := range in.Hosts {
-			_pid := ""
-			metadataUrl := host.Metadata["dubbo.metadata-service.urls"]
-			u, _ := regexp.Compile("pid=(.+?)&")
-			pid := u.FindStringSubmatch(metadataUrl)
-			if len(pid) == 2 {
-				_pid = pid[1]
-			}
 			instance := ServerInstance{
 				NamespaceName: namespace,
 				ServiceName:   se,
@@ -143,7 +131,6 @@ func (d *Nacos) GetNacosInstance() {
 				Health:        strconv.FormatBool(host.Healthy),
 				Hostname:      host.Ip,
 				Weight:        fmt.Sprintf("%.1f", host.Weight),
-				Pid:           _pid,
 				Container:     strconv.FormatBool(ContainerdIPCheck(host.Ip)),
 				Ip:            host.Ip,
 				Port:          strconv.Itoa(host.Port),
@@ -154,9 +141,11 @@ func (d *Nacos) GetNacosInstance() {
 			} else {
 				cluster.UnHealthInstance = append(cluster.UnHealthInstance, instance)
 			}
-			d.Clusterdata[d.Config.Server] = cluster
+			//fmt.Println(instance)
 		}
+		d.Clusterdata = cluster
 	}
+	//fmt.Println(d.Clusterdata.HealthInstance)
 }
 func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 	//mutex.Lock()
@@ -171,24 +160,23 @@ func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 		d.GetNacosInstance()
 	}
 	var nacos Nacosfile
-	for _, nacosServer := range d.Clusterdata {
-		if len(nacosServer.HealthInstance) != 0 {
-			for _, na := range nacosServer.HealthInstance {
-				var ta Nacostarget
-				ta.Labels = make(map[string]string)
-				ta.Targets = append(ta.Targets, na.IpAddr)
-				ta.Labels["namespace"] = na.NamespaceName
-				ta.Labels["service"] = na.ServiceName
-				ta.Labels["hostname"] = na.Hostname
-				ta.Labels["weight"] = na.Weight
-				ta.Labels["pid"] = na.Pid
-				ta.Labels["ip"] = na.Ip
-				ta.Labels["port"] = na.Port
-				ta.Labels["group"] = na.GroupName
-				ta.Labels["containerd"] = na.Container
-				nacos.Data = append(nacos.Data, ta)
-			}
+	nacosServer := d.Clusterdata
+	if len(nacosServer.HealthInstance) != 0 {
+		for _, na := range nacosServer.HealthInstance {
+			var ta Nacostarget
+			ta.Labels = make(map[string]string)
+			ta.Targets = append(ta.Targets, na.IpAddr)
+			ta.Labels["namespace"] = na.NamespaceName
+			ta.Labels["service"] = na.ServiceName
+			ta.Labels["hostname"] = na.Hostname
+			ta.Labels["weight"] = na.Weight
+			ta.Labels["ip"] = na.Ip
+			ta.Labels["port"] = na.Port
+			ta.Labels["group"] = na.GroupName
+			ta.Labels["containerd"] = na.Container
+			nacos.Data = append(nacos.Data, ta)
 		}
+
 	}
 
 	if resultType == "json" {
