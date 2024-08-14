@@ -8,6 +8,7 @@ import (
 	"github.com/robfig/cron/v3"
 	"log"
 	"vhagar/inspect"
+	"vhagar/notifier"
 
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,7 @@ func crontabJob() {
 	if CONFIG.Crontab.Inspectjob {
 		// 初始化 inspect 对象
 		esclient, _ := inspect.NewESClient(CONFIG.ES)
-		pgclient1, pgclient2 := inspect.NewPGClient(CONFIG.PG)
+		pgclient1, pgclient2, pgclient3 := inspect.NewPGClient(CONFIG.PG)
 		defer func() {
 			if pgclient1 != nil {
 				err := pgclient1.Close(context.Background())
@@ -41,8 +42,14 @@ func crontabJob() {
 					return
 				}
 			}
-			if pgclient1 != nil {
+			if pgclient2 != nil {
 				err := pgclient2.Close(context.Background())
+				if err != nil {
+					return
+				}
+			}
+			if pgclient3 != nil {
+				err := pgclient3.Close(context.Background())
 				if err != nil {
 					return
 				}
@@ -51,7 +58,7 @@ func crontabJob() {
 				esclient.Stop()
 			}
 		}()
-		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, CONFIG.ProjectName, VERSION)
+		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, CONFIG.ProjectName, VERSION)
 		// 加入定时任务
 		_, err := c.AddFunc(CONFIG.Inspection.Scheducron, func() {
 			inspectTask(_inspect)
@@ -80,4 +87,7 @@ func crontabJob() {
 
 func testjob() {
 	log.Printf("大王叫我来巡山，巡了南山巡北山。。。 \n")
+	clusterdata, _ := inspect.GetMQDetail()
+	markdown := inspect.MQDetailToMarkdown(clusterdata, CONFIG.ProjectName)
+	_ = notifier.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
 }

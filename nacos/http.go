@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -40,7 +39,7 @@ func (d *Nacos) get(apiurl string) []byte {
 			panic(err)
 		}
 	}(res.Body)
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	return resp
 
 }
@@ -78,6 +77,6 @@ func (d *Nacos) post(apiurl string, formData map[string]string) []byte {
 			panic(err)
 		}
 	}(res.Body)
-	resp, _ := ioutil.ReadAll(res.Body)
+	resp, _ := io.ReadAll(res.Body)
 	return resp
 }

@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"io/ioutil"
+	"io"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -34,9 +35,14 @@ func probeInstance(instance ServerInstance) {
 		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
 		return
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Failed info: %s \n", err)
+		}
+	}(resp.Body)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading response body from %s: %v\n", url, err)
 		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
@@ -72,6 +78,24 @@ func Monitor(nacos *Nacos) {
 
 	// 设置 HTTP 服务器并暴露 /metrics 端点
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("Starting server at %s\n", nacos.Webport)
+	log.Printf("Starting server at http://%s%s/metrics\n", getLocalIp(), nacos.Webport)
 	log.Fatal(http.ListenAndServe(nacos.Webport, nil))
+}
+
+func getLocalIp() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Println("获取本机 IP 地址失败:", err)
+	}
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				//fmt.Println("本机 IP 地址:", ipnet.IP.String())
+				return ipnet.IP.String()
+			}
+		}
+	}
+
+	return ""
 }

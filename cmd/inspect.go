@@ -9,6 +9,11 @@ import (
 	"log"
 	"time"
 	"vhagar/inspect"
+	"vhagar/notifier"
+)
+
+var (
+	rocketmq bool
 )
 
 // versionCmd represents the version command
@@ -17,41 +22,54 @@ var inspectCmd = &cobra.Command{
 	Short: "项目巡检",
 	Long:  `获取项目的企业数据，活跃数，会话数`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Println("开始项目巡检")
-		// 初始化 inspect 对象
-		esclient, _ := inspect.NewESClient(CONFIG.ES)
-		pgclient1, pgclient2 := inspect.NewPGClient(CONFIG.PG)
-		defer func() {
-			if pgclient1 != nil {
-				err := pgclient1.Close(context.Background())
-				if err != nil {
-					return
+		switch {
+		case rocketmq:
+			mqTask()
+		default:
+			log.Println("开始项目巡检")
+			// 初始化 inspect 对象
+			esclient, _ := inspect.NewESClient(CONFIG.ES)
+			pgclient1, pgclient2, pgclient3 := inspect.NewPGClient(CONFIG.PG)
+			defer func() {
+				if pgclient1 != nil {
+					err := pgclient1.Close(context.Background())
+					if err != nil {
+						return
+					}
 				}
-			}
-			if pgclient1 != nil {
-				err := pgclient2.Close(context.Background())
-				if err != nil {
-					return
+				if pgclient2 != nil {
+					err := pgclient2.Close(context.Background())
+					if err != nil {
+						return
+					}
 				}
-			}
-			if esclient != nil {
-				esclient.Stop()
-			}
-		}()
-		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, CONFIG.ProjectName, VERSION)
-		// 执行巡检 job
-		inspectTask(_inspect)
+				if pgclient3 != nil {
+					err := pgclient3.Close(context.Background())
+					if err != nil {
+						return
+					}
+				}
+				if esclient != nil {
+					esclient.Stop()
+				}
+			}()
+			_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, CONFIG.ProjectName, VERSION)
+			// 执行巡检 job
+			inspectTask(_inspect)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(inspectCmd)
+	inspectCmd.Flags().BoolVarP(&rocketmq, "rocketmq", "m", false, "获取 rocketmq broker 信息")
+
 }
 
 func inspectTask(_inspect *inspect.Inspect) {
 	// 当前时间
 	dateNow := time.Now().AddDate(0, 0, 0)
-	log.Print("启动巡检任务")
+	log.Print("启动企微租户巡检任务")
 	//inspect.GetVersion(url)
 	for _, corp := range _inspect.Corp {
 		//fmt.Println(corp.Corpid)
@@ -62,6 +80,10 @@ func inspectTask(_inspect *inspect.Inspect) {
 		if _inspect.PgClient2 != nil {
 			// 获取用户数
 			_inspect.SetUserNum(corp.Corpid)
+		}
+		if _inspect.PgClient3 != nil {
+			// 获取客户群
+			_inspect.SetCustomerGroupNum(corp.Corpid)
 		}
 		if _inspect.EsClient != nil {
 			// 获取客户数
@@ -77,8 +99,15 @@ func inspectTask(_inspect *inspect.Inspect) {
 	}
 	// 发送巡检报告
 	markdown := _inspect.TransformToMarkdown(CONFIG.Inspection.Userlist, dateNow)
-	err := inspect.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
+	err := notifier.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
 	if err != nil {
 		return
 	}
+}
+
+func mqTask() {
+	log.Print("启动 rocketmq 巡检任务")
+	clusterdata, _ := inspect.GetMQDetail()
+	markdown := inspect.MQDetailToMarkdown(clusterdata, CONFIG.ProjectName)
+	_ = notifier.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
 }

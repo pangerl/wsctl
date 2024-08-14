@@ -12,11 +12,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"vhagar/notifier"
 )
 
 var isalert = false
 
-func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2 *pgx.Conn, name, version string) *Inspect {
+func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2, conn3 *pgx.Conn, name, version string) *Inspect {
 	return &Inspect{
 		ProjectName: name,
 		Version:     version,
@@ -24,6 +25,7 @@ func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2 *pgx.Conn, name, 
 		EsClient:    es,
 		PgClient1:   conn1,
 		PgClient2:   conn2,
+		PgClient3:   conn3,
 	}
 }
 
@@ -36,7 +38,7 @@ func (i *Inspect) GetVersion(url string) {
 	log.Println("Elasticsearch version: ", version)
 }
 
-func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) *WeChatMarkdown {
+func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) *notifier.WeChatMarkdown {
 
 	var builder strings.Builder
 	isalert = false
@@ -54,9 +56,9 @@ func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) *WeChat
 		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + calluser(users))
 	}
 
-	markdown := &WeChatMarkdown{
+	markdown := &notifier.WeChatMarkdown{
 		MsgType: "markdown",
-		Markdown: &Markdown{
+		Markdown: &notifier.Markdown{
 			Content: builder.String(),
 		},
 	}
@@ -69,6 +71,16 @@ func (i *Inspect) SetCustomerNum(corpid string) {
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerNum = customernum
+			return
+		}
+	}
+}
+
+func (i *Inspect) SetCustomerGroupNum(corpid string) {
+	customergroupnum, _ := queryCustomerGroupNum(i.PgClient3, corpid)
+	for _, corp := range i.Corp {
+		if corp.Corpid == corpid {
+			corp.CustomerGroupNum = customergroupnum
 			return
 		}
 	}
@@ -209,13 +221,24 @@ func queryCorpName(conn *pgx.Conn, corpid string) (string, error) {
 }
 func queryUserNum(conn *pgx.Conn, corpid string) (int, error) {
 	var userNum int
-	query := "SELECT count(*) from qw_user WHERE deleted=0 AND tenant_id=$1 LIMIT 1"
+	query := "SELECT count(*) FROM qw_user WHERE deleted=0 AND tenant_id=$1 LIMIT 1"
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&userNum)
 	if err != nil {
 		log.Printf("Failed info: %s \n", err)
 		return -1, err
 	}
 	return userNum, nil
+}
+
+func queryCustomerGroupNum(conn *pgx.Conn, corpid string) (int, error) {
+	var customerGroupNum int
+	query := "SELECT count(1) FROM co_saas_customer_group WHERE dismiss=false AND tenant_id=$1 AND deleted_at IS NULL"
+	err := conn.QueryRow(context.Background(), query, corpid).Scan(&customerGroupNum)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
+	return customerGroupNum, nil
 }
 
 func generateCorpString(corp *Corp) string {
@@ -228,11 +251,12 @@ func generateCorpString(corp *Corp) string {
 			isalert = true
 		}
 	}
-	builder.WriteString("> 员工数统计：<font color='info'>" + strconv.Itoa(corp.UserNum) + "</font>\n")
-	builder.WriteString("> 客户数统计：<font color='info'>" + strconv.FormatInt(corp.CustomerNum, 10) + "</font>\n")
-	builder.WriteString("> 日活数统计：<font color='info'>" + strconv.FormatInt(corp.DauNum, 10) + "</font>\n")
-	builder.WriteString("> 周活数统计：<font color='info'>" + strconv.FormatInt(corp.WauNum, 10) + "</font>\n")
-	builder.WriteString("> 月活数统计：<font color='info'>" + strconv.FormatInt(corp.MauNum, 10) + "</font>\n")
+	builder.WriteString("> 员工数：<font color='info'>" + strconv.Itoa(corp.UserNum) + "</font>\n")
+	builder.WriteString("> 客户数：<font color='info'>" + strconv.FormatInt(corp.CustomerNum, 10) + "</font>\n")
+	builder.WriteString("> 客户群数：<font color='info'>" + strconv.Itoa(corp.CustomerGroupNum) + "</font>\n")
+	builder.WriteString("> 日活数：<font color='info'>" + strconv.FormatInt(corp.DauNum, 10) + "</font>\n")
+	builder.WriteString("> 周活数：<font color='info'>" + strconv.FormatInt(corp.WauNum, 10) + "</font>\n")
+	builder.WriteString("> 月活数：<font color='info'>" + strconv.FormatInt(corp.MauNum, 10) + "</font>\n")
 	builder.WriteString("==================\n")
 
 	return builder.String()

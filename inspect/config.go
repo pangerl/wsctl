@@ -9,13 +9,13 @@ import (
 )
 
 type Inspect struct {
-	ProjectName  string
-	Version      string
-	Corp         []*Corp
-	EsClient     *elastic.Client
-	PgClient1    *pgx.Conn //"qv30"
-	PgClient2    *pgx.Conn //"user"
-	BrokerServer map[string]map[string]BrokerData
+	ProjectName string
+	Version     string
+	Corp        []*Corp
+	EsClient    *elastic.Client
+	PgClient1   *pgx.Conn //"qv30"
+	PgClient2   *pgx.Conn //"user"
+	PgClient3   *pgx.Conn //"customer"
 }
 
 type Tenant struct {
@@ -23,15 +23,16 @@ type Tenant struct {
 }
 
 type Corp struct {
-	Corpid      string
-	Convenabled bool
-	CorpName    string
-	MessageNum  int64
-	UserNum     int
-	CustomerNum int64
-	DauNum      int64
-	WauNum      int64
-	MauNum      int64
+	Corpid           string
+	Convenabled      bool
+	CorpName         string
+	MessageNum       int64
+	UserNum          int
+	CustomerNum      int64
+	CustomerGroupNum int
+	DauNum           int64
+	WauNum           int64
+	MauNum           int64
 }
 
 type DB struct {
@@ -46,13 +47,4 @@ type Config struct {
 	Scheducron string
 	Robotkey   string
 	Userlist   []string
-}
-
-type WeChatMarkdown struct {
-	MsgType  string    `json:"msgtype"`
-	Markdown *Markdown `json:"markdown"`
-}
-
-type Markdown struct {
-	Content string `json:"content"`
 }

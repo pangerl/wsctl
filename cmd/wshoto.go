@@ -20,8 +20,8 @@ var (
 )
 
 // versionCmd represents the version command
-var nacosCmd = &cobra.Command{
-	Use:   "nacos",
+var wshotoCmd = &cobra.Command{
+	Use:   "wshoto",
 	Short: "服务健康检查工具",
 	Long:  `通过 nacos 的服务注册信息，统计微服务的信息`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -51,11 +51,11 @@ var nacosCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(nacosCmd)
-	nacosCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
-	nacosCmd.Flags().BoolVarP(&web, "web", "w", false, "开启web api Prometheus http_sd_configs")
-	nacosCmd.Flags().StringVarP(&webport, "port", "p", "8099", "web 端口")
-	nacosCmd.Flags().BoolVarP(&watch, "watch", "d", false, "监控服务，定时刷新")
-	nacosCmd.Flags().BoolVarP(&monitor, "monitor", "m", false, "服务接口探活")
+	rootCmd.AddCommand(wshotoCmd)
+	wshotoCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
+	wshotoCmd.Flags().BoolVarP(&web, "web", "w", false, "开启web api Prometheus http_sd_configs")
+	wshotoCmd.Flags().StringVarP(&webport, "port", "p", "8099", "web 端口")
+	wshotoCmd.Flags().BoolVarP(&watch, "watch", "d", false, "监控服务，定时刷新")
+	wshotoCmd.Flags().BoolVarP(&monitor, "monitor", "m", false, "服务接口探活")
 
 }

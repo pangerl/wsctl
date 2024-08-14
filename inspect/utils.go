@@ -26,3 +26,10 @@ func calluser(users []string) string {
 	}
 	return result
 }
+
+func getRole(role string) string {
+	if role == "0" {
+		return "master"
+	}
+	return "slave"
+}

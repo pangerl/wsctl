@@ -1,7 +1,7 @@
 // Package inspect @Author lanpang
 // @Date 2024/8/8 下午5:14:00
 // @Desc
-package inspect
+package notifier
 
 import (
 	"bytes"
@@ -11,6 +11,15 @@ import (
 	"net/http"
 	"net/url"
 )
+
+type WeChatMarkdown struct {
+	MsgType  string    `json:"msgtype"`
+	Markdown *Markdown `json:"markdown"`
+}
+
+type Markdown struct {
+	Content string `json:"content"`
+}
 
 func SendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 
