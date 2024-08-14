@@ -16,9 +16,13 @@ import (
 
 // BrokerData 定义用于解析RocketMQ Dashboard返回数据的结构体
 type BrokerData struct {
-	RunTime              string `json:"runtime"`
-	CommitLogDirCapacity string `json:"commitLogDirCapacity"`
-	BrokerVersionDesc    string `json:"brokerVersionDesc"`
+	RunTime                 string `json:"runtime"`
+	CommitLogDirCapacity    string `json:"commitLogDirCapacity"`
+	BrokerVersionDesc       string `json:"brokerVersionDesc"`
+	MsgPutTotalTodayNow     string `json:"msgPutTotalTodayNow"`
+	MsgPutTotalTodayMorning string `json:"msgPutTotalTodayMorning"`
+	MsgGetTotalTodayNow     string `json:"msgGetTotalTodayNow"`
+	MsgGetTotalTodayMorning string `json:"msgGetTotalTodayMorning"`
 }
 
 type Broker struct {
@@ -83,9 +87,14 @@ func MQDetailToMarkdown(data ClusterData, ProjectName string) *notifier.WeChatMa
 		builder.WriteString("## Broker Name：<font color='info'>" + brokername + "</font>\n")
 		for role, broker := range brokerdata {
 			brokercount += 1
+			var produceCount, consumeCount int
+			produceCount, _ = convertAndCalculate(broker.MsgPutTotalTodayNow, broker.MsgPutTotalTodayMorning)
+			consumeCount, _ = convertAndCalculate(broker.MsgGetTotalTodayNow, broker.MsgGetTotalTodayMorning)
 			builder.WriteString("### " + getRole(role) + "\n")
 			builder.WriteString("> Broker 版本：<font color='info'>" + broker.BrokerVersionDesc + "</font>\n")
 			builder.WriteString("> Broker 地址：<font color='info'>" + data.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role] + "</font>\n")
+			builder.WriteString("> 今天生产总数：<font color='info'>" + strconv.Itoa(produceCount) + "</font>\n")
+			builder.WriteString("> 今天消费总数：<font color='info'>" + strconv.Itoa(consumeCount) + "</font>\n")
 			builder.WriteString("> 运行时间：<font color='info'>" + broker.RunTime + "</font>\n")
 			builder.WriteString("> 磁盘使用量：<font color='info'>" + broker.CommitLogDirCapacity + "</font>")
 			builder.WriteString("\n\n")
