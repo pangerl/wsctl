@@ -30,7 +30,7 @@ convenabled = false
 # 配置定时任务，每日巡检的发送时间：09:30 - 10:00
 scheducron = "*/3 * * * *"
 # 测试-每日巡检机器人
-robotkey = "8ab989f5-d86f-4c99-b95f-5d23a30eb351"
+robotkey = ["8ab989f5-d86f-4c99-b95f-5d23a30eb351","e8c33d32-e0af-49cf-95b2-c1d098859b5a"]
 # 告警@人 ["lanpang", "mark"]
 userlist = []
 

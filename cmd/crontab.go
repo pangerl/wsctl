@@ -6,11 +6,9 @@ package cmd
 import (
 	"context"
 	"github.com/robfig/cron/v3"
+	"github.com/spf13/cobra"
 	"log"
 	"vhagar/inspect"
-	"vhagar/notifier"
-
-	"github.com/spf13/cobra"
 )
 
 // versionCmd represents the version command
@@ -87,7 +85,4 @@ func crontabJob() {
 
 func testjob() {
 	log.Printf("大王叫我来巡山，巡了南山巡北山。。。 \n")
-	clusterdata, _ := inspect.GetMQDetail()
-	markdown := inspect.MQDetailToMarkdown(clusterdata, CONFIG.ProjectName)
-	_ = notifier.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
 }

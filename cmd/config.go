@@ -25,11 +25,6 @@ type Config struct {
 	Inspection  inspect.Config
 }
 
-type Inspection struct {
-	Scheducron string
-	Robotkey   string
-}
-
 type Crontab struct {
 	Inspectjob bool
 	Testjob    bool

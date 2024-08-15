@@ -45,6 +45,6 @@ type DB struct {
 
 type Config struct {
 	Scheducron string
-	Robotkey   string
+	Robotkey   []string
 	Userlist   []string
 }

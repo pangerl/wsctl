@@ -99,15 +99,20 @@ func inspectTask(_inspect *inspect.Inspect) {
 	}
 	// 发送巡检报告
 	markdown := _inspect.TransformToMarkdown(CONFIG.Inspection.Userlist, dateNow)
-	err := notifier.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
-	if err != nil {
-		return
+	for _, robotkey := range CONFIG.Inspection.Robotkey {
+		err := notifier.SendWecom(markdown, robotkey, CONFIG.ProxyURL)
+		if err != nil {
+			return
+		}
 	}
+
 }
 
 func mqTask() {
 	log.Print("启动 rocketmq 巡检任务")
 	clusterdata, _ := inspect.GetMQDetail()
 	markdown := inspect.MQDetailToMarkdown(clusterdata, CONFIG.ProjectName)
-	_ = notifier.SendWecom(markdown, CONFIG.Inspection.Robotkey, CONFIG.ProxyURL)
+	for _, robotkey := range CONFIG.Inspection.Robotkey {
+		_ = notifier.SendWecom(markdown, robotkey, CONFIG.ProxyURL)
+	}
 }
