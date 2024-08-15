@@ -23,6 +23,7 @@ type Config struct {
 	PG          inspect.DB
 	ES          inspect.DB
 	Inspection  inspect.Config
+	Rocketmq    inspect.Rocketmq
 }
 
 type Crontab struct {

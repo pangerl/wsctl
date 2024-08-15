@@ -48,3 +48,7 @@ type Config struct {
 	Robotkey   []string
 	Userlist   []string
 }
+
+type Rocketmq struct {
+	RocketmqDashboard string
+}

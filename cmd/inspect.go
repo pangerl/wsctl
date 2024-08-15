@@ -110,7 +110,7 @@ func inspectTask(_inspect *inspect.Inspect) {
 
 func mqTask() {
 	log.Print("启动 rocketmq 巡检任务")
-	clusterdata, _ := inspect.GetMQDetail()
+	clusterdata, _ := inspect.GetMQDetail(CONFIG.Rocketmq.RocketmqDashboard)
 	markdown := inspect.MQDetailToMarkdown(clusterdata, CONFIG.ProjectName)
 	for _, robotkey := range CONFIG.Inspection.Robotkey {
 		_ = notifier.SendWecom(markdown, robotkey, CONFIG.ProxyURL)

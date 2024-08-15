@@ -44,9 +44,9 @@ type ResponseData struct {
 	Data   ClusterData `json:"data"`
 }
 
-func GetMQDetail() (result ClusterData, err error) {
+func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
 	// 第一步：发送HTTP请求到RocketMQ Dashboard接口
-	url := "http://192.9.253.205:8081/cluster/list.query"
+	url := mqDashboard + "/cluster/list.query"
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Failed to send request: %v", err)
@@ -77,16 +77,19 @@ func MQDetailToMarkdown(data ClusterData, ProjectName string) *notifier.WeChatMa
 
 	var builder strings.Builder
 	var brokercount int
+
+	brokercount = GetBrokerCount(data)
 	// 组装巡检内容
 	builder.WriteString("# RocketMQ 巡检 \n")
 	builder.WriteString("**项目名称：**<font color='info'>" + ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n\n")
+	builder.WriteString("**Broker 健康数：**<font color='info'>" + strconv.Itoa(brokercount) + "</font>\n")
+	builder.WriteString("========================\n")
 
 	for brokername, brokerdata := range data.BrokerServer {
 		builder.WriteString("## Broker Name：<font color='info'>" + brokername + "</font>\n")
 		for role, broker := range brokerdata {
-			brokercount += 1
 			var produceCount, consumeCount int
 			produceCount, _ = convertAndCalculate(broker.MsgPutTotalTodayNow, broker.MsgPutTotalTodayMorning)
 			consumeCount, _ = convertAndCalculate(broker.MsgGetTotalTodayNow, broker.MsgGetTotalTodayMorning)
@@ -102,8 +105,6 @@ func MQDetailToMarkdown(data ClusterData, ProjectName string) *notifier.WeChatMa
 		builder.WriteString("========================\n\n")
 	}
 
-	builder.WriteString("**Broker 健康数：**<font color='info'>" + strconv.Itoa(brokercount) + "</font>\n")
-
 	markdown := &notifier.WeChatMarkdown{
 		MsgType: "markdown",
 		Markdown: &notifier.Markdown{
@@ -112,4 +113,12 @@ func MQDetailToMarkdown(data ClusterData, ProjectName string) *notifier.WeChatMa
 	}
 
 	return markdown
+}
+
+func GetBrokerCount(data ClusterData) int {
+	var brokercount int
+	for _, brokerdata := range data.BrokerServer {
+		brokercount += len(brokerdata)
+	}
+	return brokercount
 }
