@@ -9,10 +9,12 @@ import (
 )
 
 var (
-	CONFIG Config
+	CONFIG = Config{
+		ProjectName: "测试项目",
+	}
 )
 
-const VERSION = "v1.0"
+const VERSION = "v4.5"
 
 type Config struct {
 	ProjectName string

@@ -84,6 +84,8 @@ func inspectTask(_inspect *inspect.Inspect) {
 		if _inspect.PgClient3 != nil {
 			// 获取客户群
 			_inspect.SetCustomerGroupNum(corp.Corpid)
+			// 获取客户群人数
+			_inspect.SetCustomerGroupUserNum(corp.Corpid)
 		}
 		if _inspect.EsClient != nil {
 			// 获取客户数

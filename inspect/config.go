@@ -23,16 +23,17 @@ type Tenant struct {
 }
 
 type Corp struct {
-	Corpid           string
-	Convenabled      bool
-	CorpName         string
-	MessageNum       int64
-	UserNum          int
-	CustomerNum      int64
-	CustomerGroupNum int
-	DauNum           int64
-	WauNum           int64
-	MauNum           int64
+	Corpid               string
+	Convenabled          bool
+	CorpName             string
+	MessageNum           int64
+	UserNum              int
+	CustomerNum          int64
+	CustomerGroupNum     int
+	CustomerGroupUserNum int
+	DauNum               int64
+	WauNum               int64
+	MauNum               int64
 }
 
 type DB struct {

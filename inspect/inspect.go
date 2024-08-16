@@ -86,6 +86,16 @@ func (i *Inspect) SetCustomerGroupNum(corpid string) {
 	}
 }
 
+func (i *Inspect) SetCustomerGroupUserNum(corpid string) {
+	customergroupusernum, _ := queryCustomerGroupUserNum(i.PgClient3, corpid)
+	for _, corp := range i.Corp {
+		if corp.Corpid == corpid {
+			corp.CustomerGroupUserNum = customergroupusernum
+			return
+		}
+	}
+}
+
 func (i *Inspect) SetMessageNum(corpid string, dateNow time.Time) {
 	messagenum, _ := countMessageNum(i.EsClient, corpid, dateNow)
 	for _, corp := range i.Corp {
@@ -241,6 +251,17 @@ func queryCustomerGroupNum(conn *pgx.Conn, corpid string) (int, error) {
 	return customerGroupNum, nil
 }
 
+func queryCustomerGroupUserNum(conn *pgx.Conn, corpid string) (int, error) {
+	var customerGroupUserNum int
+	query := "SELECT count(1) FROM co_saas_customer_group_user WHERE type = 2 AND loss = false AND deleted_at IS NULL AND tenant_id=$1"
+	err := conn.QueryRow(context.Background(), query, corpid).Scan(&customerGroupUserNum)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
+	return customerGroupUserNum, nil
+}
+
 func generateCorpString(corp *Corp) string {
 	var builder strings.Builder
 
@@ -251,12 +272,13 @@ func generateCorpString(corp *Corp) string {
 			isalert = true
 		}
 	}
-	builder.WriteString("> 员工数：<font color='info'>" + strconv.Itoa(corp.UserNum) + "</font>\n")
-	builder.WriteString("> 客户数：<font color='info'>" + strconv.FormatInt(corp.CustomerNum, 10) + "</font>\n")
+	builder.WriteString("> 员工人数：<font color='info'>" + strconv.Itoa(corp.UserNum) + "</font>\n")
+	builder.WriteString("> 客户人数：<font color='info'>" + strconv.FormatInt(corp.CustomerNum, 10) + "</font>\n")
 	builder.WriteString("> 客户群数：<font color='info'>" + strconv.Itoa(corp.CustomerGroupNum) + "</font>\n")
-	builder.WriteString("> 日活数：<font color='info'>" + strconv.FormatInt(corp.DauNum, 10) + "</font>\n")
-	builder.WriteString("> 周活数：<font color='info'>" + strconv.FormatInt(corp.WauNum, 10) + "</font>\n")
-	builder.WriteString("> 月活数：<font color='info'>" + strconv.FormatInt(corp.MauNum, 10) + "</font>\n")
+	builder.WriteString("> 客户群人数：<font color='info'>" + strconv.Itoa(corp.CustomerGroupUserNum) + "</font>\n")
+	builder.WriteString("> 日活跃数：<font color='info'>" + strconv.FormatInt(corp.DauNum, 10) + "</font>\n")
+	builder.WriteString("> 周活跃数：<font color='info'>" + strconv.FormatInt(corp.WauNum, 10) + "</font>\n")
+	builder.WriteString("> 月活跃数：<font color='info'>" + strconv.FormatInt(corp.MauNum, 10) + "</font>\n")
 	builder.WriteString("==================\n")
 
 	return builder.String()
