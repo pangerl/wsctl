@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"time"
-	"vhagar/metric"
 	"vhagar/nacos"
 )
 
@@ -36,7 +35,7 @@ var wshotoCmd = &cobra.Command{
 		case writefile != "":
 			_nacos.WriteFile()
 		case monitor:
-			metric.Monitor(_nacos, CONFIG.Rocketmq.RocketmqDashboard)
+		//
 		default:
 			if watch {
 				log.Printf("监控模式 刷新时间:%s/次\n", 10*time.Second)

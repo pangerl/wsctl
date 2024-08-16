@@ -56,7 +56,7 @@ func crontabJob() {
 				esclient.Stop()
 			}
 		}()
-		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, CONFIG.ProjectName, VERSION)
+		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, CONFIG.ProjectName)
 		// 加入定时任务
 		_, err := c.AddFunc(CONFIG.Inspection.Scheducron, func() {
 			inspectTask(_inspect)

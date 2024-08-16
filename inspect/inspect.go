@@ -17,10 +17,10 @@ import (
 
 var isalert = false
 
-func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2, conn3 *pgx.Conn, name, version string) *Inspect {
+func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2, conn3 *pgx.Conn, name string) *Inspect {
 	return &Inspect{
 		ProjectName: name,
-		Version:     version,
+		Version:     "v4.5",
 		Corp:        corp,
 		EsClient:    es,
 		PgClient1:   conn1,

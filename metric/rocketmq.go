@@ -6,6 +6,7 @@ package metric
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
+	"time"
 	"vhagar/inspect"
 )
 
@@ -18,8 +19,13 @@ var (
 )
 
 func setBrokerCount(mqDashboard string) {
-	clusterdata, _ := inspect.GetMQDetail(mqDashboard)
-	brokercount := inspect.GetBrokerCount(clusterdata)
-	log.Printf("brokercount: %v", brokercount)
-	brokerCount.Set(float64(brokercount))
+	prometheus.MustRegister(brokerCount)
+	for {
+		clusterdata, _ := inspect.GetMQDetail(mqDashboard)
+		brokercount := inspect.GetBrokerCount(clusterdata)
+		brokerCount.Set(float64(brokercount))
+		log.Printf("brokercount: %v", brokercount)
+		time.Sleep(30 * time.Second) // 每30秒探测一次
+	}
+
 }

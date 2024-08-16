@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"vhagar/inspect"
+	"vhagar/metric"
 	"vhagar/nacos"
 )
 
@@ -14,7 +15,7 @@ var (
 	}
 )
 
-const VERSION = "v4.5"
+const VERSION = "v1.0"
 
 type Config struct {
 	ProjectName string
@@ -26,6 +27,7 @@ type Config struct {
 	ES          inspect.DB
 	Inspection  inspect.Config
 	Rocketmq    inspect.Rocketmq
+	Metric      metric.Metric
 }
 
 type Crontab struct {

@@ -8,29 +8,33 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
-	"time"
+	"vhagar/inspect"
 	"vhagar/nacos"
 )
 
-func Monitor(nacos *nacos.Nacos, mqDashboard string) {
-	// 注册 Prometheus 指标
-	prometheus.MustRegister(probeHTTPStatusCode)
-	prometheus.MustRegister(brokerCount)
-	healthInstances := nacos.Clusterdata.HealthInstance
+type Metric struct {
+	Port     string
+	Wsapp    bool
+	Rocketmq bool
+}
 
-	// 设置一个定时器来定期探测每个实例的健康状况
-	go func() {
-		for {
-			for _, instance := range healthInstances {
-				probeInstance(instance)
-			}
-			setBrokerCount(mqDashboard)
-			time.Sleep(30 * time.Second) // 每30秒探测一次
-		}
-	}()
+var (
+	randomNumber = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "random_number",
+		Help: "Randomly generated number",
+	})
+)
 
-	// 设置 HTTP 服务器并暴露 /metrics 端点
+func StartMetric(cfg Metric, ncfg nacos.Config, mcfg inspect.Rocketmq) {
+
+	if cfg.Wsapp {
+		go setprobeHTTPStatusCode(ncfg)
+	}
+
+	if cfg.Rocketmq {
+		go setBrokerCount(mcfg.RocketmqDashboard)
+	}
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("Starting server at http://%s%s/metrics\n", getLocalIp(), nacos.Webport)
-	log.Fatal(http.ListenAndServe(nacos.Webport, nil))
+	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
 }

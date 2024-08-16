@@ -34,6 +34,14 @@ robotkey = ["8ab989f5-d86f-4c99-b95f-5d23a30eb351"]
 # 告警@人 ["lanpang", "mark"]
 userlist = []
 
+[metric]
+# 定义 metric 的端口
+port = "8081"
+# 启动微服务接口监控
+wsapp = true
+# rocketmq 监控
+rocketmq = true
+
 [crontab]
 inspectjob = true
 testjob = true

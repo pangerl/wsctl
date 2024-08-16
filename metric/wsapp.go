@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 	"vhagar/nacos"
 )
 
@@ -24,6 +25,30 @@ var (
 		[]string{"namespace", "service", "ip", "port", "url"},
 	)
 )
+
+func setprobeHTTPStatusCode(config nacos.Config) {
+	// 注册 Prometheus 指标
+	prometheus.MustRegister(probeHTTPStatusCode)
+
+	// 实例化 nacos 对象
+	_nacos := &nacos.Nacos{
+		Config: config,
+	}
+	log.Println("获取nacos认证信息")
+	_nacos.WithAuth()
+	// 获取微服务实例的信息
+	_nacos.GetNacosInstance()
+	healthInstances := _nacos.Clusterdata.HealthInstance
+
+	// 设置一个定时器来定期探测每个实例的健康状况
+	for {
+		log.Println("检查服务接口健康状态")
+		for _, instance := range healthInstances {
+			probeInstance(instance)
+		}
+		time.Sleep(30 * time.Second) // 每30秒探测一次
+	}
+}
 
 // probeInstance 发送 HTTP 请求并检查返回值
 func probeInstance(instance nacos.ServerInstance) {

@@ -53,7 +53,7 @@ var inspectCmd = &cobra.Command{
 					esclient.Stop()
 				}
 			}()
-			_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, CONFIG.ProjectName, VERSION)
+			_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, VERSION)
 			// 执行巡检 job
 			inspectTask(_inspect)
 		}
