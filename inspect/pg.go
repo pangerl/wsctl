@@ -10,18 +10,35 @@ import (
 	"log"
 )
 
-func NewPGClient(conf DB) (*pgx.Conn, *pgx.Conn, *pgx.Conn) {
-	connString1 := connStr(conf, "qv30")
-	connString2 := connStr(conf, "user")
-	connString3 := connStr(conf, "customer")
-	conn1, err := pgx.Connect(context.Background(), connString1)
-	conn2, _ := pgx.Connect(context.Background(), connString2)
-	conn3, _ := pgx.Connect(context.Background(), connString3)
-	if err != nil {
-		log.Printf("Failed to create PG client: %s \n", err)
-		return nil, nil, nil
+type DBClient struct {
+	conn map[string]*pgx.Conn
+}
+
+// Close 关闭所有数据库连接
+func (dbClient *DBClient) Close() {
+	for dbName, conn := range dbClient.conn {
+		if err := conn.Close(context.Background()); err != nil {
+			log.Printf("Failed to close connection for database %s: %v", dbName, err)
+		}
 	}
-	return conn1, conn2, conn3
+}
+
+func NewPGClient(conf DB) (*DBClient, error) {
+	dbClient := &DBClient{
+		conn: make(map[string]*pgx.Conn),
+	}
+	databases := []string{"qv30", "user", "customer"}
+	for _, dbName := range databases {
+		connString := connStr(conf, dbName)
+		conn, err := pgx.Connect(context.Background(), connString)
+		if err != nil {
+			log.Printf("Failed to connect to database %s: %s\n", dbName, err)
+			return nil, err
+		}
+		dbClient.conn[dbName] = conn
+	}
+
+	return dbClient, nil
 }
 
 func connStr(conf DB, db string) string {

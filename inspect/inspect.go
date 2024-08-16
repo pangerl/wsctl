@@ -17,15 +17,13 @@ import (
 
 var isalert = false
 
-func NewInspect(corp []*Corp, es *elastic.Client, conn1, conn2, conn3 *pgx.Conn, name string) *Inspect {
+func NewInspect(corp []*Corp, es *elastic.Client, dbClient *DBClient, name string) *Inspect {
 	return &Inspect{
 		ProjectName: name,
 		Version:     "v4.5",
 		Corp:        corp,
 		EsClient:    es,
-		PgClient1:   conn1,
-		PgClient2:   conn2,
-		PgClient3:   conn3,
+		DBClient:    dbClient,
 	}
 }
 
@@ -77,7 +75,7 @@ func (i *Inspect) SetCustomerNum(corpid string) {
 }
 
 func (i *Inspect) SetCustomerGroupNum(corpid string) {
-	customergroupnum, _ := queryCustomerGroupNum(i.PgClient3, corpid)
+	customergroupnum, _ := queryCustomerGroupNum(i.DBClient.conn["customer"], corpid)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerGroupNum = customergroupnum
@@ -87,7 +85,7 @@ func (i *Inspect) SetCustomerGroupNum(corpid string) {
 }
 
 func (i *Inspect) SetCustomerGroupUserNum(corpid string) {
-	customergroupusernum, _ := queryCustomerGroupUserNum(i.PgClient3, corpid)
+	customergroupusernum, _ := queryCustomerGroupUserNum(i.DBClient.conn["customer"], corpid)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerGroupUserNum = customergroupusernum
@@ -107,7 +105,7 @@ func (i *Inspect) SetMessageNum(corpid string, dateNow time.Time) {
 }
 
 func (i *Inspect) SetCorpName(corpid string) {
-	corpName, _ := queryCorpName(i.PgClient1, corpid)
+	corpName, _ := queryCorpName(i.DBClient.conn["qv30"], corpid)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.CorpName = corpName
@@ -117,7 +115,7 @@ func (i *Inspect) SetCorpName(corpid string) {
 }
 
 func (i *Inspect) SetUserNum(corpid string) {
-	userNum, _ := queryUserNum(i.PgClient2, corpid)
+	userNum, _ := queryUserNum(i.DBClient.conn["user"], corpid)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.UserNum = userNum

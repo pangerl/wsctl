@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"context"
 	"github.com/spf13/cobra"
 	"log"
 	"time"
@@ -29,31 +28,14 @@ var inspectCmd = &cobra.Command{
 			log.Println("开始项目巡检")
 			// 初始化 inspect 对象
 			esclient, _ := inspect.NewESClient(CONFIG.ES)
-			pgclient1, pgclient2, pgclient3 := inspect.NewPGClient(CONFIG.PG)
+			dbClient, _ := inspect.NewPGClient(CONFIG.PG)
 			defer func() {
-				if pgclient1 != nil {
-					err := pgclient1.Close(context.Background())
-					if err != nil {
-						return
-					}
-				}
-				if pgclient2 != nil {
-					err := pgclient2.Close(context.Background())
-					if err != nil {
-						return
-					}
-				}
-				if pgclient3 != nil {
-					err := pgclient3.Close(context.Background())
-					if err != nil {
-						return
-					}
-				}
+				dbClient.Close()
 				if esclient != nil {
 					esclient.Stop()
 				}
 			}()
-			_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, VERSION)
+			_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, dbClient, CONFIG.ProjectName)
 			// 执行巡检 job
 			inspectTask(_inspect)
 		}
@@ -73,15 +55,11 @@ func inspectTask(_inspect *inspect.Inspect) {
 	//inspect.GetVersion(url)
 	for _, corp := range _inspect.Corp {
 		//fmt.Println(corp.Corpid)
-		if _inspect.PgClient1 != nil {
+		if _inspect.DBClient != nil {
 			// 获取租户名
 			_inspect.SetCorpName(corp.Corpid)
-		}
-		if _inspect.PgClient2 != nil {
 			// 获取用户数
 			_inspect.SetUserNum(corp.Corpid)
-		}
-		if _inspect.PgClient3 != nil {
 			// 获取客户群
 			_inspect.SetCustomerGroupNum(corp.Corpid)
 			// 获取客户群人数

@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"context"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 	"log"
@@ -32,31 +31,14 @@ func crontabJob() {
 	if CONFIG.Crontab.Inspectjob {
 		// 初始化 inspect 对象
 		esclient, _ := inspect.NewESClient(CONFIG.ES)
-		pgclient1, pgclient2, pgclient3 := inspect.NewPGClient(CONFIG.PG)
+		dbClient, _ := inspect.NewPGClient(CONFIG.PG)
 		defer func() {
-			if pgclient1 != nil {
-				err := pgclient1.Close(context.Background())
-				if err != nil {
-					return
-				}
-			}
-			if pgclient2 != nil {
-				err := pgclient2.Close(context.Background())
-				if err != nil {
-					return
-				}
-			}
-			if pgclient3 != nil {
-				err := pgclient3.Close(context.Background())
-				if err != nil {
-					return
-				}
-			}
+			dbClient.Close()
 			if esclient != nil {
 				esclient.Stop()
 			}
 		}()
-		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, pgclient1, pgclient2, pgclient3, CONFIG.ProjectName)
+		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, dbClient, CONFIG.ProjectName)
 		// 加入定时任务
 		_, err := c.AddFunc(CONFIG.Inspection.Scheducron, func() {
 			inspectTask(_inspect)

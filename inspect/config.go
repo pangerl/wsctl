@@ -4,7 +4,6 @@
 package inspect
 
 import (
-	"github.com/jackc/pgx/v5"
 	"github.com/olivere/elastic/v7"
 )
 
@@ -13,9 +12,7 @@ type Inspect struct {
 	Version     string
 	Corp        []*Corp
 	EsClient    *elastic.Client
-	PgClient1   *pgx.Conn //"qv30"
-	PgClient2   *pgx.Conn //"user"
-	PgClient3   *pgx.Conn //"customer"
+	DBClient    *DBClient
 }
 
 type Tenant struct {
