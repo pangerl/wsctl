@@ -30,7 +30,9 @@ var inspectCmd = &cobra.Command{
 			esclient, _ := inspect.NewESClient(CONFIG.ES)
 			dbClient, _ := inspect.NewPGClient(CONFIG.PG)
 			defer func() {
-				dbClient.Close()
+				if dbClient != nil {
+					dbClient.Close()
+				}
 				if esclient != nil {
 					esclient.Stop()
 				}
