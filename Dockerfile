@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/golang:1.21.4-alpine as builder
+FROM docker.m.daocloud.io/library/golang:1.21.4-alpine as builder
 LABEL org.opencontainers.image.authors="lanpang@wshoto.com"
 
 ENV GOPROXY https://goproxy.cn
@@ -13,7 +13,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o wsctl
 
-FROM alpine:3.15
+FROM docker.m.daocloud.io/library/alpine:3.15
 
 # 设置工作目录
 WORKDIR /app
