@@ -27,6 +27,8 @@ func init() {
 
 func crontabJob() {
 	c := cron.New() //创建一个cron实例
+	// 获取等待时间
+	duration := inspect.GetRandomDuration()
 	// 每日巡检 job
 	if CONFIG.Crontab.Inspectjob {
 		// 初始化 inspect 对象
@@ -43,7 +45,7 @@ func crontabJob() {
 		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, dbClient, CONFIG.ProjectName)
 		// 加入定时任务
 		_, err := c.AddFunc(CONFIG.Inspection.Scheducron, func() {
-			inspectTask(_inspect)
+			inspectTask(_inspect, duration)
 		})
 		if err != nil {
 			log.Printf("Failed to add crontab job: %s \n", err)

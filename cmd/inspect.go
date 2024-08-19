@@ -39,7 +39,7 @@ var inspectCmd = &cobra.Command{
 			}()
 			_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, dbClient, CONFIG.ProjectName)
 			// 执行巡检 job
-			inspectTask(_inspect)
+			inspectTask(_inspect, 0)
 		}
 	},
 }
@@ -50,7 +50,7 @@ func init() {
 
 }
 
-func inspectTask(_inspect *inspect.Inspect) {
+func inspectTask(_inspect *inspect.Inspect, duration time.Duration) {
 	// 当前时间
 	dateNow := time.Now().AddDate(0, 0, 0)
 	log.Print("启动企微租户巡检任务")
@@ -80,11 +80,15 @@ func inspectTask(_inspect *inspect.Inspect) {
 		//fmt.Println(*corp)
 	}
 	// 发送巡检报告
-	markdown := _inspect.TransformToMarkdown(CONFIG.Inspection.Userlist, dateNow)
-	for _, robotkey := range CONFIG.Inspection.Robotkey {
-		err := notifier.SendWecom(markdown, robotkey, CONFIG.ProxyURL)
-		if err != nil {
-			return
+	markdownList := _inspect.TransformToMarkdown(CONFIG.Inspection.Userlist, dateNow)
+	log.Println("任务等待时间", duration)
+	time.Sleep(duration)
+	for _, markdown := range markdownList {
+		for _, robotkey := range CONFIG.Inspection.Robotkey {
+			err := notifier.SendWecom(markdown, robotkey, CONFIG.ProxyURL)
+			if err != nil {
+				return
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-// Package inspect @Author lanpang
+// Package notifier @Author lanpang
 // @Date 2024/8/8 下午5:14:00
 // @Desc
 package notifier
@@ -24,6 +24,7 @@ type Markdown struct {
 func SendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 
 	jsonStr, _ := json.Marshal(markdown)
+	//fmt.Println("jsonStr长度：", len(jsonStr))
 	wechatRobotURL := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + robotKey
 
 	req, err := http.NewRequest("POST", wechatRobotURL, bytes.NewBuffer(jsonStr))

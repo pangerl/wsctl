@@ -36,32 +36,27 @@ func (i *Inspect) GetVersion(url string) {
 	log.Println("Elasticsearch version: ", version)
 }
 
-func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) *notifier.WeChatMarkdown {
+func (i *Inspect) TransformToMarkdown(users []string, dateNow time.Time) []*notifier.WeChatMarkdown {
 
-	var builder strings.Builder
+	var inspectList []*notifier.WeChatMarkdown
 	isalert = false
 
-	// 组装巡检内容
-	builder.WriteString("# 每日巡检报告 " + i.Version + "\n")
-	builder.WriteString("**项目名称：**<font color='info'>" + i.ProjectName + "</font>\n")
-	builder.WriteString("**巡检时间：**<font color='info'>" + dateNow.Format("2006-01-02") + "</font>\n")
-	builder.WriteString("**巡检内容：**\n")
+	headString := headCorpString(i, dateNow)
 
-	for _, corp := range i.Corp {
-		builder.WriteString(generateCorpString(corp))
-	}
-	if isalert {
-		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + calluser(users))
-	}
+	length := len(i.Corp)
+	// 每次返回8个租户的信息
+	chunkSize := 8
 
-	markdown := &notifier.WeChatMarkdown{
-		MsgType: "markdown",
-		Markdown: &notifier.Markdown{
-			Content: builder.String(),
-		},
+	for n := 0; n < length; n += chunkSize {
+		end := n + chunkSize
+		if end > length {
+			end = length
+		}
+		slice := i.Corp[n:end]
+		markdown := inspectMarkdown(headString, slice, users)
+		inspectList = append(inspectList, markdown)
 	}
-
-	return markdown
+	return inspectList
 }
 
 func (i *Inspect) SetCustomerNum(corpid string) {
@@ -148,7 +143,7 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 		)
 	searchResult, err := client.Search().
 		Index("customer_related_1"). // 设置索引名
-		Query(query).                // 设置查询条件
+		Query(query). // 设置查询条件
 		TrackTotalHits(true).
 		Do(context.Background()) // 执行
 	if err != nil {
@@ -168,7 +163,7 @@ func countMessageNum(client *elastic.Client, corpid string, dateNow time.Time) (
 	query := elastic.NewBoolQuery().
 		Must(elastic.NewRangeQuery("msgtime").
 			From(startTime). // from timestamp for yesterday 0:00:00
-			To(endTime),     // to timestamp for today 0:00:00
+			To(endTime), // to timestamp for today 0:00:00
 		)
 	// Make the count request
 	countResult, err := client.Count().
@@ -196,7 +191,7 @@ func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate t
 		)
 	searchResult, err := client.Search().
 		Index("text_event_index*"). // 设置索引名
-		Query(query).               // 设置查询条件
+		Query(query). // 设置查询条件
 		Aggregation("dau", elastic.NewCardinalityAggregation().Field("who.id.keyword")).
 		Size(0).
 		Do(context.Background()) // 执行
@@ -260,6 +255,26 @@ func queryCustomerGroupUserNum(conn *pgx.Conn, corpid string) (int, error) {
 	return customerGroupUserNum, nil
 }
 
+func inspectMarkdown(headString string, Corp []*Corp, users []string) *notifier.WeChatMarkdown {
+	var builder strings.Builder
+	// 添加巡检头文件
+	builder.WriteString(headString)
+	for _, corp := range Corp {
+		// 组装租户巡检信息
+		builder.WriteString(generateCorpString(corp))
+	}
+	if isalert {
+		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + calluser(users))
+	}
+	markdown := &notifier.WeChatMarkdown{
+		MsgType: "markdown",
+		Markdown: &notifier.Markdown{
+			Content: builder.String(),
+		},
+	}
+	return markdown
+}
+
 func generateCorpString(corp *Corp) string {
 	var builder strings.Builder
 
@@ -278,6 +293,16 @@ func generateCorpString(corp *Corp) string {
 	builder.WriteString("> 周活跃数：<font color='info'>" + strconv.FormatInt(corp.WauNum, 10) + "</font>\n")
 	builder.WriteString("> 月活跃数：<font color='info'>" + strconv.FormatInt(corp.MauNum, 10) + "</font>\n")
 	builder.WriteString("==================\n")
+
+	return builder.String()
+}
+func headCorpString(i *Inspect, dateNow time.Time) string {
+	var builder strings.Builder
+	// 组装巡检内容
+	builder.WriteString("# 每日巡检报告 " + i.Version + "\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + i.ProjectName + "</font>\n")
+	builder.WriteString("**巡检时间：**<font color='info'>" + dateNow.Format("2006-01-02") + "</font>\n")
+	builder.WriteString("**巡检内容：**\n")
 
 	return builder.String()
 }
