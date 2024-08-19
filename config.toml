@@ -3,12 +3,6 @@ projectname = "千金药业"
 # proxyURL := "http://proxyuser:proxypassword@proxy_ip:proxy_port"
 proxyurl = "http://wshoto:123qazwsx@172.18.0.17:9253"
 
-[nacos]
-server = "http://192.9.253.198:8848"
-username = "nacos"
-password = "nacos"
-namespace = "qw-uat"
-
 [tenant]
 [[tenant.corp]]
 corpid = "wxbe45d6b56a61e293"
@@ -25,42 +19,18 @@ convenabled = true
 [[tenant.corp]]
 corpid = "wwe2007d5a571677f3"
 convenabled = false
-[[tenant.corp]]
-corpid = "wwe2007d5a571677f4"
-convenabled = false
-[[tenant.corp]]
-corpid = "wwe2007d5a571677f5"
-convenabled = false
-[[tenant.corp]]
-corpid = "wwe2007d5a571677f6"
-convenabled = false
-[[tenant.corp]]
-corpid = "wwe2007d5a571677f7"
-convenabled = false
-[[tenant.corp]]
-corpid = "wwe2007d5a571677f8"
-convenabled = false
 
+[crontab]
+inspectjob = true
+testjob = false
 
 [inspection]
-# 配置定时任务，每日巡检的发送时间：09:30 - 10:00
-scheducron = "*/3 * * * *"
+# 配置定时任务，每天09:30启动巡检任务
+scheducron = "30 09 * * *"
 # 巡检机器人，支持配置多个机器人 "5c8daf9d-bebb-4453-bab4-aa3fe56eeac3"
 robotkey = ["8ab989f5-d86f-4c99-b95f-5d23a30eb351"]
 # 告警@人 ["lanpang", "mark"]
 userlist = []
-
-[metric]
-# 定义 metric 的端口
-port = "8081"
-# 启动微服务接口监控
-wsapp = true
-# rocketmq 监控
-rocketmq = true
-
-[crontab]
-inspectjob = true
-testjob = true
 
 [pg]
 ip = "192.9.253.195"
@@ -76,5 +46,19 @@ username = "elastic"
 password = "wshoto@2022"
 sslmode = false
 
+[nacos]
+server = "http://192.9.253.198:8848"
+username = "nacos"
+password = "nacos"
+namespace = "qw-uat"
+
 [rocketmq]
 rocketmqDashboard = "http://192.9.253.205:8081"
+
+[metric]
+# 定义 metric 的端口
+port = "8081"
+# 启动微服务接口监控
+wsapp = true
+# rocketmq 监控
+rocketmq = true
