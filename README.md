@@ -33,7 +33,17 @@ go get github.com/olivere/elastic/v7
 go get github.com/jackc/pgx/v5
 go get github.com/robfig/cron/v3
 ```
+### 编译部署
 
+```shell
+cd vhagar
+# 调试运行，第一次运行，会自动安装三方库
+go run main.go
+# 编译，指定二进制文件名：alarm_go_v3.7
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o wsctl
+# 查看帮助
+./wsctl -h
+```
 
 ### 生成镜像
 
@@ -44,8 +54,8 @@ docker build -t vhagar:v1.0 .
 # 查找镜像
 docker images|grep vhagar
 # 推送到tcr
-docker tag 946289afea65 ka-tcr.tencentcloudcr.com/middleware/alarm-go:v4.2
-docker push ka-tcr.tencentcloudcr.com/middleware/alarm-go:v4.2
+docker tag 31f29de3d9cb ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
+docker push ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
 # 离线镜像
 docker save -o alarm-go_v4.2 ka-tcr.tencentcloudcr.com/middleware/alarm-go:v4.2
 ```
