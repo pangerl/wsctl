@@ -1,4 +1,4 @@
-FROM golang:1.19.5-alpine as builder
+FROM golang:1.21.4-alpine as builder
 LABEL org.opencontainers.image.authors="lanpang@wshoto.com"
 
 ENV GOPROXY https://goproxy.cn
