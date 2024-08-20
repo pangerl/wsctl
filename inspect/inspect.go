@@ -90,13 +90,26 @@ func (i *Inspect) SetCustomerGroupUserNum(corpid string) {
 }
 
 func (i *Inspect) SetMessageNum(corpid string, dateNow time.Time) {
-	messagenum, _ := countMessageNum(i.EsClient, corpid, dateNow)
+	// 统计昨天的会话数
+	t := dateNow.AddDate(0, 0, -1)
+	startTime := getZeroTime(t).UnixNano() / 1e6
+	endTime := getZeroTime(dateNow).UnixNano() / 1e6
+	messagenum, _ := countMessageNum(i.EsClient, corpid, startTime, endTime)
 	for _, corp := range i.Corp {
 		if corp.Corpid == corpid {
 			corp.MessageNum = messagenum
 			return
 		}
 	}
+}
+
+func CurrentMessageNum(client *elastic.Client, corpid string, dateNow time.Time) int64 {
+	// 统计昨天的会话数
+	t := dateNow.AddDate(0, 0, -1)
+	startTime := getZeroTime(t).UnixNano() / 1e6
+	endTime := getZeroTime(dateNow).UnixNano() / 1e6
+	messagenum, _ := countMessageNum(client, corpid, startTime, endTime)
+	return messagenum
 }
 
 func (i *Inspect) SetCorpName(corpid string) {
@@ -143,7 +156,7 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 		)
 	searchResult, err := client.Search().
 		Index("customer_related_1"). // 设置索引名
-		Query(query). // 设置查询条件
+		Query(query).                // 设置查询条件
 		TrackTotalHits(true).
 		Do(context.Background()) // 执行
 	if err != nil {
@@ -154,16 +167,16 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 	return searchResult.TotalHits(), nil
 }
 
-func countMessageNum(client *elastic.Client, corpid string, dateNow time.Time) (int64, error) {
-	t := dateNow.AddDate(0, 0, -1)
-	startTime := getZeroTime(t).UnixNano() / 1e6
-	endTime := getZeroTime(dateNow).UnixNano() / 1e6
+func countMessageNum(client *elastic.Client, corpid string, startTime, endTime int64) (int64, error) {
+	//t := dateNow.AddDate(0, 0, -1)
+	//startTime := getZeroTime(t).UnixNano() / 1e6
+	//endTime := getZeroTime(dateNow).UnixNano() / 1e6
 
 	// Define the query
 	query := elastic.NewBoolQuery().
 		Must(elastic.NewRangeQuery("msgtime").
 			From(startTime). // from timestamp for yesterday 0:00:00
-			To(endTime), // to timestamp for today 0:00:00
+			To(endTime),     // to timestamp for today 0:00:00
 		)
 	// Make the count request
 	countResult, err := client.Count().
@@ -191,7 +204,7 @@ func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate t
 		)
 	searchResult, err := client.Search().
 		Index("text_event_index*"). // 设置索引名
-		Query(query). // 设置查询条件
+		Query(query).               // 设置查询条件
 		Aggregation("dau", elastic.NewCardinalityAggregation().Field("who.id.keyword")).
 		Size(0).
 		Do(context.Background()) // 执行

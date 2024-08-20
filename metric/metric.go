@@ -4,7 +4,7 @@
 package metric
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/olivere/elastic/v7"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
@@ -12,29 +12,30 @@ import (
 	"vhagar/nacos"
 )
 
-type Metric struct {
-	Port     string
-	Wsapp    bool
-	Rocketmq bool
+func NewMetric(cfg Config, ncfg nacos.Config, mcfg inspect.Rocketmq, corp []*inspect.Corp, es *elastic.Client) *Metric {
+	return &Metric{
+		Corp:     corp,
+		EsClient: es,
+		Rocketmq: mcfg,
+		Metric:   cfg,
+		Nacos:    ncfg,
+	}
 }
 
-var (
-	randomNumber = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "random_number",
-		Help: "Randomly generated number",
-	})
-)
+func (m *Metric) StartMetric() {
 
-func StartMetric(cfg Metric, ncfg nacos.Config, mcfg inspect.Rocketmq) {
-
-	if cfg.Wsapp {
-		go setprobeHTTPStatusCode(ncfg)
+	if m.Metric.Wsapp {
+		go setprobeHTTPStatusCode(m.Nacos)
 	}
 
-	if cfg.Rocketmq {
-		go setBrokerCount(mcfg.RocketmqDashboard)
+	if m.Metric.Rocketmq {
+		go setBrokerCount(m.Rocketmq.RocketmqDashboard)
+	}
+
+	if m.Metric.Conversation {
+		//go setMessageCount(ecfg, tenant)
 	}
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
+	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), m.Metric.Port)
+	log.Fatal(http.ListenAndServe(":"+m.Metric.Port, nil))
 }

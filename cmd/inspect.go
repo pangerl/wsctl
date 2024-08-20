@@ -52,7 +52,7 @@ func init() {
 
 func inspectTask(_inspect *inspect.Inspect, duration time.Duration) {
 	// 当前时间
-	dateNow := time.Now().AddDate(0, 0, 0)
+	dateNow := time.Now()
 	log.Print("启动企微租户巡检任务")
 	//inspect.GetVersion(url)
 	for _, corp := range _inspect.Corp {

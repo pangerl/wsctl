@@ -32,6 +32,8 @@ go get github.com/gin-gonic/gin
 go get github.com/olivere/elastic/v7
 go get github.com/jackc/pgx/v5
 go get github.com/robfig/cron/v3
+# 剔除不必要的依赖
+go mod tidy
 ```
 ### 编译部署
 
@@ -57,5 +59,5 @@ docker images|grep vhagar
 docker tag 31f29de3d9cb ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
 docker push ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
 # 离线镜像
-docker save -o alarm-go_v4.2 ka-tcr.tencentcloudcr.com/middleware/alarm-go:v4.2
+docker save -o vhagar_v1.0 ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
 ```

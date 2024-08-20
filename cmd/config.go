@@ -27,7 +27,7 @@ type Config struct {
 	ES          inspect.DB
 	Inspection  inspect.Config
 	Rocketmq    inspect.Rocketmq
-	Metric      metric.Metric
+	Metric      metric.Config
 }
 
 type Crontab struct {

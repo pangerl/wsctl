@@ -62,3 +62,5 @@ port = "8081"
 wsapp = true
 # rocketmq 监控
 rocketmq = true
+# 当前会话数
+conversation = true

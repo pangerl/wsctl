@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"vhagar/inspect"
 	"vhagar/metric"
 )
 
@@ -13,7 +14,15 @@ var metricCmd = &cobra.Command{
 	Short: "监控指标",
 	Long:  `监控指标metric`,
 	Run: func(cmd *cobra.Command, args []string) {
-		metric.StartMetric(CONFIG.Metric, CONFIG.Nacos, CONFIG.Rocketmq)
+		// 初始化 inspect 对象
+		esclient, _ := inspect.NewESClient(CONFIG.ES)
+		defer func() {
+			if esclient != nil {
+				esclient.Stop()
+			}
+		}()
+		m := metric.NewMetric(CONFIG.Metric, CONFIG.Nacos, CONFIG.Rocketmq, CONFIG.Tenant.Corp, esclient)
+		m.StartMetric()
 	},
 }
 
