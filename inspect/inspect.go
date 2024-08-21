@@ -104,10 +104,9 @@ func (i *Inspect) SetMessageNum(corpid string, dateNow time.Time) {
 }
 
 func CurrentMessageNum(client *elastic.Client, corpid string, dateNow time.Time) int64 {
-	// 统计昨天的会话数
-	t := dateNow.AddDate(0, 0, -1)
-	startTime := getZeroTime(t).UnixNano() / 1e6
-	endTime := getZeroTime(dateNow).UnixNano() / 1e6
+	// 统计今天的会话数
+	startTime := getZeroTime(dateNow).UnixNano() / 1e6
+	endTime := dateNow.UnixNano() / 1e6
 	messagenum, _ := countMessageNum(client, corpid, startTime, endTime)
 	return messagenum
 }

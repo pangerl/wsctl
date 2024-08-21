@@ -10,8 +10,8 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "vhagar",
-	Short: "A brief description of vhagar",
+	Use:   "wsctl",
+	Short: "ws运维部署工具",
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("程序开始启动！！！")

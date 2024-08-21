@@ -20,11 +20,10 @@ import (
 var cidrs []*net.IPNet
 var tablerow []string
 
-func NewNacos(c Config, web bool, webport, writefile string) *Nacos {
+func NewNacos(c Config, writefile string) *Nacos {
 	return &Nacos{
-		Config:    c,
-		Web:       web,
-		Webport:   ":" + webport,
+		Config: c,
+		//Webport:   ":" + webport,
 		Writefile: writefile,
 	}
 }

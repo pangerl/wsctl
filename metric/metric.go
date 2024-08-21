@@ -33,7 +33,7 @@ func (m *Metric) StartMetric() {
 	}
 
 	if m.Metric.Conversation {
-		//go setMessageCount(ecfg, tenant)
+		go setMessageCount(m)
 	}
 	http.Handle("/metrics", promhttp.Handler())
 	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), m.Metric.Port)

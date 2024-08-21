@@ -13,8 +13,10 @@ import (
 // versionCmd represents the version command
 var crontabCmd = &cobra.Command{
 	Use:   "crontab",
-	Short: " 任务调度",
-	Long:  `定时调度任务`,
+	Short: " 启动定时任务",
+	Long: `可自定义周期性运行 job
+相关配置见配置文件的 [crontab]
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Print("启动任务调度")
 		crontabJob()

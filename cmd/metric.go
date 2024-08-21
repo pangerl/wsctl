@@ -14,7 +14,7 @@ var metricCmd = &cobra.Command{
 	Short: "监控指标",
 	Long:  `监控指标metric`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// 初始化 inspect 对象
+		// 初始化 metric 对象
 		esclient, _ := inspect.NewESClient(CONFIG.ES)
 		defer func() {
 			if esclient != nil {

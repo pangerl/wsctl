@@ -5,21 +5,33 @@ package metric
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"log"
+	"time"
+	"vhagar/inspect"
 )
 
 var (
-	messageCount = prometheus.NewGauge(
+	messageCount = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "message_count",
 			Help: "Status count for conversation",
-		})
+		},
+		[]string{"corpid"},
+	)
 )
 
-//func setMessageCount(ecfg inspect.DB, tenant inspect.Tenant) {
-//	prometheus.MustRegister(messageCount)
-//	esclient, _ := inspect.NewESClient(ecfg)
-//	for {
-//		log.Printf("brokercount: %v", brokercount)
-//		time.Sleep(30 * time.Second) // 每30秒探测一次
-//	}
-//}
+func setMessageCount(m *Metric) {
+	prometheus.MustRegister(messageCount)
+	for {
+		dateNow := time.Now()
+		for _, corp := range m.Corp {
+			if corp.Convenabled {
+				messagenum := inspect.CurrentMessageNum(m.EsClient, corp.Corpid, dateNow)
+				messageCount.WithLabelValues(corp.Corpid).Set(float64(messagenum))
+				log.Printf("corp %s messagenum: %v", corp.Corpid, messagenum)
+			}
+
+		}
+		time.Sleep(300 * time.Second)
+	}
+}
