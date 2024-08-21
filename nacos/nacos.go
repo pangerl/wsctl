@@ -10,20 +10,19 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/tidwall/gjson"
 	"log"
-	"net"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 )
 
-var cidrs []*net.IPNet
 var tablerow []string
+var mutex sync.Mutex
 
 func NewNacos(c Config, writefile string) *Nacos {
 	return &Nacos{
-		Config: c,
-		//Webport:   ":" + webport,
+		Config:    c,
 		Writefile: writefile,
 	}
 }
@@ -37,20 +36,13 @@ func (d *Nacos) WithAuth() {
 	}
 	res := d.post(_url, formData)
 	if len(gjson.GetBytes(res, "accessToken").String()) != 0 {
-		log.Println("Authentication successful...")
+		//log.Println("Authentication successful...")
 		d.Token = gjson.GetBytes(res, "accessToken").String()
 	} else {
 		log.Println("Authentication failed!")
 	}
 }
-func ContainerdIPCheck(ip string) bool {
-	for i := range cidrs {
-		if cidrs[i].Contains(net.ParseIP(ip)) {
-			return true
-		}
-	}
-	return false
-}
+
 func (d *Nacos) GetService(url string, namespaceId string, group string) []byte {
 	_url := fmt.Sprintf("%s/nacos/v1/ns/service/list?pageNo=1&pageSize=500&namespaceId=%s&groupName=%s", url, namespaceId, group)
 	res := d.get(_url)
@@ -80,14 +72,15 @@ func (d *Nacos) tableAppend(table *tablewriter.Table, data []string) {
 		table.Append(data)
 	}
 }
+
 func (d *Nacos) TableRender() {
 	tablerow = []string{}
 	nacosServer := d.Clusterdata
-	tabletitle := []string{"命名空间", "服务名称", "实例", "健康状态", "主机名", "权重", "容器", "组"}
+	tabletitle := []string{"命名空间", "服务名称", "实例", "健康状态", "主机名", "权重", "组"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
 	for _, v := range nacosServer.HealthInstance {
-		tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.Container, v.GroupName}
+		tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.GroupName}
 		d.tableAppend(table, tabledata)
 	}
 	fmt.Printf("健康实例:(%d 个)\n", table.NumLines())
@@ -96,7 +89,7 @@ func (d *Nacos) TableRender() {
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader(tabletitle)
 		for _, v := range nacosServer.UnHealthInstance {
-			tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.Container, v.GroupName}
+			tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.GroupName}
 			d.tableAppend(table, tabledata)
 		}
 		fmt.Printf("异常实例:(%d 个)\n", table.NumLines())
@@ -131,7 +124,6 @@ func (d *Nacos) GetNacosInstance() {
 				Health:        strconv.FormatBool(host.Healthy),
 				Hostname:      host.Ip,
 				Weight:        fmt.Sprintf("%.1f", host.Weight),
-				Container:     strconv.FormatBool(ContainerdIPCheck(host.Ip)),
 				Ip:            host.Ip,
 				Port:          strconv.Itoa(host.Port),
 				GroupName:     in.GroupName,
@@ -147,18 +139,16 @@ func (d *Nacos) GetNacosInstance() {
 	}
 	//fmt.Println(d.Clusterdata.HealthInstance)
 }
+
 func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
-	//mutex.Lock()
-	//defer mutex.Unlock()
+	mutex.Lock()
 	defer func() {
+		mutex.Unlock()
 		if funcErr := recover(); funcErr != nil {
 			result = []byte("[]")
 			err = errors.New("error")
 		}
 	}()
-	if d.Web {
-		d.GetNacosInstance()
-	}
 	var nacos Nacosfile
 	nacosServer := d.Clusterdata
 	if len(nacosServer.HealthInstance) != 0 {
@@ -173,7 +163,6 @@ func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 			ta.Labels["ip"] = na.Ip
 			ta.Labels["port"] = na.Port
 			ta.Labels["group"] = na.GroupName
-			ta.Labels["containerd"] = na.Container
 			nacos.Data = append(nacos.Data, ta)
 		}
 
@@ -190,7 +179,6 @@ func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 		return result, err
 	}
 	result = data
-	//result = []byte("[]")
 	return result, err
 }
 

@@ -7,8 +7,6 @@ import "net/http"
 
 type Nacos struct {
 	Config      Config
-	Web         bool
-	Webport     string
 	Writefile   string
 	Client      http.Client
 	Host        string
@@ -69,7 +67,6 @@ type ServerInstance struct {
 	Health        string `json:"health"`
 	Hostname      string `json:"hostname"`
 	Weight        string `json:"weight"`
-	Container     string `json:"container"`
 	Ip            string `json:"ip"`
 	Port          string `json:"port"`
 	GroupName     string `json:"groupName"`

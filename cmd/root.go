@@ -37,7 +37,7 @@ func init() {
 func preFunc() {
 	homedir := "."
 	configfile := filepath.Join(homedir, "config.toml")
-	log.Printf("Info: 读取配置文件 %s \n", configfile)
+	log.Printf("读取配置文件 %s \n", configfile)
 	defer func() {
 		if err := recover(); err != nil {
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
