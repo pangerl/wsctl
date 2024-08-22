@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"log"
 	"vhagar/check"
 
 	"github.com/spf13/cobra"
@@ -14,7 +15,8 @@ var checkCmd = &cobra.Command{
 	Short: "检查服务",
 	Long:  `支持各种服务的健康检测`,
 	Run: func(cmd *cobra.Command, args []string) {
-		check.ProbeRocketMq(CONFIG.Rocketmq.NameServer)
+		mqStatus := check.ProbeRocketMq(CONFIG.Rocketmq.NameServer)
+		log.Println("RocketMq 集群状态:", mqStatus)
 	},
 }
 
