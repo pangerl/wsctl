@@ -5,8 +5,9 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"os"
-	"path/filepath"
 )
+
+var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -14,7 +15,7 @@ var rootCmd = &cobra.Command{
 	Short: "ws运维部署工具",
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Println("程序开始启动！！！")
+		log.Println("wsctl go go go！！！")
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		preFunc()
@@ -30,25 +31,24 @@ func Execute() {
 }
 
 func init() {
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cobra.yaml)")
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "config.toml", "config file")
 }
 
 func preFunc() {
-	homedir := "."
-	configfile := filepath.Join(homedir, "config.toml")
-	log.Printf("读取配置文件 %s \n", configfile)
+	//homedir := "."
+	//configfile := filepath.Join(homedir, "config.toml")
+	log.Printf("读取配置文件 %s \n", cfgFile)
 	defer func() {
 		if err := recover(); err != nil {
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
 	}()
-	if _, err := os.Stat(configfile); err != nil {
+	if _, err := os.Stat(cfgFile); err != nil {
 		if !os.IsExist(err) {
 			log.Fatalf("Failed Info: 读取配置文件报错 %s", err)
 		}
 	} else {
-		if _, err := toml.DecodeFile("config.toml", &CONFIG); err != nil {
+		if _, err := toml.DecodeFile(cfgFile, &CONFIG); err != nil {
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
 		//fmt.Println(CONFIG.Crontab)

@@ -6,6 +6,7 @@ proxyurl = "http://wshoto:123qazwsx@172.18.0.17:9253"
 [tenant]
 [[tenant.corp]]
 corpid = "wxbe45d6b56a61e293"
+# 是否开通会话存档功能
 convenabled = true
 [[tenant.corp]]
 corpid = "ww70adef74dc10951c"
