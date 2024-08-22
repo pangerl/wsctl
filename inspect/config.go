@@ -49,4 +49,5 @@ type Config struct {
 
 type Rocketmq struct {
 	RocketmqDashboard string
+	NameServer        string
 }

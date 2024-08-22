@@ -27,8 +27,8 @@ func NewNacos(c Config, writefile string) *Nacos {
 	}
 }
 
-func (d *Nacos) WithAuth() {
-	log.Println("更新 token")
+func (d *Nacos) WithAuth() bool {
+	log.Println("更新 nacos 的 token")
 	_url := fmt.Sprintf("%s/nacos/v1/auth/login", d.Config.Server)
 	formData := map[string]string{
 		"username": d.Config.Username,
@@ -40,7 +40,9 @@ func (d *Nacos) WithAuth() {
 		d.Token = gjson.GetBytes(res, "accessToken").String()
 	} else {
 		log.Println("Authentication failed!")
+		return false
 	}
+	return true
 }
 
 func (d *Nacos) GetService(url string, namespaceId string, group string) []byte {

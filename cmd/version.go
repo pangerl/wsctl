@@ -10,10 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "version",
+	Short: "查看版本",
 	Long:  `查看版本`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("vhagar version: ", VERSION)

@@ -34,10 +34,14 @@ func setprobeHTTPStatusCode(config nacos.Config) {
 	_nacos := &nacos.Nacos{
 		Config: config,
 	}
-	log.Println("获取nacos认证信息")
-	_nacos.WithAuth()
-	// 获取微服务实例的信息
-	_nacos.GetNacosInstance()
+	// 获取nacos认证信息
+	if _nacos.WithAuth() {
+		// 获取微服务实例的信息
+		_nacos.GetNacosInstance()
+	} else {
+		return
+	}
+
 	healthInstances := _nacos.Clusterdata.HealthInstance
 
 	// 设置一个定时器来定期探测每个实例的健康状况

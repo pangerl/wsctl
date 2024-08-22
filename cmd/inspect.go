@@ -15,7 +15,7 @@ var (
 	rocketmq bool
 )
 
-// versionCmd represents the version command
+// inspectCmd represents the version command
 var inspectCmd = &cobra.Command{
 	Use:   "inspect",
 	Short: "项目巡检",

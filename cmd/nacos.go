@@ -25,8 +25,11 @@ var nacosCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		_nacos := nacos.NewNacos(CONFIG.Nacos, writefile)
 		log.Println("获取nacos认证信息")
-		_nacos.WithAuth()
-		_nacos.GetNacosInstance()
+		if _nacos.WithAuth() {
+			_nacos.GetNacosInstance()
+		} else {
+			return
+		}
 		switch {
 		//case web:
 		//	nacos.Webserver(_nacos)

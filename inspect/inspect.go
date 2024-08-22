@@ -167,9 +167,6 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 }
 
 func countMessageNum(client *elastic.Client, corpid string, startTime, endTime int64) (int64, error) {
-	//t := dateNow.AddDate(0, 0, -1)
-	//startTime := getZeroTime(t).UnixNano() / 1e6
-	//endTime := getZeroTime(dateNow).UnixNano() / 1e6
 
 	// Define the query
 	query := elastic.NewBoolQuery().

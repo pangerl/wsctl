@@ -2,8 +2,8 @@ package nacos
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -12,7 +12,7 @@ import (
 func (d *Nacos) get(apiurl string) []byte {
 	u, err := url.Parse(apiurl)
 	if err != nil {
-		panic(err)
+		log.Printf("Failed info: %s \n", err)
 	}
 	if len(d.Config.Username) != 0 && len(d.Config.Password) != 0 {
 		if len(u.RawQuery) == 0 {
@@ -25,18 +25,18 @@ func (d *Nacos) get(apiurl string) []byte {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		log.Printf("Failed info: %s \n", err)
 	}
 	if res.StatusCode != 200 {
 		if res.StatusCode == 403 {
-			panic(fmt.Sprintf("%s请求状态码异常:%d 请使用--username --password参数进行鉴权", apiurl, res.StatusCode))
+			log.Printf("%s请求状态码异常:%d 请使用--username --password参数进行鉴权", apiurl, res.StatusCode)
 		}
-		panic(fmt.Sprintf("%s请求状态码异常:%d", apiurl, res.StatusCode))
+		log.Printf("%s请求状态码异常:%d", apiurl, res.StatusCode)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			panic(err)
+			log.Printf("Failed info: %s \n", err)
 		}
 	}(res.Body)
 	resp, _ := io.ReadAll(res.Body)
@@ -63,18 +63,18 @@ func (d *Nacos) post(apiurl string, formData map[string]string) []byte {
 	}
 	res, err := d.Client.Do(req)
 	if err != nil {
-		panic(err)
+		log.Printf("Failed info: %s \n", err)
 	}
 	if res.StatusCode != 200 {
 		if u.Path == "/nacos/v1/auth/login" && res.StatusCode == 403 {
-			panic(fmt.Sprintf("%s请求状态码异常,认证失败!:%d", apiurl, res.StatusCode))
+			log.Printf("%s请求状态码异常,认证失败!:%d", apiurl, res.StatusCode)
 		}
-		panic(fmt.Sprintf("%s请求状态码异常:%d", apiurl, res.StatusCode))
+		log.Printf("%s请求状态码异常:%d", apiurl, res.StatusCode)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			panic(err)
+			log.Printf("Failed info: %s \n", err)
 		}
 	}(res.Body)
 	resp, _ := io.ReadAll(res.Body)

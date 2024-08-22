@@ -10,7 +10,6 @@ import (
 	"vhagar/inspect"
 )
 
-// versionCmd represents the version command
 var crontabCmd = &cobra.Command{
 	Use:   "crontab",
 	Short: " 启动定时任务",

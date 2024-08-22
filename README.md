@@ -32,6 +32,7 @@ go get github.com/gin-gonic/gin
 go get github.com/olivere/elastic/v7
 go get github.com/jackc/pgx/v5
 go get github.com/robfig/cron/v3
+go get github.com/apache/rocketmq-client-go/v2
 # 剔除不必要的依赖
 go mod tidy
 ```

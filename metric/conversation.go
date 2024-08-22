@@ -22,6 +22,9 @@ var (
 
 func setMessageCount(m *Metric) {
 	prometheus.MustRegister(messageCount)
+	if m.EsClient == nil {
+		return
+	}
 	for {
 		dateNow := time.Now()
 		for _, corp := range m.Corp {
