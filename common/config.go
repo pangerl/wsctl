@@ -1,21 +1,13 @@
-// Package cmd @Author lanpang
+// Package common @Author lanpang
 // @Date 2024/8/1 下午2:47:00
 // @Desc
-package cmd
+package common
 
 import (
 	"vhagar/inspect"
 	"vhagar/metric"
 	"vhagar/nacos"
 )
-
-var (
-	CONFIG = Config{
-		ProjectName: "测试项目",
-	}
-)
-
-const VERSION = "v1.0"
 
 type Config struct {
 	ProjectName string
@@ -25,12 +17,17 @@ type Config struct {
 	Tenant      inspect.Tenant
 	PG          inspect.DB
 	ES          inspect.DB
-	Inspection  inspect.Config
-	Rocketmq    inspect.Rocketmq
+	Doris       inspect.DB
+	Rocketmq    Rocketmq
 	Metric      metric.Config
 }
 
 type Crontab struct {
-	Inspectjob bool
-	Testjob    bool
+	TenantJob bool
+	TestJob   bool
+}
+
+type Rocketmq struct {
+	RocketmqDashboard string
+	NameServer        string
 }

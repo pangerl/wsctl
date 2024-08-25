@@ -1,16 +1,17 @@
-// Package inspect @Author lanpang
+// Package libs @Author lanpang
 // @Date 2024/8/6 下午6:10:00
 // @Desc
-package inspect
+package libs
 
 import (
 	"context"
 	"github.com/olivere/elastic/v7"
 	"log"
 	"strconv"
+	"vhagar/inspect"
 )
 
-func NewESClient(conf DB) (*elastic.Client, string) {
+func NewESClient(conf inspect.DB) (*elastic.Client, string) {
 	scheme := map[bool]string{true: "https", false: "http"}[conf.Sslmode]
 	esurl := scheme + "://" + conf.Ip + ":" + strconv.Itoa(conf.Port)
 	client, err := elastic.NewClient(

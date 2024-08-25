@@ -31,29 +31,21 @@ func crontabJob() {
 	// 获取等待时间
 	duration := inspect.GetRandomDuration()
 	// 每日巡检 job
-	if CONFIG.Crontab.Inspectjob {
-		// 初始化 inspect 对象
-		esclient, _ := inspect.NewESClient(CONFIG.ES)
-		dbClient, _ := inspect.NewPGClient(CONFIG.PG)
-		defer func() {
-			if dbClient != nil {
-				dbClient.Close()
-			}
-			if esclient != nil {
-				esclient.Stop()
-			}
-		}()
-		_inspect := inspect.NewInspect(CONFIG.Tenant.Corp, esclient, dbClient, CONFIG.ProjectName)
+	if CONFIG.Crontab.TenantJob {
+		log.Println("初始化 Tenant 对象")
+		tenant := inspect.NewTenant(
+			CONFIG.ES, CONFIG.PG, CONFIG.ProjectName, CONFIG.ProxyURL,
+			CONFIG.Tenant.Corp, CONFIG.Tenant.Userlist, CONFIG.Tenant.Robotkey)
 		// 加入定时任务
-		_, err := c.AddFunc(CONFIG.Inspection.Scheducron, func() {
-			inspectTask(_inspect, duration)
+		_, err := c.AddFunc(CONFIG.Tenant.Scheducron, func() {
+			inspect.TenantTask(tenant, duration)
 		})
 		if err != nil {
 			log.Printf("Failed to add crontab job: %s \n", err)
 		}
 	}
 	// 测试任务
-	if CONFIG.Crontab.Testjob {
+	if CONFIG.Crontab.TestJob {
 		_, err := c.AddFunc("* * * * *", func() {
 			testjob()
 		})

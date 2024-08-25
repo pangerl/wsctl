@@ -5,9 +5,15 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"os"
+	"vhagar/common"
 )
 
-var cfgFile string
+var (
+	CONFIG = &common.Config{
+		ProjectName: "测试项目",
+	}
+	cfgFile string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -48,7 +54,7 @@ func preFunc() {
 			log.Fatalf("Failed Info: 读取配置文件报错 %s", err)
 		}
 	} else {
-		if _, err := toml.DecodeFile(cfgFile, &CONFIG); err != nil {
+		if _, err := toml.DecodeFile(cfgFile, CONFIG); err != nil {
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
 		//fmt.Println(CONFIG.Crontab)

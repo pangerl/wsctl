@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const VERSION = "v1.0"
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "查看版本",

@@ -21,17 +21,19 @@ convenabled = true
 corpid = "wwe2007d5a571677f3"
 convenabled = false
 
-[crontab]
-inspectjob = true
-testjob = false
-
-[inspection]
 # 配置定时任务，每天09:30启动巡检任务
 scheducron = "30 09 * * *"
 # 巡检机器人，支持配置多个机器人 "5c8daf9d-bebb-4453-bab4-aa3fe56eeac3"
 robotkey = ["8ab989f5-d86f-4c99-b95f-5d23a30eb351"]
 # 告警@人 ["lanpang", "mark"]
 userlist = []
+
+[crontab]
+tenantjob = true
+testjob = false
+
+[inspection]
+
 
 [pg]
 ip = "192.9.253.195"
@@ -47,6 +49,13 @@ username = "elastic"
 password = "wshoto@2022"
 sslmode = false
 
+[doris]
+ip = "192.9.253.196"
+port = 9030
+username = "root"
+password = "Wshoto!@2024"
+sslmode = false
+
 [nacos]
 server = "http://192.9.253.198:8848"
 username = "nacos"
@@ -55,7 +64,8 @@ namespace = "qw-uat"
 
 [rocketmq]
 rocketmqDashboard = "http://192.9.253.205:8081"
-nameServer = "192.9.253.197:9876"
+#nameServer = "192.9.253.197:9876"
+nameServer = "192.9.253.149:9999"
 
 [metric]
 # 定义 metric 的端口

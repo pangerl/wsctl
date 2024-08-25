@@ -5,18 +5,19 @@ package inspect
 
 import (
 	"github.com/olivere/elastic/v7"
+	"vhagar/libs"
 )
 
-type Inspect struct {
+type Tenant struct {
 	ProjectName string
 	Version     string
+	ProxyURL    string
 	Corp        []*Corp
-	EsClient    *elastic.Client
-	DBClient    *DBClient
-}
-
-type Tenant struct {
-	Corp []*Corp
+	Scheducron  string
+	Robotkey    []string
+	Userlist    []string
+	ESClient    *elastic.Client
+	PGClient    *libs.PGClient
 }
 
 type Corp struct {
@@ -32,22 +33,10 @@ type Corp struct {
 	WauNum               int64
 	MauNum               int64
 }
-
 type DB struct {
 	Ip       string
 	Port     int
 	Username string
 	Password string
 	Sslmode  bool
-}
-
-type Config struct {
-	Scheducron string
-	Robotkey   []string
-	Userlist   []string
-}
-
-type Rocketmq struct {
-	RocketmqDashboard string
-	NameServer        string
 }

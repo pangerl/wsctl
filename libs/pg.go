@@ -1,31 +1,32 @@
-// Package inspect @Author lanpang
+// Package libs @Author lanpang
 // @Date 2024/8/8 下午1:43:00
 // @Desc
-package inspect
+package libs
 
 import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"log"
+	"vhagar/inspect"
 )
 
-type DBClient struct {
-	conn map[string]*pgx.Conn
+type PGClient struct {
+	Conn map[string]*pgx.Conn
 }
 
 // Close 关闭所有数据库连接
-func (dbClient *DBClient) Close() {
-	for dbName, conn := range dbClient.conn {
+func (dbClient *PGClient) Close() {
+	for dbName, conn := range dbClient.Conn {
 		if err := conn.Close(context.Background()); err != nil {
 			log.Printf("Failed to close connection for database %s: %v", dbName, err)
 		}
 	}
 }
 
-func NewPGClient(conf DB) (*DBClient, error) {
-	dbClient := &DBClient{
-		conn: make(map[string]*pgx.Conn),
+func NewPGClient(conf inspect.DB) (*PGClient, error) {
+	dbClient := &PGClient{
+		Conn: make(map[string]*pgx.Conn),
 	}
 	databases := []string{"qv30", "user", "customer"}
 	for _, dbName := range databases {
@@ -35,13 +36,13 @@ func NewPGClient(conf DB) (*DBClient, error) {
 			log.Printf("Failed to connect to database %s: %s\n", dbName, err)
 			return nil, err
 		}
-		dbClient.conn[dbName] = conn
+		dbClient.Conn[dbName] = conn
 	}
 
 	return dbClient, nil
 }
 
-func connStr(conf DB, db string) string {
+func connStr(conf inspect.DB, db string) string {
 	scheme := map[bool]string{true: "require", false: "disable"}[conf.Sslmode]
 	str := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		conf.Username, conf.Password, conf.Ip, conf.Port, db, scheme)

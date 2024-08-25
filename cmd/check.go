@@ -4,10 +4,9 @@
 package cmd
 
 import (
+	"github.com/spf13/cobra"
 	"log"
 	"vhagar/check"
-
-	"github.com/spf13/cobra"
 )
 
 var checkCmd = &cobra.Command{
