@@ -4,15 +4,16 @@
 package metric
 
 import (
-	"github.com/olivere/elastic/v7"
 	"vhagar/inspect"
 	"vhagar/nacos"
+
+	"github.com/olivere/elastic/v7"
 )
 
 type Metric struct {
 	Corp     []*inspect.Corp
 	EsClient *elastic.Client
-	Rocketmq inspect.Rocketmq
+	Rocketmq Rocketmq
 	Metric   Config
 	Nacos    nacos.Config
 }
@@ -22,4 +23,9 @@ type Config struct {
 	Wsapp        bool
 	Rocketmq     bool
 	Conversation bool
+}
+
+type Rocketmq struct {
+	RocketmqDashboard string
+	NameServer        string
 }

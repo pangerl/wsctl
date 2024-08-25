@@ -1,18 +1,11 @@
 package cmd
 
 import (
-	"github.com/BurntSushi/toml"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
-	"vhagar/common"
-)
 
-var (
-	CONFIG = &common.Config{
-		ProjectName: "测试项目",
-	}
-	cfgFile string
+	"github.com/BurntSushi/toml"
+	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -57,7 +50,7 @@ func preFunc() {
 		if _, err := toml.DecodeFile(cfgFile, CONFIG); err != nil {
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
-		//fmt.Println(CONFIG.Crontab)
+		// log.Println(CONFIG.Tenant.Corp)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.PG)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.ES)
 	}

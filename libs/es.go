@@ -5,13 +5,13 @@ package libs
 
 import (
 	"context"
-	"github.com/olivere/elastic/v7"
 	"log"
 	"strconv"
-	"vhagar/inspect"
+
+	"github.com/olivere/elastic/v7"
 )
 
-func NewESClient(conf inspect.DB) (*elastic.Client, string) {
+func NewESClient(conf DB) (*elastic.Client, string) {
 	scheme := map[bool]string{true: "https", false: "http"}[conf.Sslmode]
 	esurl := scheme + "://" + conf.Ip + ":" + strconv.Itoa(conf.Port)
 	client, err := elastic.NewClient(

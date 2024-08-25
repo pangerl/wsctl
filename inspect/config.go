@@ -4,8 +4,9 @@
 package inspect
 
 import (
-	"github.com/olivere/elastic/v7"
 	"vhagar/libs"
+
+	"github.com/olivere/elastic/v7"
 )
 
 type Tenant struct {
@@ -32,11 +33,4 @@ type Corp struct {
 	DauNum               int64
 	WauNum               int64
 	MauNum               int64
-}
-type DB struct {
-	Ip       string
-	Port     int
-	Username string
-	Password string
-	Sslmode  bool
 }

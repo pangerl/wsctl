@@ -1,12 +1,20 @@
-// Package common @Author lanpang
+// Package cmd @Author lanpang
 // @Date 2024/8/1 下午2:47:00
 // @Desc
-package common
+package cmd
 
 import (
 	"vhagar/inspect"
+	"vhagar/libs"
 	"vhagar/metric"
 	"vhagar/nacos"
+)
+
+var (
+	CONFIG = &Config{
+		ProjectName: "测试项目",
+	}
+	cfgFile string
 )
 
 type Config struct {
@@ -15,19 +23,14 @@ type Config struct {
 	Crontab     Crontab
 	Nacos       nacos.Config
 	Tenant      inspect.Tenant
-	PG          inspect.DB
-	ES          inspect.DB
-	Doris       inspect.DB
-	Rocketmq    Rocketmq
+	PG          libs.DB
+	ES          libs.DB
+	Doris       libs.DB
+	Rocketmq    metric.Rocketmq
 	Metric      metric.Config
 }
 
 type Crontab struct {
 	TenantJob bool
 	TestJob   bool
-}
-
-type Rocketmq struct {
-	RocketmqDashboard string
-	NameServer        string
 }

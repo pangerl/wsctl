@@ -4,15 +4,16 @@
 package metric
 
 import (
-	"github.com/olivere/elastic/v7"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 	"vhagar/inspect"
 	"vhagar/nacos"
+
+	"github.com/olivere/elastic/v7"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func NewMetric(cfg Config, ncfg nacos.Config, mcfg inspect.Rocketmq, corp []*inspect.Corp, es *elastic.Client) *Metric {
+func NewMetric(cfg Config, ncfg nacos.Config, mcfg Rocketmq, corp []*inspect.Corp, es *elastic.Client) *Metric {
 	return &Metric{
 		Corp:     corp,
 		EsClient: es,

@@ -1,7 +1,7 @@
 projectname = "千金药业"
 # 可配置网络代理，支持 http/https 协议
 # proxyURL := "http://proxyuser:proxypassword@proxy_ip:proxy_port"
-proxyurl = "http://wshoto:123qazwsx@172.18.0.17:9253"
+proxyurl = ""
 
 [tenant]
 [[tenant.corp]]

@@ -6,22 +6,22 @@ package inspect
 import (
 	"context"
 	"encoding/json"
-	"github.com/jackc/pgx/v5"
-	"github.com/olivere/elastic/v7"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 	"vhagar/notifier"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/olivere/elastic/v7"
 )
 
 func TenantTask(tenant *Tenant, duration time.Duration) {
 	// 当前时间
 	dateNow := time.Now()
 	log.Print("启动企微租户信息巡检任务")
-	//inspect.GetVersion(url)
 	for _, corp := range tenant.Corp {
-		//fmt.Println(corp.Corpid)
+		// fmt.Println(corp.Corpid)
 		if tenant.PGClient != nil {
 			// 获取租户名
 			tenant.SetCorpName(corp.Corpid)
@@ -45,7 +45,7 @@ func TenantTask(tenant *Tenant, duration time.Duration) {
 		//fmt.Println(*corp)
 	}
 	// 发送巡检报告
-	markdownList := TenantNotifier(tenant, dateNow)
+	markdownList := tenantNotifier(tenant, dateNow)
 	log.Println("任务等待时间", duration)
 	time.Sleep(duration)
 	for _, markdown := range markdownList {
@@ -59,7 +59,7 @@ func TenantTask(tenant *Tenant, duration time.Duration) {
 
 }
 
-func TenantNotifier(t *Tenant, dateNow time.Time) []*notifier.WeChatMarkdown {
+func tenantNotifier(t *Tenant, dateNow time.Time) []*notifier.WeChatMarkdown {
 
 	var inspectList []*notifier.WeChatMarkdown
 	isalert = false
@@ -98,6 +98,8 @@ func tenantMarkdown(headString string, Corp []*Corp, users []string) *notifier.W
 			Content: builder.String(),
 		},
 	}
+
+	// fmt.Println("调试信息", builder.String())
 	return markdown
 }
 func generateCorpString(corp *Corp) string {

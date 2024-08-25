@@ -6,10 +6,18 @@ package libs
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"log"
-	"vhagar/inspect"
+
+	"github.com/jackc/pgx/v5"
 )
+
+type DB struct {
+	Ip       string
+	Port     int
+	Username string
+	Password string
+	Sslmode  bool
+}
 
 type PGClient struct {
 	Conn map[string]*pgx.Conn
@@ -24,7 +32,7 @@ func (dbClient *PGClient) Close() {
 	}
 }
 
-func NewPGClient(conf inspect.DB) (*PGClient, error) {
+func NewPGClient(conf DB) (*PGClient, error) {
 	dbClient := &PGClient{
 		Conn: make(map[string]*pgx.Conn),
 	}
@@ -42,7 +50,7 @@ func NewPGClient(conf inspect.DB) (*PGClient, error) {
 	return dbClient, nil
 }
 
-func connStr(conf inspect.DB, db string) string {
+func connStr(conf DB, db string) string {
 	scheme := map[bool]string{true: "require", false: "disable"}[conf.Sslmode]
 	str := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		conf.Username, conf.Password, conf.Ip, conf.Port, db, scheme)

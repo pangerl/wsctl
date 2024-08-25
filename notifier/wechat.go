@@ -24,6 +24,7 @@ type Markdown struct {
 func SendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 
 	jsonStr, _ := json.Marshal(markdown)
+	log.Println("markdown：", jsonStr)
 	//fmt.Println("jsonStr长度：", len(jsonStr))
 	wechatRobotURL := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + robotKey
 

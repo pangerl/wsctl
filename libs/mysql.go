@@ -7,15 +7,14 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"vhagar/inspect"
 )
 
 // 连接数据库的编码格式
 var charset string = "utf8"
 
-func NewMysqlClient(conf inspect.DB, dbName string) (*sql.DB, error) {
+func NewMysqlClient(conf DB, dbName string) (*sql.DB, error) {
 	// 构建数据库连接字符串
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s",
 		conf.Username, conf.Password, conf.Ip, conf.Port, dbName, charset)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {

@@ -4,10 +4,11 @@
 package cmd
 
 import (
-	"github.com/robfig/cron/v3"
-	"github.com/spf13/cobra"
 	"log"
 	"vhagar/inspect"
+
+	"github.com/robfig/cron/v3"
+	"github.com/spf13/cobra"
 )
 
 var crontabCmd = &cobra.Command{
@@ -33,9 +34,7 @@ func crontabJob() {
 	// 每日巡检 job
 	if CONFIG.Crontab.TenantJob {
 		log.Println("初始化 Tenant 对象")
-		tenant := inspect.NewTenant(
-			CONFIG.ES, CONFIG.PG, CONFIG.ProjectName, CONFIG.ProxyURL,
-			CONFIG.Tenant.Corp, CONFIG.Tenant.Userlist, CONFIG.Tenant.Robotkey)
+		tenant := NewTenant(CONFIG)
 		// 加入定时任务
 		_, err := c.AddFunc(CONFIG.Tenant.Scheducron, func() {
 			inspect.TenantTask(tenant, duration)
