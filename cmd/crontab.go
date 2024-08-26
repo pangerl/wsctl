@@ -34,7 +34,7 @@ func crontabJob() {
 	duration := inspect.GetRandomDuration()
 	// 每日巡检 job
 	if CONFIG.Crontab.TenantJob {
-		log.Println("初始化 Tenant 对象")
+		// 初始化 Tenant 对象
 		tenant := NewTenant(CONFIG)
 		// 创建ESClient，PGClient
 		esClient, _ := libs.NewESClient(CONFIG.ES)
@@ -49,6 +49,7 @@ func crontabJob() {
 		}()
 		tenant.ESClient = esClient
 		tenant.PGClient = pgClient
+		tenant.Corp = CONFIG.Tenant.Corp
 		// 加入定时任务
 		_, err := c.AddFunc(CONFIG.Tenant.Scheducron, func() {
 			inspect.TenantTask(tenant, duration)
