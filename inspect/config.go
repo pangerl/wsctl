@@ -4,9 +4,9 @@
 package inspect
 
 import (
-	"vhagar/libs"
-
+	"database/sql"
 	"github.com/olivere/elastic/v7"
+	"vhagar/libs"
 )
 
 type Tenant struct {
@@ -15,10 +15,12 @@ type Tenant struct {
 	ProxyURL    string
 	Corp        []*Corp
 	Scheducron  string
+	Rocketmq    libs.Rocketmq
 	Robotkey    []string
 	Userlist    []string
 	ESClient    *elastic.Client
 	PGClient    *libs.PGClient
+	MysqlClient *sql.DB
 }
 
 type Corp struct {

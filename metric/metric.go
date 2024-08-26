@@ -4,26 +4,12 @@
 package metric
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
-	"vhagar/inspect"
-	"vhagar/nacos"
-
-	"github.com/olivere/elastic/v7"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func NewMetric(cfg Config, ncfg nacos.Config, mcfg Rocketmq, corp []*inspect.Corp, es *elastic.Client) *Metric {
-	return &Metric{
-		Corp:     corp,
-		EsClient: es,
-		Rocketmq: mcfg,
-		Metric:   cfg,
-		Nacos:    ncfg,
-	}
-}
-
-func (m *Metric) StartMetric() {
+func StartMetric(m *Metric) {
 
 	if m.Metric.Wsapp {
 		go setprobeHTTPStatusCode(m.Nacos)

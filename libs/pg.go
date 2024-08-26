@@ -7,21 +7,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 
 	"github.com/jackc/pgx/v5"
 )
-
-type DB struct {
-	Ip       string
-	Port     int
-	Username string
-	Password string
-	Sslmode  bool
-}
-
-type PGClient struct {
-	Conn map[string]*pgx.Conn
-}
 
 // Close 关闭所有数据库连接
 func (dbClient *PGClient) Close() {
@@ -52,7 +41,9 @@ func NewPGClient(conf DB) (*PGClient, error) {
 
 func connStr(conf DB, db string) string {
 	scheme := map[bool]string{true: "require", false: "disable"}[conf.Sslmode]
+	// 对密码进行 URL 编码
+	encodedPassword := url.QueryEscape(conf.Password)
 	str := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		conf.Username, conf.Password, conf.Ip, conf.Port, db, scheme)
+		conf.Username, encodedPassword, conf.Ip, conf.Port, db, scheme)
 	return str
 }

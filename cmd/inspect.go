@@ -13,6 +13,7 @@ import (
 
 var (
 	rocketmq bool
+	doris    bool
 )
 
 // inspectCmd represents the version command
@@ -21,12 +22,25 @@ var inspectCmd = &cobra.Command{
 	Short: "项目巡检",
 	Long:  `获取项目的企业数据，活跃数，会话数`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// 初始化Tenant
+		tenant := NewTenant(CONFIG)
 		switch {
-		//case rocketmq:
-		//	mqTask()
+		case rocketmq:
+			tenant.Rocketmq = CONFIG.Rocketmq
+			inspect.RocketmqTask(tenant)
+		case doris:
+			// 创建 mysqlClinet
+			mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris, "wshoto")
+			defer func() {
+				if mysqlClinet != nil {
+					err := mysqlClinet.Close()
+					if err != nil {
+						return
+					}
+				}
+			}()
+			tenant.MysqlClient = mysqlClinet
 		default:
-			// 执行巡检 job
-			tenant := NewTenant(CONFIG)
 			// 创建ESClient，PGClient
 			esClient, _ := libs.NewESClient(CONFIG.ES)
 			pgClient, _ := libs.NewPGClient(CONFIG.PG)
@@ -40,6 +54,7 @@ var inspectCmd = &cobra.Command{
 			}()
 			tenant.ESClient = esClient
 			tenant.PGClient = pgClient
+			tenant.Corp = CONFIG.Tenant.Corp
 			inspect.TenantTask(tenant, 0)
 		}
 	},
@@ -48,6 +63,7 @@ var inspectCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(inspectCmd)
 	inspectCmd.Flags().BoolVarP(&rocketmq, "rocketmq", "m", false, "获取 rocketmq broker 信息")
+	inspectCmd.Flags().BoolVarP(&doris, "doris", "d", false, "检查 doris 服务")
 
 }
 
@@ -58,7 +74,6 @@ func NewTenant(cfg *Config) *inspect.Tenant {
 		ProjectName: cfg.ProjectName,
 		ProxyURL:    cfg.ProxyURL,
 		Version:     "v4.5",
-		Corp:        cfg.Tenant.Corp,
 		Userlist:    cfg.Tenant.Userlist,
 		Robotkey:    cfg.Tenant.Robotkey,
 	}

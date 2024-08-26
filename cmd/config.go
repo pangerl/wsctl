@@ -26,7 +26,7 @@ type Config struct {
 	PG          libs.DB
 	ES          libs.DB
 	Doris       libs.DB
-	Rocketmq    metric.Rocketmq
+	Rocketmq    libs.Rocketmq
 	Metric      metric.Config
 }
 

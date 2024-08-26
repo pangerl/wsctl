@@ -54,7 +54,7 @@ sslmode = false
 ip = "192.9.253.196"
 port = 9030
 username = "root"
-password = "Wshoto!@2024"
+password = "Wshoto@2024"
 sslmode = false
 
 [nacos]
