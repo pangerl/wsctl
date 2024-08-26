@@ -4,6 +4,14 @@ projectname = "千金药业"
 proxyurl = ""
 
 [tenant]
+
+# 配置定时任务，每天09:30启动巡检任务
+scheducron = "30 09 * * *"
+# 巡检机器人，支持配置多个机器人 "5c8daf9d-bebb-4453-bab4-aa3fe56eeac3"
+robotkey = ["8ab989f5-d86f-4c99-b95f-5d23a30eb351"]
+# 告警@人 ["lanpang", "mark"]
+userlist = []
+
 [[tenant.corp]]
 corpid = "wxbe45d6b56a61e293"
 # 是否开通会话存档功能
@@ -20,13 +28,6 @@ convenabled = true
 [[tenant.corp]]
 corpid = "wwe2007d5a571677f3"
 convenabled = false
-
-# 配置定时任务，每天09:30启动巡检任务
-scheducron = "30 09 * * *"
-# 巡检机器人，支持配置多个机器人 "5c8daf9d-bebb-4453-bab4-aa3fe56eeac3"
-robotkey = ["8ab989f5-d86f-4c99-b95f-5d23a30eb351"]
-# 告警@人 ["lanpang", "mark"]
-userlist = []
 
 [crontab]
 tenantjob = true

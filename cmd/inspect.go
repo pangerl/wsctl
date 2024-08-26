@@ -27,6 +27,19 @@ var inspectCmd = &cobra.Command{
 		default:
 			// 执行巡检 job
 			tenant := NewTenant(CONFIG)
+			// 创建ESClient，PGClient
+			esClient, _ := libs.NewESClient(CONFIG.ES)
+			pgClient, _ := libs.NewPGClient(CONFIG.PG)
+			defer func() {
+				if pgClient != nil {
+					pgClient.Close()
+				}
+				if esClient != nil {
+					esClient.Stop()
+				}
+			}()
+			tenant.ESClient = esClient
+			tenant.PGClient = pgClient
 			inspect.TenantTask(tenant, 0)
 		}
 	},
@@ -40,24 +53,12 @@ func init() {
 
 func NewTenant(cfg *Config) *inspect.Tenant {
 	log.Println("初始化 Tenant 对象")
-	esClient, _ := libs.NewESClient(cfg.ES)
-	pgClient, _ := libs.NewPGClient(cfg.PG)
-	defer func() {
-		if pgClient != nil {
-			pgClient.Close()
-		}
-		if esClient != nil {
-			esClient.Stop()
-		}
-	}()
 
 	tenant := &inspect.Tenant{
 		ProjectName: cfg.ProjectName,
 		ProxyURL:    cfg.ProxyURL,
 		Version:     "v4.5",
 		Corp:        cfg.Tenant.Corp,
-		ESClient:    esClient,
-		PGClient:    pgClient,
 		Userlist:    cfg.Tenant.Userlist,
 		Robotkey:    cfg.Tenant.Robotkey,
 	}

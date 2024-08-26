@@ -6,6 +6,7 @@ package cmd
 import (
 	"log"
 	"vhagar/inspect"
+	"vhagar/libs"
 
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
@@ -35,6 +36,19 @@ func crontabJob() {
 	if CONFIG.Crontab.TenantJob {
 		log.Println("初始化 Tenant 对象")
 		tenant := NewTenant(CONFIG)
+		// 创建ESClient，PGClient
+		esClient, _ := libs.NewESClient(CONFIG.ES)
+		pgClient, _ := libs.NewPGClient(CONFIG.PG)
+		defer func() {
+			if pgClient != nil {
+				pgClient.Close()
+			}
+			if esClient != nil {
+				esClient.Stop()
+			}
+		}()
+		tenant.ESClient = esClient
+		tenant.PGClient = pgClient
 		// 加入定时任务
 		_, err := c.AddFunc(CONFIG.Tenant.Scheducron, func() {
 			inspect.TenantTask(tenant, duration)

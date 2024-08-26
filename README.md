@@ -1,65 +1,81 @@
 
+vhagar
+======
 
->vhagar: 瓦格哈尔，冰与火之歌，龙之家族中最大的一条龙。
+### wsctl 微盛运维管理工具
 
-### 使用 cobra-cli 工具
+特性
+------
 
-安装工具：`go install github.com/spf13/cobra-cli@latest`
+* 企微租户巡检
+* 中间件监控
 
-**创建和初始化项目**
-
-```bash
-mkdir vhagar
-go mod init cobra
-# 项目初始化
-cobra-cli init
-# 增加功能
-cobra-cli add version
-# 编译
-go build -o vhagar
-# 执行
-./vhagar
-```
-
-### 开发
+安装
+------
+#### 二进制文件
 
 ```bash
-# 安装第三方库
-go get github.com/BurntSushi/toml
-go get github.com/tidwall/gjson
-go get github.com/olekukonko/tablewriter
-go get github.com/gin-gonic/gin
-go get github.com/olivere/elastic/v7
-go get github.com/jackc/pgx/v5
-go get github.com/robfig/cron/v3
-go get github.com/apache/rocketmq-client-go/v2
-go get -u github.com/go-sql-driver/mysql
-# 剔除不必要的依赖
-go mod tidy
+# 修改配置文件
+vim config.toml
+# 调试模式，单次运行
+[root@localhost vhagar]# ./wsctl inspect
+2024/08/19 18:07:41 Info: 读取配置文件 config.toml
+2024/08/19 18:07:41 开始项目巡检
+2024/08/19 18:07:41 启动企微租户巡检任务
+2024/08/19 18:07:44 任务等待时间 0s
+2024/08/19 18:07:44 推送企微机器人 response Status:200 OK
+2024/08/19 18:07:44 推送企微机器人 response Status:200 OK
+# 调度模式，定时任务
+[root@localhost vhagar]# ./wsctl crontab
+2024/08/19 18:08:40 Info: 读取配置文件 config.toml
+2024/08/19 18:08:40 启动任务调度
+# 后台运行
+nohup ./wsctl crontab > /dev/null 2>&1 &
 ```
-### 编译部署
 
-```shell
+#### 源码编译
+
+```bash
+git clone https://github.com/pangerl/vhagar.git
 cd vhagar
-# 调试运行，第一次运行，会自动安装三方库
-go run main.go
-# 编译，指定二进制文件名：alarm_go_v3.7
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o wsctl
-# 查看帮助
-./wsctl -h
+go build -o wsctl
+```
+#### Docker
+```bash
+# 修改配置文件
+vim config.toml
+# 后台启动
+docker-compose up -d
 ```
 
-### 生成镜像
+快速上手
+------
 
-```shell
-cd vhagar
-# 编译打包，指定tag
-docker build -t vhagar:v1.0 .
-# 查找镜像
-docker images|grep vhagar
-# 推送到tcr
-docker tag 31f29de3d9cb ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
-docker push ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
-# 离线镜像
-docker save -o vhagar_v1.0 ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
+### 查看帮助
+
+```bash
+[root@localhost vhagar]# ./wsctl -h
+A longer description that vhagar
+
+Usage:
+  wsctl [flags]
+  wsctl [command]
+
+Available Commands:
+  check       检查服务
+  completion  Generate the autocompletion script for the specified shell
+  crontab      启动定时任务
+  help        Help about any command
+  inspect     项目巡检
+  metric      监控指标
+  nacos       服务健康检查工具
+  version     查看版本
+
+Flags:
+  -c, --config string   config file (default "config.toml")
+  -h, --help            help for wsctl
+
+Use "wsctl [command] --help" for more information about a command.
 ```
+
+### 项目巡检
