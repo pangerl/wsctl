@@ -73,7 +73,7 @@ func NewTenant(cfg *Config) *inspect.Tenant {
 	tenant := &inspect.Tenant{
 		ProjectName: cfg.ProjectName,
 		ProxyURL:    cfg.ProxyURL,
-		Version:     "v4.5",
+		Version:     "v4.6",
 		Userlist:    cfg.Tenant.Userlist,
 		Robotkey:    cfg.Tenant.Robotkey,
 	}
