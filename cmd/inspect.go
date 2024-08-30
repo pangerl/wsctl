@@ -30,7 +30,7 @@ var inspectCmd = &cobra.Command{
 			inspect.RocketmqTask(tenant)
 		case doris:
 			// 创建 mysqlClinet
-			mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris, "wshoto")
+			mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris.Config, "wshoto")
 			defer func() {
 				if mysqlClinet != nil {
 					err := mysqlClinet.Close()
@@ -40,6 +40,7 @@ var inspectCmd = &cobra.Command{
 				}
 			}()
 			tenant.MysqlClient = mysqlClinet
+			inspect.DorisTask(tenant, 0)
 		default:
 			// 创建ESClient，PGClient
 			esClient, _ := libs.NewESClient(CONFIG.ES)
@@ -71,11 +72,12 @@ func NewTenant(cfg *Config) *inspect.Tenant {
 	log.Println("初始化 Tenant 对象")
 
 	tenant := &inspect.Tenant{
-		ProjectName: cfg.ProjectName,
-		ProxyURL:    cfg.ProxyURL,
-		Version:     "v4.6",
-		Userlist:    cfg.Tenant.Userlist,
-		Robotkey:    cfg.Tenant.Robotkey,
+		ProjectName:   cfg.ProjectName,
+		ProxyURL:      cfg.ProxyURL,
+		Version:       "v4.6",
+		Userlist:      cfg.Tenant.Userlist,
+		Robotkey:      cfg.Tenant.Robotkey,
+		DorisRobotkey: cfg.Doris.Robotkey,
 	}
 	return tenant
 

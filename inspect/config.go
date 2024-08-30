@@ -10,17 +10,23 @@ import (
 )
 
 type Tenant struct {
-	ProjectName string
-	Version     string
-	ProxyURL    string
-	Corp        []*Corp
-	Scheducron  string
-	Rocketmq    libs.Rocketmq
-	Robotkey    []string
-	Userlist    []string
-	ESClient    *elastic.Client
-	PGClient    *libs.PGClient
-	MysqlClient *sql.DB
+	ProjectName        string
+	Version            string
+	ProxyURL           string
+	Crontab            bool
+	Corp               []*Corp
+	Scheducron         string
+	Rocketmq           libs.Rocketmq
+	Robotkey           []string
+	DorisRobotkey      []string
+	Userlist           []string
+	ESClient           *elastic.Client
+	PGClient           *libs.PGClient
+	MysqlClient        *sql.DB
+	FailedJobs         []string
+	StaffCount         int
+	UseAnalyseCount    int
+	CustomerGroupCount int
 }
 
 type Corp struct {
@@ -35,4 +41,11 @@ type Corp struct {
 	DauNum               int64
 	WauNum               int64
 	MauNum               int64
+}
+
+type Doris struct {
+	Config     libs.DB
+	Scheducron string
+	Crontab    bool
+	Robotkey   []string
 }

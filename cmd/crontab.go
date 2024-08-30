@@ -32,10 +32,10 @@ func crontabJob() {
 	c := cron.New() //创建一个cron实例
 	// 获取等待时间
 	duration := inspect.GetRandomDuration()
-	// 每日巡检 job
-	if CONFIG.Crontab.TenantJob {
-		// 初始化 Tenant 对象
-		tenant := NewTenant(CONFIG)
+	// 初始化 Tenant 对象
+	tenant := NewTenant(CONFIG)
+	// 租户巡检 job
+	if CONFIG.Tenant.Crontab {
 		// 创建ESClient，PGClient
 		esClient, _ := libs.NewESClient(CONFIG.ES)
 		pgClient, _ := libs.NewPGClient(CONFIG.PG)
@@ -58,10 +58,21 @@ func crontabJob() {
 			log.Printf("Failed to add crontab job: %s \n", err)
 		}
 	}
-	// 测试任务
-	if CONFIG.Crontab.TestJob {
-		_, err := c.AddFunc("* * * * *", func() {
-			testjob()
+	//  doris 巡检 job
+	if CONFIG.Doris.Crontab {
+		// 创建 mysqlClinet
+		mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris.Config, "wshoto")
+		defer func() {
+			if mysqlClinet != nil {
+				err := mysqlClinet.Close()
+				if err != nil {
+					return
+				}
+			}
+		}()
+		tenant.MysqlClient = mysqlClinet
+		_, err := c.AddFunc(CONFIG.Doris.Scheducron, func() {
+			inspect.DorisTask(tenant, duration)
 		})
 		if err != nil {
 			log.Printf("Failed to add crontab job: %s \n", err)

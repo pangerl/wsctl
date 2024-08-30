@@ -73,7 +73,7 @@ func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
 	return result, err
 }
 
-func mqDetailToMarkdown(data ClusterData, ProjectName string) *notifier.WeChatMarkdown {
+func mqDetailMarkdown(data ClusterData, ProjectName string) *notifier.WeChatMarkdown {
 
 	var builder strings.Builder
 	var brokercount int

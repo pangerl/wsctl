@@ -20,17 +20,16 @@ var (
 type Config struct {
 	ProjectName string
 	ProxyURL    string
-	Crontab     Crontab
 	Nacos       nacos.Config
 	Tenant      inspect.Tenant
 	PG          libs.DB
 	ES          libs.DB
-	Doris       libs.DB
+	Doris       inspect.Doris
 	Rocketmq    libs.Rocketmq
 	Metric      metric.Config
 }
 
-type Crontab struct {
-	TenantJob bool
-	TestJob   bool
-}
+//type Crontab struct {
+//	TenantJob bool
+//	TestJob   bool
+//}

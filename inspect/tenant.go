@@ -16,12 +16,12 @@ import (
 	"github.com/olivere/elastic/v7"
 )
 
-func tenantNotifier(t *Tenant, dateNow time.Time) []*notifier.WeChatMarkdown {
+func tenantNotifier(t *Tenant) []*notifier.WeChatMarkdown {
 
 	var inspectList []*notifier.WeChatMarkdown
 	isalert = false
 
-	headString := headCorpString(t, dateNow)
+	headString := headCorpString(t)
 
 	length := len(t.Corp)
 	// 每次返回8个租户的信息
@@ -80,12 +80,12 @@ func generateCorpString(corp *Corp) string {
 
 	return builder.String()
 }
-func headCorpString(t *Tenant, dateNow time.Time) string {
+func headCorpString(t *Tenant) string {
 	var builder strings.Builder
 	// 组装巡检内容
 	builder.WriteString("# 每日巡检报告 " + t.Version + "\n")
 	builder.WriteString("**项目名称：**<font color='info'>" + t.ProjectName + "</font>\n")
-	builder.WriteString("**巡检时间：**<font color='info'>" + dateNow.Format("2006-01-02") + "</font>\n")
+	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n")
 
 	return builder.String()

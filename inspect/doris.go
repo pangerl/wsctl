@@ -3,23 +3,149 @@
 // @Desc
 package inspect
 
-// 查询多行数据
-//func selectFailedJob(id int, db *sql.DB) {
-//	sqlStr := "select id,name,age from user where id>?"
-//	rows, err := db.Query(sqlStr, id)
-//	if err != nil {
-//		fmt.Println("数据查询失败. err:", err)
-//	}
-//	defer rows.Close()
-//	// 循环读数据
-//	for rows.Next() {
-//		var u user
-//		err := rows.Scan(&u.id, &u.name, &u.age)
-//		if err != nil {
-//			fmt.Println("数据读取失败. err:", err)
-//			return
-//		}
-//		// 输出数据
-//		fmt.Printf("id:%d name:%s age:%d\n", u.id, u.name, u.age)
-//	}
-//}
+import (
+	"database/sql"
+	"log"
+	"strconv"
+	"strings"
+	"time"
+	"vhagar/notifier"
+)
+
+// 查询失败的job
+func selectFailedJob(queryTime string, db *sql.DB) []string {
+	// 定义查询语句
+	query := `
+	SELECT
+	   name
+	FROM
+	   sys_job
+	WHERE
+	   frequency = 'd'
+	   AND status = 1
+	   AND name NOT LIKE '%dwd_%'
+	   AND name != 'ads_bi_mbr_staff_ptt_mall_statistics'
+	   AND name != 'ads_bi_mbr_staff_sales_conversion'
+	   AND last_execute_time < ?`
+	rows, err := db.Query(query, queryTime)
+	if err != nil {
+		log.Println("数据查询失败. err:", err)
+		return nil
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Printf("Failed info: %s \n", err)
+		}
+	}(rows)
+
+	// 创建一个切片来存储结果
+	var failedJobs []string
+
+	// 处理查询结果
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			log.Printf("Failed info: %s \n", err)
+			return nil
+		}
+		failedJobs = append(failedJobs, name)
+	}
+	// 输出结果
+	//fmt.Println("Failed Job Names:", failedJobs)
+	return failedJobs
+}
+
+// 查询员工统计表
+func selectStaffCount(queryTime string, db *sql.DB) int {
+	// 定义查询语句
+	query := `
+	SELECT
+		count(1) data_cnt
+	from
+		ads_bi_mbr_staff_pull_new_d
+	where
+		ds = ?
+		and date_type = 'day';`
+	rows := db.QueryRow(query, queryTime)
+	// 处理查询结果
+	var staffCount int
+	err := rows.Scan(&staffCount)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1
+	}
+	return staffCount
+}
+
+// 使用分析表
+func selectUseAnalyseCount(queryTime string, db *sql.DB) int {
+	// 定义查询语句
+	query := `
+	SELECT
+		count(1) data_cnt
+	from
+		qw_user_use_analyse_d
+	where
+		ds = ?;`
+	rows := db.QueryRow(query, queryTime)
+	// 处理查询结果
+	var useAnalyseCount int
+	err := rows.Scan(&useAnalyseCount)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1
+	}
+	return useAnalyseCount
+}
+
+// 客户群统计表
+func selectCustomerGroupCount(queryTime string, db *sql.DB) int {
+	// 定义查询语句
+	query := `
+	SELECT
+		count(1) data_cnt
+	from
+		dws_customer_group_st_h
+	where
+		ds = ?;`
+	rows := db.QueryRow(query, queryTime)
+	// 处理查询结果
+	var customerGroupCount int
+	err := rows.Scan(&customerGroupCount)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1
+	}
+	return customerGroupCount
+}
+
+func dorisToMarkdown(t *Tenant) *notifier.WeChatMarkdown {
+
+	var builder strings.Builder
+
+	failedJobCount := len(t.FailedJobs)
+	// 组装巡检内容
+	builder.WriteString("# Doris 巡检 \n")
+	builder.WriteString("**项目名称：**<font color='info'>" + t.ProjectName + "</font>\n")
+	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
+	builder.WriteString("**Job失败数：**<font color='info'>" + strconv.Itoa(failedJobCount) + "</font>\n")
+
+	for _, jobName := range t.FailedJobs {
+		builder.WriteString("> <font color='red'>" + jobName + "</font>\n")
+	}
+	builder.WriteString("\n")
+	builder.WriteString("=======**昨天各表增量数据**========\n\n")
+	builder.WriteString("**员工统计表：**<font color='info'>" + strconv.Itoa(t.StaffCount) + "</font>\n")
+	builder.WriteString("**使用分析表：**<font color='info'>" + strconv.Itoa(t.UseAnalyseCount) + "</font>\n")
+	builder.WriteString("**客户群统计表：**<font color='info'>" + strconv.Itoa(t.CustomerGroupCount) + "</font>\n")
+
+	markdown := &notifier.WeChatMarkdown{
+		MsgType: "markdown",
+		Markdown: &notifier.Markdown{
+			Content: builder.String(),
+		},
+	}
+
+	return markdown
+}

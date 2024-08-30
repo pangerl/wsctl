@@ -4,6 +4,8 @@ projectname = "测试企业"
 proxyurl = ""
 
 [tenant]
+# 启用定时任务
+crontab = true
 # 配置定时任务，每天09:30启动巡检任务
 scheducron = "30 09 * * *"
 # 巡检机器人，支持配置多个机器人
@@ -15,11 +17,6 @@ userlist = []
 corpid = "xxxxxxxx"
 # 是否开通会话存档功能
 convenabled = true
-
-[crontab]
-tenantjob = true
-testjob = false
-
 
 [pg]
 ip = "x.x.x.x"
@@ -36,6 +33,14 @@ password = "xxx"
 sslmode = false
 
 [doris]
+# 启用定时任务
+crontab = true
+# 配置定时任务，每天09:30启动巡检任务
+scheducron = "30 09 * * *"
+# 巡检机器人，支持配置多个机器人
+robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
+
+[doris.config]
 ip = "x.x.x.x"
 port = 9030
 username = "root"
