@@ -22,15 +22,15 @@ var inspectCmd = &cobra.Command{
 	Short: "项目巡检",
 	Long:  `获取项目的企业数据，活跃数，会话数`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// 初始化Tenant
-		tenant := NewTenant(CONFIG)
+		// 初始化 inspect
+		_inspect := NewInspect(CONFIG)
 		switch {
 		case rocketmq:
-			tenant.Rocketmq = CONFIG.Rocketmq
-			inspect.RocketmqTask(tenant)
+			_inspect.Rocketmq = CONFIG.Rocketmq
+			inspect.RocketmqTask(_inspect)
 		case doris:
 			// 创建 mysqlClinet
-			mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris.Config, "wshoto")
+			mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris, "wshoto")
 			defer func() {
 				if mysqlClinet != nil {
 					err := mysqlClinet.Close()
@@ -39,8 +39,10 @@ var inspectCmd = &cobra.Command{
 					}
 				}
 			}()
-			tenant.MysqlClient = mysqlClinet
-			inspect.DorisTask(tenant, 0)
+			_inspect.Doris = &inspect.Doris{
+				MysqlClient: mysqlClinet,
+			}
+			inspect.DorisTask(_inspect, 0)
 		default:
 			// 创建ESClient，PGClient
 			esClient, _ := libs.NewESClient(CONFIG.ES)
@@ -53,10 +55,12 @@ var inspectCmd = &cobra.Command{
 					esClient.Stop()
 				}
 			}()
-			tenant.ESClient = esClient
-			tenant.PGClient = pgClient
-			tenant.Corp = CONFIG.Tenant.Corp
-			inspect.TenantTask(tenant, 0)
+			_inspect.Tenant = &inspect.Tenant{
+				ESClient: esClient,
+				PGClient: pgClient,
+				Corp:     CONFIG.Tenant.Corp,
+			}
+			inspect.TenantTask(_inspect, 0)
 		}
 	},
 }
@@ -68,17 +72,14 @@ func init() {
 
 }
 
-func NewTenant(cfg *Config) *inspect.Tenant {
-	log.Println("初始化 Tenant 对象")
+func NewInspect(cfg *Config) *inspect.Inspect {
+	log.Println("初始化 Inspect 对象")
 
-	tenant := &inspect.Tenant{
-		ProjectName:   cfg.ProjectName,
-		ProxyURL:      cfg.ProxyURL,
-		Version:       "v4.6",
-		Userlist:      cfg.Tenant.Userlist,
-		Robotkey:      cfg.Tenant.Robotkey,
-		DorisRobotkey: cfg.Doris.Robotkey,
+	_inspect := &inspect.Inspect{
+		ProjectName: cfg.ProjectName,
+		ProxyURL:    cfg.ProxyURL,
+		Notifier:    cfg.Notifier,
 	}
-	return tenant
+	return _inspect
 
 }

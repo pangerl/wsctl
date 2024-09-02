@@ -50,7 +50,8 @@ func preFunc() {
 		if _, err := toml.DecodeFile(cfgFile, CONFIG); err != nil {
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
-		//log.Println(CONFIG.Tenant.Robotkey)
+		//log.Println(CONFIG.Cron)
+		//log.Println(CONFIG.Cron["tenant"].Crontab)
 		//log.Println(CONFIG.Tenant.Scheducron)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.PG)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.ES)

@@ -120,25 +120,25 @@ func selectCustomerGroupCount(queryTime string, db *sql.DB) int {
 	return customerGroupCount
 }
 
-func dorisToMarkdown(t *Tenant) *notifier.WeChatMarkdown {
+func dorisToMarkdown(doris *Doris, name string) *notifier.WeChatMarkdown {
 
 	var builder strings.Builder
 
-	failedJobCount := len(t.FailedJobs)
+	failedJobCount := len(doris.FailedJobs)
 	// 组装巡检内容
 	builder.WriteString("# Doris 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + t.ProjectName + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + name + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**Job失败数：**<font color='info'>" + strconv.Itoa(failedJobCount) + "</font>\n")
 
-	for _, jobName := range t.FailedJobs {
+	for _, jobName := range doris.FailedJobs {
 		builder.WriteString("> <font color='red'>" + jobName + "</font>\n")
 	}
-	builder.WriteString("\n")
-	builder.WriteString("=======**昨天各表增量数据**========\n\n")
-	builder.WriteString("**员工统计表：**<font color='info'>" + strconv.Itoa(t.StaffCount) + "</font>\n")
-	builder.WriteString("**使用分析表：**<font color='info'>" + strconv.Itoa(t.UseAnalyseCount) + "</font>\n")
-	builder.WriteString("**客户群统计表：**<font color='info'>" + strconv.Itoa(t.CustomerGroupCount) + "</font>\n")
+	builder.WriteString("==================\n")
+	builder.WriteString("**昨天各表增量数据**\n\n")
+	builder.WriteString("**员工统计表：**<font color='info'>" + strconv.Itoa(doris.StaffCount) + "</font>\n")
+	builder.WriteString("**使用分析表：**<font color='info'>" + strconv.Itoa(doris.UseAnalyseCount) + "</font>\n")
+	builder.WriteString("**客户群统计表：**<font color='info'>" + strconv.Itoa(doris.CustomerGroupCount) + "</font>\n")
 
 	markdown := &notifier.WeChatMarkdown{
 		MsgType: "markdown",

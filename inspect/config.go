@@ -9,24 +9,22 @@ import (
 	"vhagar/libs"
 )
 
+// 每日巡检版本
+var version = "v4.6"
+
+type Inspect struct {
+	ProjectName string
+	ProxyURL    string
+	Rocketmq    libs.Rocketmq
+	Notifier    map[string]Notifier
+	Tenant      *Tenant
+	Doris       *Doris
+}
+
 type Tenant struct {
-	ProjectName        string
-	Version            string
-	ProxyURL           string
-	Crontab            bool
-	Corp               []*Corp
-	Scheducron         string
-	Rocketmq           libs.Rocketmq
-	Robotkey           []string
-	DorisRobotkey      []string
-	Userlist           []string
-	ESClient           *elastic.Client
-	PGClient           *libs.PGClient
-	MysqlClient        *sql.DB
-	FailedJobs         []string
-	StaffCount         int
-	UseAnalyseCount    int
-	CustomerGroupCount int
+	Corp     []*Corp
+	ESClient *elastic.Client
+	PGClient *libs.PGClient
 }
 
 type Corp struct {
@@ -44,8 +42,14 @@ type Corp struct {
 }
 
 type Doris struct {
-	Config     libs.DB
-	Scheducron string
-	Crontab    bool
-	Robotkey   []string
+	MysqlClient        *sql.DB
+	FailedJobs         []string
+	StaffCount         int
+	UseAnalyseCount    int
+	CustomerGroupCount int
+}
+
+type Notifier struct {
+	Robotkey []string
+	Userlist []string
 }

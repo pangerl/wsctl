@@ -32,10 +32,10 @@ func crontabJob() {
 	c := cron.New() //创建一个cron实例
 	// 获取等待时间
 	duration := inspect.GetRandomDuration()
-	// 初始化 Tenant 对象
-	tenant := NewTenant(CONFIG)
+	// 初始化 inspect
+	_inspect := NewInspect(CONFIG)
 	// 租户巡检 job
-	if CONFIG.Tenant.Crontab {
+	if CONFIG.Cron["tenant"].Crontab {
 		// 创建ESClient，PGClient
 		esClient, _ := libs.NewESClient(CONFIG.ES)
 		pgClient, _ := libs.NewPGClient(CONFIG.PG)
@@ -47,21 +47,23 @@ func crontabJob() {
 				esClient.Stop()
 			}
 		}()
-		tenant.ESClient = esClient
-		tenant.PGClient = pgClient
-		tenant.Corp = CONFIG.Tenant.Corp
+		_inspect.Tenant = &inspect.Tenant{
+			ESClient: esClient,
+			PGClient: pgClient,
+			Corp:     CONFIG.Tenant.Corp,
+		}
 		// 加入定时任务
-		_, err := c.AddFunc(CONFIG.Tenant.Scheducron, func() {
-			inspect.TenantTask(tenant, duration)
+		_, err := c.AddFunc(CONFIG.Cron["tenant"].Scheducron, func() {
+			inspect.TenantTask(_inspect, duration)
 		})
 		if err != nil {
 			log.Printf("Failed to add crontab job: %s \n", err)
 		}
 	}
 	//  doris 巡检 job
-	if CONFIG.Doris.Crontab {
+	if CONFIG.Cron["tenant"].Crontab {
 		// 创建 mysqlClinet
-		mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris.Config, "wshoto")
+		mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris, "wshoto")
 		defer func() {
 			if mysqlClinet != nil {
 				err := mysqlClinet.Close()
@@ -70,9 +72,11 @@ func crontabJob() {
 				}
 			}
 		}()
-		tenant.MysqlClient = mysqlClinet
-		_, err := c.AddFunc(CONFIG.Doris.Scheducron, func() {
-			inspect.DorisTask(tenant, duration)
+		_inspect.Doris = &inspect.Doris{
+			MysqlClient: mysqlClinet,
+		}
+		_, err := c.AddFunc(CONFIG.Cron["doris"].Scheducron, func() {
+			inspect.DorisTask(_inspect, duration)
 		})
 		if err != nil {
 			log.Printf("Failed to add crontab job: %s \n", err)

@@ -16,12 +16,12 @@ import (
 	"github.com/olivere/elastic/v7"
 )
 
-func tenantNotifier(t *Tenant) []*notifier.WeChatMarkdown {
+func tenantNotifier(t *Tenant, name string, userlist []string) []*notifier.WeChatMarkdown {
 
 	var inspectList []*notifier.WeChatMarkdown
 	isalert = false
 
-	headString := headCorpString(t)
+	headString := headCorpString(t, name)
 
 	length := len(t.Corp)
 	// 每次返回8个租户的信息
@@ -33,7 +33,7 @@ func tenantNotifier(t *Tenant) []*notifier.WeChatMarkdown {
 			end = length
 		}
 		slice := t.Corp[n:end]
-		markdown := tenantMarkdown(headString, slice, t.Userlist)
+		markdown := tenantMarkdown(headString, slice, userlist)
 		inspectList = append(inspectList, markdown)
 	}
 	return inspectList
@@ -80,11 +80,11 @@ func generateCorpString(corp *Corp) string {
 
 	return builder.String()
 }
-func headCorpString(t *Tenant) string {
+func headCorpString(t *Tenant, name string) string {
 	var builder strings.Builder
 	// 组装巡检内容
-	builder.WriteString("# 每日巡检报告 " + t.Version + "\n")
-	builder.WriteString("**项目名称：**<font color='info'>" + t.ProjectName + "</font>\n")
+	builder.WriteString("# 每日巡检报告 " + version + "\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + name + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n")
 
