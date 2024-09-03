@@ -43,8 +43,9 @@ func preFunc() {
 		}
 	}()
 	if _, err := os.Stat(cfgFile); err != nil {
-		if !os.IsExist(err) {
-			log.Fatalf("Failed Info: 读取配置文件报错 %s", err)
+		if os.IsNotExist(err) {
+			log.Println("config.toml 文件不存在，创建模板配置文件")
+			createTempConfig()
 		}
 	} else {
 		if _, err := toml.DecodeFile(cfgFile, CONFIG); err != nil {

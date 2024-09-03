@@ -6,11 +6,11 @@ package libs
 import "github.com/jackc/pgx/v5"
 
 type DB struct {
-	Ip       string
-	Port     int
-	Username string
-	Password string
-	Sslmode  bool
+	Ip       string `toml:"ip"`
+	Port     int    `toml:"port"`
+	Username string `toml:"username"`
+	Password string `toml:"password"`
+	Sslmode  bool   `toml:"sslmode"`
 }
 
 type PGClient struct {
@@ -18,6 +18,6 @@ type PGClient struct {
 }
 
 type Rocketmq struct {
-	RocketmqDashboard string
-	NameServer        string
+	RocketmqDashboard string `toml:"rocketmqdashboard"`
+	NameServer        string `toml:"nameserver"`
 }

@@ -51,6 +51,16 @@ docker-compose up -d
 快速上手
 ------
 
+### 生成模板配置
+
+```bash
+[root@localhost vhagar]# ./wsctl
+2024/09/03 11:22:18 读取配置文件 config.toml
+2024/09/03 11:22:18 config.toml 文件不存在，创建模板配置文件
+2024/09/03 11:22:18 config.toml.tml：创建成功
+2024/09/03 11:22:18 wsctl go go go！！！
+```
+
 ### 查看帮助
 
 ```bash

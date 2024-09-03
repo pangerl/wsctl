@@ -65,6 +65,7 @@ func RocketmqTask(inspect *Inspect) {
 }
 
 func DorisTask(inspect *Inspect, duration time.Duration) {
+	log.Print("启动 doris 巡检任务")
 	// 获取当前零点时间
 	todayTime := getZeroTime(time.Now())
 	yesterday := todayTime.AddDate(0, 0, -1)

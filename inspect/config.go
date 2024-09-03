@@ -28,8 +28,8 @@ type Tenant struct {
 }
 
 type Corp struct {
-	Corpid               string
-	Convenabled          bool
+	Corpid               string `json:"corpid"`
+	Convenabled          bool   `json:"convenabled"`
 	CorpName             string
 	MessageNum           int64
 	UserNum              int
@@ -50,6 +50,6 @@ type Doris struct {
 }
 
 type Notifier struct {
-	Robotkey []string
-	Userlist []string
+	Robotkey []string `json:"robotkey"`
+	Userlist []string `json:"userlist"`
 }

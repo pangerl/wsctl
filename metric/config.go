@@ -20,8 +20,8 @@ type Metric struct {
 }
 
 type Config struct {
-	Port         string
-	Wsapp        bool
-	Rocketmq     bool
-	Conversation bool
+	Port         string `json:"port"`
+	Wsapp        bool   `json:"wsapp"`
+	Rocketmq     bool   `json:"rocketmq"`
+	Conversation bool   `json:"conversation"`
 }

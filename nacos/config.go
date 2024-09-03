@@ -15,10 +15,10 @@ type Nacos struct {
 }
 
 type Config struct {
-	Server    string
-	Username  string
-	Password  string
-	Namespace string
+	Server    string `json:"server"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	Namespace string `json:"namespace"`
 }
 
 type ClusterStatus struct {
