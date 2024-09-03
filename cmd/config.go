@@ -40,7 +40,7 @@ type crontab struct {
 }
 
 func createTempConfig() {
-
+	log.Printf("创建配置文件模板")
 	config := &Config{
 		Cron: map[string]crontab{
 			"tenant": {Crontab: false, Scheducron: "30 09 * * *"},
@@ -55,7 +55,7 @@ func createTempConfig() {
 		},
 	}
 	// 创建并打开文件
-	file, err := os.Create("config.toml.tml")
+	file, err := os.Create(cfgFile)
 	if err != nil {
 		log.Fatalf("Error creating config file: %v", err)
 	}
@@ -70,6 +70,6 @@ func createTempConfig() {
 	if err := encoder.Encode(config); err != nil {
 		log.Fatalf("Error encoding config to TOML: %v", err)
 	}
-	log.Println("config.toml.tml：创建成功")
+	log.Printf("配置文件创建成功： %s", cfgFile)
 
 }
