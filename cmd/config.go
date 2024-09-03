@@ -29,11 +29,14 @@ type Config struct {
 	Tenant      inspect.Tenant              `toml:"tenant"`
 	PG          libs.DB                     `toml:"pg"`
 	ES          libs.DB                     `toml:"es"`
-	Doris       libs.DB                     `toml:"doris"`
+	Doris       dorisCfg                    `toml:"doris"`
 	Rocketmq    libs.Rocketmq               `toml:"rocketmq"`
 	Metric      metric.Config               `toml:"metric"`
 }
-
+type dorisCfg struct {
+	libs.DB
+	HttpPort int `toml:"httpport"`
+}
 type crontab struct {
 	Crontab    bool   `toml:"crontab"`
 	Scheducron string `toml:"scheducron"`

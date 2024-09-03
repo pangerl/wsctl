@@ -30,7 +30,7 @@ var inspectCmd = &cobra.Command{
 			inspect.RocketmqTask(_inspect)
 		case doris:
 			// 创建 mysqlClinet
-			mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris, "wshoto")
+			mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris.DB, "wshoto")
 			defer func() {
 				if mysqlClinet != nil {
 					err := mysqlClinet.Close()

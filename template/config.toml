@@ -49,6 +49,7 @@ proxyurl = ""
     username = "root"
     password = "xxx"
     sslmode = false
+    httpPort = 18030
 
 [nacos]
     server = "http://x.x.x.x:8848"
