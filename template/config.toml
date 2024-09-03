@@ -23,6 +23,7 @@ proxyurl = ""
     [notifier.tenant]
         robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
         userlist = []   # 告警@人 ["lanpang", "mark"]
+        ispush = false   # 是否推送运营平台
     [notifier.doris]
         robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
     [notifier.rocketmq]
