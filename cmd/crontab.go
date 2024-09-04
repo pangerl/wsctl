@@ -91,6 +91,6 @@ func crontabJob() {
 	}
 }
 
-func testjob() {
-	log.Printf("大王叫我来巡山，巡了南山巡北山。。。 \n")
-}
+//func testjob() {
+//	log.Printf("大王叫我来巡山，巡了南山巡北山。。。 \n")
+//}

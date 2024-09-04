@@ -3,7 +3,7 @@ projectname = "测试企业"
 # proxyURL := "http://proxyuser:proxypassword@proxy_ip:proxy_port"
 proxyurl = ""
 
-# 租户配置
+# 租户配置，如果是服务商模式，租户填写加密 ID
 [tenant]
     [[tenant.corp]]
         corpid = "xxxxxxxx"

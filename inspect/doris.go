@@ -5,7 +5,11 @@ package inspect
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -129,6 +133,11 @@ func dorisToMarkdown(doris *Doris, name string) *notifier.WeChatMarkdown {
 	builder.WriteString("# Doris 巡检 \n")
 	builder.WriteString("**项目名称：**<font color='info'>" + name + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
+	builder.WriteString("**BE节点总数：**<font color='info'>" + strconv.Itoa(doris.TotalBackendNum) + "</font>\n")
+	builder.WriteString("**在线节点数：**<font color='info'>" + strconv.Itoa(doris.OnlineBackendNum) + "</font>\n")
+
+	builder.WriteString("==================\n")
+
 	builder.WriteString("**Job失败数：**<font color='info'>" + strconv.Itoa(failedJobCount) + "</font>\n")
 
 	for _, jobName := range doris.FailedJobs {
@@ -148,4 +157,41 @@ func dorisToMarkdown(doris *Doris, name string) *notifier.WeChatMarkdown {
 	}
 
 	return markdown
+}
+
+func checkbehealth(doris *Doris) {
+	//url := "http://10.166.3.35:18030/api/health"
+	healthUrl := fmt.Sprintf("http://%s:%d/api/health", doris.DB.Ip, doris.DorisCfg.HttpPort)
+
+	// 发起 HTTP GET 请求
+	resp, err := http.Get(healthUrl)
+	if err != nil {
+		log.Printf("Error making request: %v", err)
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Failed info: %s \n", err)
+		}
+	}(resp.Body)
+
+	// 检查响应状态码
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Error: received status code %d", resp.StatusCode)
+	}
+
+	// 读取响应体
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading body: %v", err)
+	}
+
+	// 解析 JSON 响应
+	var response dorisResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		log.Printf("Error unmarshalling json: %v", err)
+	}
+
+	doris.OnlineBackendNum = response.Data.OnlineBackendNum
+	doris.TotalBackendNum = response.Data.TotalBackendNum
 }

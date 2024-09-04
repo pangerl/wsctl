@@ -39,7 +39,12 @@ func tenantDetail(tenant *Tenant) {
 			tenant.SetActiveNum(corp.Corpid, dateNow)
 			// 获取会话数
 			if corp.Convenabled {
-				tenant.SetMessageNum(corp.Corpid, dateNow)
+				var suiteId string
+				if strings.HasPrefix(corp.Corpid, "wpIaoBE") {
+					suiteId, _ = querySuiteId(tenant.PGClient.Conn["qv30"], corp.Corpid)
+				}
+				suiteId = corp.Corpid
+				tenant.SetMessageNum(suiteId, dateNow)
 			}
 		}
 		//fmt.Println(*corp)
@@ -294,6 +299,18 @@ func queryCorpName(conn *pgx.Conn, corpid string) (string, error) {
 		return "-1", err
 	}
 	return corpName, nil
+}
+
+// 解密 ID
+func querySuiteId(conn *pgx.Conn, corpid string) (string, error) {
+	var suiteId string
+	query := "SELECT suite_id FROM qw_base_tenant_corp_info WHERE tenant_id=$1 LIMIT 1"
+	err := conn.QueryRow(context.Background(), query, corpid).Scan(&suiteId)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return "-1", err
+	}
+	return suiteId, nil
 }
 
 // 员工数

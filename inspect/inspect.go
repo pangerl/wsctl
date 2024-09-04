@@ -75,6 +75,8 @@ func DorisTask(inspect *Inspect, duration time.Duration) {
 		customerGroupCount := selectCustomerGroupCount(yesterdayTime.String(), inspect.Doris.MysqlClient)
 		inspect.Doris.CustomerGroupCount = customerGroupCount
 	}
+	// 检查 BE 节点健康
+	checkbehealth(inspect.Doris)
 	// 发送巡检报告
 	markdown := dorisToMarkdown(inspect.Doris, inspect.ProjectName)
 	log.Println("任务等待时间", duration)

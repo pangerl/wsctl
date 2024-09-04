@@ -41,6 +41,7 @@ var inspectCmd = &cobra.Command{
 			}()
 			_inspect.Doris = &inspect.Doris{
 				MysqlClient: mysqlClinet,
+				DorisCfg:    CONFIG.Doris,
 			}
 			inspect.DorisTask(_inspect, 0)
 		default:

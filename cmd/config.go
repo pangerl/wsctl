@@ -29,7 +29,7 @@ type Config struct {
 	Tenant      inspect.Tenant              `toml:"tenant"`
 	PG          libs.DB                     `toml:"pg"`
 	ES          libs.DB                     `toml:"es"`
-	Doris       dorisCfg                    `toml:"doris"`
+	Doris       inspect.DorisCfg            `toml:"doris"`
 	Rocketmq    libs.Rocketmq               `toml:"rocketmq"`
 	Metric      metric.Config               `toml:"metric"`
 }
