@@ -39,12 +39,7 @@ func tenantDetail(tenant *Tenant) {
 			tenant.SetActiveNum(corp.Corpid, dateNow)
 			// 获取会话数
 			if corp.Convenabled {
-				var suiteId string
-				if strings.HasPrefix(corp.Corpid, "wpIaoBE") {
-					suiteId, _ = querySuiteId(tenant.PGClient.Conn["qv30"], corp.Corpid)
-				}
-				suiteId = corp.Corpid
-				tenant.SetMessageNum(suiteId, dateNow)
+				tenant.SetMessageNum(corp.Corpid, dateNow)
 			}
 		}
 		//fmt.Println(*corp)
@@ -153,7 +148,12 @@ func (t *Tenant) SetMessageNum(corpid string, dateNow time.Time) {
 	date := dateNow.AddDate(0, 0, -1)
 	startTime := getZeroTime(date).UnixNano() / 1e6
 	endTime := getZeroTime(dateNow).UnixNano() / 1e6
-	messagenum, _ := countMessageNum(t.ESClient, corpid, startTime, endTime)
+	var suiteId string
+	if strings.HasPrefix(corpid, "wpIaoBE") {
+		suiteId, _ = querySuiteId(t.PGClient.Conn["qv30"], corpid)
+	}
+	suiteId = corpid
+	messagenum, _ := countMessageNum(t.ESClient, suiteId, startTime, endTime)
 	for _, corp := range t.Corp {
 		if corp.Corpid == corpid {
 			corp.MessageNum = messagenum
