@@ -63,7 +63,7 @@ func crontabJob() {
 	//  doris 巡检 job
 	if CONFIG.Cron["tenant"].Crontab {
 		// 创建 mysqlClinet
-		mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris, "wshoto")
+		mysqlClinet, _ := libs.NewMysqlClient(CONFIG.Doris.DB, "wshoto")
 		defer func() {
 			if mysqlClinet != nil {
 				err := mysqlClinet.Close()
