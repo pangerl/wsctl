@@ -148,11 +148,11 @@ func (t *Tenant) SetMessageNum(corpid string, dateNow time.Time) {
 	date := dateNow.AddDate(0, 0, -1)
 	startTime := getZeroTime(date).UnixNano() / 1e6
 	endTime := getZeroTime(dateNow).UnixNano() / 1e6
-	var suiteId = corpid
+	var orgCorpId = corpid
 	if strings.HasPrefix(corpid, "wpIaoBE") {
-		suiteId, _ = querySuiteId(t.PGClient.Conn["qv30"], corpid)
+		orgCorpId, _ = queryOrgCorpId(t.PGClient.Conn["qv30"], corpid)
 	}
-	messagenum, _ := countMessageNum(t.ESClient, suiteId, startTime, endTime)
+	messagenum, _ := countMessageNum(t.ESClient, orgCorpId, startTime, endTime)
 	for _, corp := range t.Corp {
 		if corp.Corpid == corpid {
 			corp.MessageNum = messagenum
@@ -301,15 +301,15 @@ func queryCorpName(conn *pgx.Conn, corpid string) (string, error) {
 }
 
 // 解密 ID
-func querySuiteId(conn *pgx.Conn, corpid string) (string, error) {
-	var suiteId string
-	query := "SELECT suite_id FROM qw_base_tenant_corp_info WHERE tenant_id=$1 LIMIT 1"
-	err := conn.QueryRow(context.Background(), query, corpid).Scan(&suiteId)
+func queryOrgCorpId(conn *pgx.Conn, corpid string) (string, error) {
+	var orgCorpId string
+	query := "SELECT org_corp_id FROM qw_base_tenant_corp_info WHERE tenant_id=$1 LIMIT 1"
+	err := conn.QueryRow(context.Background(), query, corpid).Scan(&orgCorpId)
 	if err != nil {
 		log.Printf("Failed info: %s \n", err)
 		return "-1", err
 	}
-	return suiteId, nil
+	return orgCorpId, nil
 }
 
 // 员工数
