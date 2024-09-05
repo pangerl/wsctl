@@ -34,7 +34,7 @@ func NewMysqlClient(conf DB, dbName string) (*sql.DB, error) {
 		log.Println("校验失败", err)
 		return nil, err
 	}
-	log.Println("数据库连接成功！")
+	log.Println("mysql数据库连接成功！")
 	return db, nil
 }
 

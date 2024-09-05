@@ -167,11 +167,13 @@ func checkbehealth(doris *Doris) {
 	resp, err := http.Get(healthUrl)
 	if err != nil {
 		log.Printf("Error making request: %v", err)
+		return
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
 			log.Printf("Failed info: %s \n", err)
+			return
 		}
 	}(resp.Body)
 
@@ -184,12 +186,14 @@ func checkbehealth(doris *Doris) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading body: %v", err)
+		return
 	}
 
 	// 解析 JSON 响应
 	var response dorisResponse
 	if err := json.Unmarshal(body, &response); err != nil {
 		log.Printf("Error unmarshalling json: %v", err)
+		return
 	}
 
 	doris.OnlineBackendNum = response.Data.OnlineBackendNum

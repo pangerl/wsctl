@@ -35,7 +35,7 @@ func NewPGClient(conf DB) (*PGClient, error) {
 		}
 		dbClient.Conn[dbName] = conn
 	}
-
+	log.Println("PG 数据库连接成功！")
 	return dbClient, nil
 }
 

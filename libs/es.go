@@ -32,5 +32,6 @@ func NewESClient(conf DB) (*elastic.Client, string) {
 		log.Printf("Failed to connect to ES: %s \n", err)
 		return nil, esurl
 	}
+	log.Println("ES 连接成功！")
 	return client, esurl
 }
