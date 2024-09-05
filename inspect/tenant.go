@@ -148,11 +148,10 @@ func (t *Tenant) SetMessageNum(corpid string, dateNow time.Time) {
 	date := dateNow.AddDate(0, 0, -1)
 	startTime := getZeroTime(date).UnixNano() / 1e6
 	endTime := getZeroTime(dateNow).UnixNano() / 1e6
-	var suiteId string
+	var suiteId = corpid
 	if strings.HasPrefix(corpid, "wpIaoBE") {
 		suiteId, _ = querySuiteId(t.PGClient.Conn["qv30"], corpid)
 	}
-	suiteId = corpid
 	messagenum, _ := countMessageNum(t.ESClient, suiteId, startTime, endTime)
 	for _, corp := range t.Corp {
 		if corp.Corpid == corpid {
