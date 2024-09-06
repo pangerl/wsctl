@@ -66,8 +66,14 @@ func queryVictoriaMetrics(url string) (*MetricsResponse, error) {
 	return &metricsResponse, nil
 }
 
-func getHostData(baseUrl, key string) {
-	url := baseUrl + "/api/v1/query?query=" + key
+func getHostData(baseUrl string, key ...string) {
+	var url string
+	if len(key) == 1 {
+		url = baseUrl + "/api/v1/query?query=" + key[0]
+	} else {
+		url = baseUrl + "/api/v1/query_range?query=" + key[0]
+	}
+	//fmt.Println(url)
 	response, _ := queryVictoriaMetrics(url)
 	if response.Status != "success" {
 		log.Printf("查询报错，Status: %s \n", response.Status)
@@ -77,11 +83,11 @@ func getHostData(baseUrl, key string) {
 		ident := result.Metric["ident"]
 		host := getHost(ident)
 		switch {
-		case key == "cpu_usage_active":
+		case key[0] == "cpu_usage_active":
 			host.CpuUsageActive, _ = strconv.ParseFloat(result.Value[1].(string), 64)
-		case key == "mem_used_percent":
+		case key[0] == "mem_used_percent":
 			host.MemUsedPercent, _ = strconv.ParseFloat(result.Value[1].(string), 64)
-		case key == "mem_total":
+		case key[0] == "mem_total":
 			host.MemTotal, _ = strconv.ParseFloat(result.Value[1].(string), 64)
 		default:
 			fmt.Printf("xxx")
