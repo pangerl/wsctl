@@ -18,12 +18,28 @@ func tableRender(hosts map[string]*Host) {
 	tabletitle := []string{"IP", "CPU使用率", "内存使用率", "内存大小"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
+	color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
+	tableColor := []tablewriter.Colors{color, color, color, color}
 	for ident, data := range hosts {
-		tabledata := []string{ident, FormatToPercentage(data.CpuUsageActive),
-			FormatToPercentage(data.MemUsedPercent), data.MemTotal}
+		tabledata := []string{ident, formatToPercentage(data.CpuUsageActive),
+			formatToPercentage(data.MemUsedPercent), bytesToGB(data.MemTotal)}
+		// 异常标红
+		if isAlarm(data) {
+			table.Rich(tabledata, tableColor)
+		}
 		table.Append(tabledata)
 	}
 	table.Render()
+}
+
+func isAlarm(host *Host) bool {
+	if host.CpuUsageActive > 90 {
+		return true
+	}
+	if host.MemUsedPercent > 85 {
+		return true
+	}
+	return false
 }
 
 func queryVictoriaMetrics(url string) (*MetricsResponse, error) {
@@ -62,11 +78,11 @@ func getHostData(baseUrl, key string) {
 		host := getHost(ident)
 		switch {
 		case key == "cpu_usage_active":
-			host.CpuUsageActive = result.Value[1].(string)
+			host.CpuUsageActive, _ = strconv.ParseFloat(result.Value[1].(string), 64)
 		case key == "mem_used_percent":
-			host.MemUsedPercent = result.Value[1].(string)
+			host.MemUsedPercent, _ = strconv.ParseFloat(result.Value[1].(string), 64)
 		case key == "mem_total":
-			host.MemTotal = result.Value[1].(string)
+			host.MemTotal, _ = strconv.ParseFloat(result.Value[1].(string), 64)
 		default:
 			fmt.Printf("xxx")
 		}
@@ -82,16 +98,13 @@ func getHost(ident string) *Host {
 	return hosts[ident]
 }
 
-func FormatToPercentage(original string) string {
-	// 将字符串转换为浮点数
-	value, err := strconv.ParseFloat(original, 64)
-	if err != nil {
-		log.Printf("Failed info: %s \n", err)
-		return ""
-	}
-
-	// 格式化浮点数，只保留小数点后1位，并添加百分号
+func formatToPercentage(value float64) string {
 	result := fmt.Sprintf("%.1f%%", value)
+	return result
+}
 
+func bytesToGB(bytes float64) string {
+	gb := bytes / (1024 * 1024 * 1024)
+	result := fmt.Sprintf("%.2f GB", gb)
 	return result
 }
