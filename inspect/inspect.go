@@ -30,7 +30,7 @@ func TenantTask(inspect *Inspect, duration time.Duration) {
 	if inspect.Notifier["tenant"].IsPush {
 		log.Println("推送微盛运营平台")
 		// 将 []*Corp 转换为 []any
-		var data []any = make([]any, len(tenant.Corp))
+		var data = make([]any, len(tenant.Corp))
 		for i, c := range tenant.Corp {
 			data[i] = c
 		}

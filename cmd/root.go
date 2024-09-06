@@ -52,7 +52,7 @@ func preFunc() {
 
 			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 		}
-		//log.Println(CONFIG.Cron)
+		log.Println(CONFIG.VictoriaMetrics)
 		//log.Println(CONFIG.Cron["tenant"])
 		//log.Println(CONFIG.Tenant.Scheducron)
 		//fmt.Printf("租户信息: %+v\n", CONFIG.PG)

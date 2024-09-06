@@ -21,17 +21,18 @@ var (
 )
 
 type Config struct {
-	ProjectName string                      `toml:"projectname"`
-	ProxyURL    string                      `toml:"proxyurl"`
-	Cron        map[string]crontab          `toml:"cron"`
-	Notifier    map[string]inspect.Notifier `toml:"notifier"`
-	Nacos       nacos.Config                `toml:"nacos"`
-	Tenant      inspect.Tenant              `toml:"tenant"`
-	PG          libs.DB                     `toml:"pg"`
-	ES          libs.DB                     `toml:"es"`
-	Doris       inspect.DorisCfg            `toml:"doris"`
-	Rocketmq    libs.Rocketmq               `toml:"rocketmq"`
-	Metric      metric.Config               `toml:"metric"`
+	ProjectName     string                      `toml:"projectname"`
+	ProxyURL        string                      `toml:"proxyurl"`
+	VictoriaMetrics string                      `toml:"victoriaMetrics"`
+	Cron            map[string]crontab          `toml:"cron"`
+	Notifier        map[string]inspect.Notifier `toml:"notifier"`
+	Nacos           nacos.Config                `toml:"nacos"`
+	Tenant          inspect.Tenant              `toml:"tenant"`
+	PG              libs.DB                     `toml:"pg"`
+	ES              libs.DB                     `toml:"es"`
+	Doris           inspect.DorisCfg            `toml:"doris"`
+	Rocketmq        libs.Rocketmq               `toml:"rocketmq"`
+	Metric          metric.Config               `toml:"metric"`
 }
 
 type crontab struct {
