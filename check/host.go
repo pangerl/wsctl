@@ -9,8 +9,10 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -20,7 +22,10 @@ func tableRender(hosts map[string]*Host) {
 	table.SetHeader(tabletitle)
 	color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
 	tableColor := []tablewriter.Colors{color, color, color, color}
-	for ident, data := range hosts {
+	// ident 排序
+	identList := ipSort(hosts)
+	for _, ident := range identList {
+		data := hosts[ident]
 		tabledata := []string{ident, formatToPercentage(data.CpuUsageActive),
 			formatToPercentage(data.MemUsedPercent), bytesToGB(data.MemTotal),
 			formatToPercentage(data.DiskUsedPercent["/"]), formatToPercentage(data.DiskUsedPercent["/data"])}
@@ -31,6 +36,22 @@ func tableRender(hosts map[string]*Host) {
 		table.Append(tabledata)
 	}
 	table.Render()
+}
+
+func ipSort(hosts map[string]*Host) []string {
+	keys := make([]string, 0, len(hosts))
+	for k := range hosts {
+		keys = append(keys, k)
+	}
+
+	// 按 IP 地址排序
+	sort.Slice(keys, func(i, j int) bool {
+		ip1 := net.ParseIP(keys[i])
+		ip2 := net.ParseIP(keys[j])
+		return ip1.String() < ip2.String() // 进行字符串比较，即可实现排序
+	})
+
+	return keys
 }
 
 func isAlarm(host *Host) bool {
