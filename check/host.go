@@ -15,14 +15,15 @@ import (
 )
 
 func tableRender(hosts map[string]*Host) {
-	tabletitle := []string{"IP", "CPU使用率", "内存使用率", "内存大小"}
+	tabletitle := []string{"IP", "CPU使用率", "内存使用率", "内存大小", "系统盘使用率", "数据盘使用率"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
 	color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
 	tableColor := []tablewriter.Colors{color, color, color, color}
 	for ident, data := range hosts {
 		tabledata := []string{ident, formatToPercentage(data.CpuUsageActive),
-			formatToPercentage(data.MemUsedPercent), bytesToGB(data.MemTotal)}
+			formatToPercentage(data.MemUsedPercent), bytesToGB(data.MemTotal),
+			formatToPercentage(data.DiskUsedPercent["/"]), formatToPercentage(data.DiskUsedPercent["/data"])}
 		// 异常标红
 		if isAlarm(data) {
 			table.Rich(tabledata, tableColor)
@@ -37,6 +38,12 @@ func isAlarm(host *Host) bool {
 		return true
 	}
 	if host.MemUsedPercent > 85 {
+		return true
+	}
+	if host.DiskUsedPercent["/"] > 80 {
+		return true
+	}
+	if host.DiskUsedPercent["/data"] > 85 {
 		return true
 	}
 	return false
@@ -70,8 +77,11 @@ func getHostData(baseUrl string, key ...string) {
 	var url string
 	if len(key) == 1 {
 		url = baseUrl + "/api/v1/query?query=" + key[0]
+	} else if len(key) == 2 {
+		url = fmt.Sprintf("%s/api/v1/query?query=%s{path='%s'}", baseUrl, key[0], key[1])
 	} else {
-		url = baseUrl + "/api/v1/query_range?query=" + key[0]
+		log.Printf("不支持的参数")
+		return
 	}
 	//fmt.Println(url)
 	response, _ := queryVictoriaMetrics(url)
@@ -89,6 +99,9 @@ func getHostData(baseUrl string, key ...string) {
 			host.MemUsedPercent, _ = strconv.ParseFloat(result.Value[1].(string), 64)
 		case key[0] == "mem_total":
 			host.MemTotal, _ = strconv.ParseFloat(result.Value[1].(string), 64)
+		case key[0] == "disk_used_percent":
+			host.DiskUsedPercent = make(map[string]float64)
+			host.DiskUsedPercent[key[1]], _ = strconv.ParseFloat(result.Value[1].(string), 64)
 		default:
 			fmt.Printf("xxx")
 		}

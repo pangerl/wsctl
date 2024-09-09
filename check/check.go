@@ -12,6 +12,10 @@ func HostCheck(baseUrl string) {
 	getHostData(baseUrl, "mem_used_percent")
 	// 内存 大小
 	getHostData(baseUrl, "mem_total")
+	// 系统盘
+	getHostData(baseUrl, "disk_used_percent", "/")
+	// 数据盘
+	getHostData(baseUrl, "disk_used_percent", "/data")
 	//fmt.Println(hosts)
 	// 输出表格
 	tableRender(hosts)
