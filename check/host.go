@@ -24,6 +24,8 @@ func tableRender(hosts map[string]*Host) {
 	tableColor := []tablewriter.Colors{color, color, color, color, color, color, color, color}
 	// ident 排序
 	identList := ipSort(hosts)
+	// 异常计数
+	var alarmNum int
 	for _, ident := range identList {
 		data := hosts[ident]
 		tabledata := []string{ident, formatToPercentage(data.CpuUsageActive),
@@ -33,9 +35,13 @@ func tableRender(hosts map[string]*Host) {
 		// 异常标红
 		if isAlarm(data) {
 			table.Rich(tabledata, tableColor)
+			alarmNum += 1
 		}
 		table.Append(tabledata)
 	}
+	identNum := len(hosts)
+	caption := fmt.Sprintf("服务器计数: %d, 巡检异常计数: %d.", identNum, alarmNum)
+	table.SetCaption(true, caption)
 	table.Render()
 }
 
