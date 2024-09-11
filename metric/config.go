@@ -6,7 +6,7 @@ package metric
 import (
 	"vhagar/inspect"
 	"vhagar/libs"
-	"vhagar/nacos"
+	"vhagar/task/nacos"
 
 	"github.com/olivere/elastic/v7"
 )

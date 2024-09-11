@@ -9,43 +9,6 @@ import (
 	"vhagar/notifier"
 )
 
-var isalert = false
-
-func TenantTask(inspect *Inspect, duration time.Duration) {
-	tenant := inspect.Tenant
-	// 填充租户信息
-	tenantDetail(tenant)
-	// 发送巡检报告
-	markdownList := tenantNotifier(tenant, inspect.ProjectName, inspect.Notifier["tenant"].Userlist)
-	log.Println("任务等待时间", duration)
-	time.Sleep(duration)
-	for _, markdown := range markdownList {
-		for _, robotkey := range inspect.Notifier["tenant"].Robotkey {
-			err := notifier.SendWecom(markdown, robotkey, inspect.ProxyURL)
-			if err != nil {
-				return
-			}
-		}
-	}
-	if inspect.Notifier["tenant"].IsPush {
-		log.Println("推送微盛运营平台")
-		// 将 []*Corp 转换为 []any
-		var data = make([]any, len(tenant.Corp))
-		for i, c := range tenant.Corp {
-			data[i] = c
-		}
-		inspectBody := notifier.InspectBody{
-			JobType: "tenant",
-			Data:    data,
-		}
-		err := notifier.SendWshoto(&inspectBody, inspect.ProxyURL)
-		if err != nil {
-			return
-		}
-	}
-
-}
-
 func RocketmqTask(inspect *Inspect) {
 	log.Print("启动 rocketmq 巡检任务")
 	clusterdata, _ := GetMQDetail(inspect.Rocketmq.RocketmqDashboard)

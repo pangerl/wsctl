@@ -1,7 +1,7 @@
-// Package check @Author lanpang
+// Package host @Author lanpang
 // @Date 2024/9/6 上午11:31:00
 // @Desc
-package check
+package host
 
 import (
 	"encoding/json"
@@ -14,7 +14,43 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"vhagar/config"
 )
+
+//var hosts = make(map[string]*Host)
+
+//var cfg = &config.Config
+
+func (s *Server) TableRender() {
+	// 获取服务器信息
+	getHostInstance(s)
+	// 输出表格
+	tableRender(s.Hosts)
+}
+
+func CheckHost() {
+	creatorServer := &CreatorServer{}
+	cfg := config.Config
+	server := creatorServer.factoryMethod(cfg)
+	server.TableRender()
+}
+
+func getHostInstance(s *Server) {
+	// CPU 使用率
+	s.getHostData("cpu_usage_active")
+	// 内存 使用率
+	s.getHostData("mem_used_percent")
+	// 内存 大小
+	s.getHostData("mem_total")
+	// 入网流量
+	s.getHostData("rate", "net_bytes_recv", "eth0")
+	// 出网流量
+	s.getHostData("rate", "net_bytes_sent", "eth0")
+	// 系统盘
+	s.getHostData("disk_used_percent", "/")
+	// 数据盘
+	s.getHostData("disk_used_percent", "/data")
+}
 
 func tableRender(hosts map[string]*Host) {
 	tabletitle := []string{"IP", "CPU使用率", "内存使用率", "内存大小", "入网流量", "出网流量", "系统盘使用率", "数据盘使用率"}
@@ -101,8 +137,9 @@ func queryVictoriaMetrics(url string) (*MetricsResponse, error) {
 	return &metricsResponse, nil
 }
 
-func getHostData(baseUrl string, key ...string) {
+func (s *Server) getHostData(key ...string) {
 	var url string
+	var baseUrl = s.vmUrl
 	if len(key) == 1 {
 		url = baseUrl + "/api/v1/query?query=" + key[0]
 	} else if len(key) == 2 {
@@ -121,7 +158,7 @@ func getHostData(baseUrl string, key ...string) {
 	}
 	for _, result := range response.Data.Result {
 		ident := result.Metric["ident"]
-		host := getHost(ident)
+		host := s.getHost(ident)
 		switch {
 		case key[0] == "cpu_usage_active":
 			host.CpuUsageActive, _ = strconv.ParseFloat(result.Value[1].(string), 64)
@@ -142,13 +179,13 @@ func getHostData(baseUrl string, key ...string) {
 	}
 }
 
-func getHost(ident string) *Host {
-	if host, exists := hosts[ident]; exists {
+func (s *Server) getHost(ident string) *Host {
+	if host, exists := s.Hosts[ident]; exists {
 		return host
 	}
 	newHost := Host{}
-	hosts[ident] = &newHost
-	return hosts[ident]
+	s.Hosts[ident] = &newHost
+	return s.Hosts[ident]
 }
 
 func formatToPercentage(value float64) string {
@@ -156,11 +193,6 @@ func formatToPercentage(value float64) string {
 	return result
 }
 
-func bytesToGB(bytes float64) string {
-	gb := bytes / (1024 * 1024 * 1024)
-	result := fmt.Sprintf("%.2f GB", gb)
-	return result
-}
 func formatBytes(bytes float64) string {
 	if bytes < 1024 {
 		return fmt.Sprintf("%.2f B", bytes)

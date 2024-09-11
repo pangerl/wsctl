@@ -1,7 +1,7 @@
-// Package inspect @Author lanpang
+// Package tenant @Author lanpang
 // @Date 2024/8/23 上午11:15:00
 // @Desc
-package inspect
+package tenant
 
 import (
 	"context"
@@ -15,6 +15,43 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/olivere/elastic/v7"
 )
+
+var isalert = false
+
+func TenantTask(inspect *Inspect, duration time.Duration) {
+	tenant := inspect.Tenant
+	// 填充租户信息
+	tenantDetail(tenant)
+	// 发送巡检报告
+	markdownList := tenantNotifier(tenant, inspect.ProjectName, inspect.Notifier["tenant"].Userlist)
+	log.Println("任务等待时间", duration)
+	time.Sleep(duration)
+	for _, markdown := range markdownList {
+		for _, robotkey := range inspect.Notifier["tenant"].Robotkey {
+			err := notifier.SendWecom(markdown, robotkey, inspect.ProxyURL)
+			if err != nil {
+				return
+			}
+		}
+	}
+	if inspect.Notifier["tenant"].IsPush {
+		log.Println("推送微盛运营平台")
+		// 将 []*Corp 转换为 []any
+		var data = make([]any, len(tenant.Corp))
+		for i, c := range tenant.Corp {
+			data[i] = c
+		}
+		inspectBody := notifier.InspectBody{
+			JobType: "tenant",
+			Data:    data,
+		}
+		err := notifier.SendWshoto(&inspectBody, inspect.ProxyURL)
+		if err != nil {
+			return
+		}
+	}
+
+}
 
 func tenantDetail(tenant *Tenant) {
 	// 当前时间
@@ -77,7 +114,7 @@ func tenantMarkdown(headString string, Corp []*Corp, users []string) *notifier.W
 		builder.WriteString(generateCorpString(corp))
 	}
 	if isalert {
-		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + calluser(users))
+		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + callUser(users))
 	}
 	markdown := &notifier.WeChatMarkdown{
 		MsgType: "markdown",

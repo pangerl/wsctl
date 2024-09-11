@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"time"
-	"vhagar/inspect"
+	"vhagar/task/tenant"
 )
 
 var (
@@ -29,7 +29,7 @@ func setMessageCount(m *Metric) {
 		dateNow := time.Now()
 		for _, corp := range m.Corp {
 			if corp.Convenabled {
-				messagenum := inspect.CurrentMessageNum(m.EsClient, corp.Corpid, dateNow)
+				messagenum := tenant.CurrentMessageNum(m.EsClient, corp.Corpid, dateNow)
 				messageCount.WithLabelValues(corp.Corpid).Set(float64(messagenum))
 				log.Printf("corp %s messagenum: %v", corp.Corpid, messagenum)
 			}

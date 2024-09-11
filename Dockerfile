@@ -26,7 +26,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
     rm -rf /var/cache/apk/*
 
 COPY --from=builder /build/wsctl .
-COPY template/config.toml .
+COPY conf/config.toml .
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 

@@ -1,7 +1,7 @@
 // Package check @Author lanpang
 // @Date 2024/9/10 下午6:13:00
 // @Desc
-package check
+package rocketmq
 
 import (
 	"io"
