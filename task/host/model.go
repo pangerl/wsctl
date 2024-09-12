@@ -11,8 +11,6 @@ type Server struct {
 	Hosts map[string]*Host
 }
 
-type CreatorServer struct{}
-
 func newServer(cfg *config.CfgType) *Server {
 	return &Server{
 		cfg.Global,

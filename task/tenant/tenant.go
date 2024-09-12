@@ -6,7 +6,9 @@ package tenant
 import (
 	"context"
 	"encoding/json"
+	"github.com/olekukonko/tablewriter"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +22,7 @@ import (
 
 var isalert = false
 
-func Check() {
+func Check(report bool) {
 	cfg := config.Config
 	tenant := newTenant(cfg)
 	// 创建ESClient，PGClient
@@ -38,10 +40,30 @@ func Check() {
 	tenant.ESClient = esClient
 	// 初始化数据
 	tenant.initData()
-	// 发送机器人
-	tenant.pushRobot(0)
+	// 输出表格
+	tenant.TableRender()
+	if report {
+		// 发送机器人
+		tenant.ReportRobot(0)
+	}
 }
-func (tenant *Tenanter) pushRobot(duration time.Duration) {
+
+func (tenant *Tenanter) TableRender() {
+	tabletitle := []string{"企业名称", "会话数", "员工数", "客户数", "客户群数", "客户群人数", "日活", "周活", "月活"}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(tabletitle)
+	//color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
+	//tableColor := []tablewriter.Colors{color, color, color, color, color, color, color, color}
+	for _, corp := range tenant.Corp {
+		tabledata := []string{corp.CorpName, strconv.FormatInt(corp.MessageNum, 10), strconv.Itoa(corp.UserNum),
+			strconv.FormatInt(corp.CustomerNum, 10), strconv.Itoa(corp.CustomerGroupNum), strconv.Itoa(corp.CustomerGroupUserNum),
+			strconv.FormatInt(corp.DauNum, 10), strconv.FormatInt(corp.WauNum, 10), strconv.FormatInt(corp.MauNum, 10)}
+		table.Append(tabledata)
+	}
+	table.Render()
+}
+
+func (tenant *Tenanter) ReportRobot(duration time.Duration) {
 	// 发送巡检报告
 	markdownList := tenantRender(tenant, tenant.ProjectName, tenant.Notifier["tenant"].Userlist)
 	log.Println("任务等待时间", duration)
@@ -57,7 +79,7 @@ func (tenant *Tenanter) pushRobot(duration time.Duration) {
 
 }
 
-func (tenant *Tenanter) pushWshoto() {
+func (tenant *Tenanter) ReportWshoto() {
 	log.Println("推送微盛运营平台")
 	// 将 []*Corp 转换为 []any
 	var data = make([]any, len(tenant.Corp))
@@ -77,7 +99,7 @@ func (tenant *Tenanter) pushWshoto() {
 func (tenant *Tenanter) initData() {
 	// 当前时间
 	dateNow := time.Now()
-	log.Print("启动企微租户信息巡检任务")
+	log.Print("开始检查企微租户信息")
 	for _, corp := range tenant.Corp {
 		// fmt.Println(corp.Corpid)
 		if tenant.PGClient != nil {

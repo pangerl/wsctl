@@ -12,6 +12,7 @@ import (
 var (
 	_host   bool
 	_tenant bool
+	report  bool
 )
 
 var checkCmd = &cobra.Command{
@@ -23,7 +24,7 @@ var checkCmd = &cobra.Command{
 		case _host:
 			host.Check()
 		case _tenant:
-			tenant.Check()
+			tenant.Check(report)
 		default:
 			//
 		}
@@ -32,7 +33,8 @@ var checkCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(checkCmd)
-	checkCmd.Flags().BoolVarP(&_host, "主机巡检", "s", false, "检查主机的健康状态")
-	checkCmd.Flags().BoolVarP(&_tenant, "企微租户巡检", "t", false, "检查企微租户的状态")
+	checkCmd.Flags().BoolVarP(&_host, "svc", "s", false, "检查主机的健康状态")
+	checkCmd.Flags().BoolVarP(&_tenant, "tenant", "t", false, "检查企微租户的状态")
+	checkCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")
 
 }

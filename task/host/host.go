@@ -23,35 +23,7 @@ import (
 
 // TableRender 输出表格
 func (s *Server) TableRender() {
-	tableRender(s.Hosts)
-}
-
-func Check() {
-	cfg := config.Config
-	server := newServer(cfg)
-	// 获取服务器信息
-	initData(server)
-	server.TableRender()
-}
-
-func initData(s *Server) {
-	// CPU 使用率
-	s.getHostData("cpu_usage_active")
-	// 内存 使用率
-	s.getHostData("mem_used_percent")
-	// 内存 大小
-	s.getHostData("mem_total")
-	// 入网流量
-	s.getHostData("rate", "net_bytes_recv", "eth0")
-	// 出网流量
-	s.getHostData("rate", "net_bytes_sent", "eth0")
-	// 系统盘
-	s.getHostData("disk_used_percent", "/")
-	// 数据盘
-	s.getHostData("disk_used_percent", "/data")
-}
-
-func tableRender(hosts map[string]*Host) {
+	hosts := s.Hosts
 	tabletitle := []string{"IP", "CPU使用率", "内存使用率", "内存大小", "入网流量", "出网流量", "系统盘使用率", "数据盘使用率"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
@@ -78,6 +50,33 @@ func tableRender(hosts map[string]*Host) {
 	caption := fmt.Sprintf("服务器计数: %d, 巡检异常计数: %d.", identNum, alarmNum)
 	table.SetCaption(true, caption)
 	table.Render()
+}
+
+func (s *Server) ReportRobot() {}
+
+func Check() {
+	cfg := config.Config
+	server := newServer(cfg)
+	// 获取服务器信息
+	initData(server)
+	server.TableRender()
+}
+
+func initData(s *Server) {
+	// CPU 使用率
+	s.getHostData("cpu_usage_active")
+	// 内存 使用率
+	s.getHostData("mem_used_percent")
+	// 内存 大小
+	s.getHostData("mem_total")
+	// 入网流量
+	s.getHostData("rate", "net_bytes_recv", "eth0")
+	// 出网流量
+	s.getHostData("rate", "net_bytes_sent", "eth0")
+	// 系统盘
+	s.getHostData("disk_used_percent", "/")
+	// 数据盘
+	s.getHostData("disk_used_percent", "/data")
 }
 
 func ipSort(hosts map[string]*Host) []string {
