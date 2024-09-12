@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/notifier"
 
 	"github.com/jackc/pgx/v5"
@@ -18,42 +20,61 @@ import (
 
 var isalert = false
 
-func TenantTask(inspect *Inspect, duration time.Duration) {
-	tenant := inspect.Tenant
-	// 填充租户信息
-	tenantDetail(tenant)
+func Check() {
+	cfg := config.Config
+	tenant := newTenant(cfg)
+	// 创建ESClient，PGClient
+	esClient, _ := libs.NewESClient(cfg.ES)
+	pgClient, _ := libs.NewPGClient(cfg.PG)
+	defer func() {
+		if pgClient != nil {
+			pgClient.Close()
+		}
+		if esClient != nil {
+			esClient.Stop()
+		}
+	}()
+	tenant.PGClient = pgClient
+	tenant.ESClient = esClient
+	// 初始化数据
+	tenant.initData()
+	// 发送机器人
+	tenant.pushRobot(0)
+}
+func (tenant *Tenanter) pushRobot(duration time.Duration) {
 	// 发送巡检报告
-	markdownList := tenantNotifier(tenant, inspect.ProjectName, inspect.Notifier["tenant"].Userlist)
+	markdownList := tenantRender(tenant, tenant.ProjectName, tenant.Notifier["tenant"].Userlist)
 	log.Println("任务等待时间", duration)
 	time.Sleep(duration)
 	for _, markdown := range markdownList {
-		for _, robotkey := range inspect.Notifier["tenant"].Robotkey {
-			err := notifier.SendWecom(markdown, robotkey, inspect.ProxyURL)
+		for _, robotkey := range tenant.Notifier["tenant"].Robotkey {
+			err := notifier.SendWecom(markdown, robotkey, tenant.ProxyURL)
 			if err != nil {
 				return
 			}
 		}
 	}
-	if inspect.Notifier["tenant"].IsPush {
-		log.Println("推送微盛运营平台")
-		// 将 []*Corp 转换为 []any
-		var data = make([]any, len(tenant.Corp))
-		for i, c := range tenant.Corp {
-			data[i] = c
-		}
-		inspectBody := notifier.InspectBody{
-			JobType: "tenant",
-			Data:    data,
-		}
-		err := notifier.SendWshoto(&inspectBody, inspect.ProxyURL)
-		if err != nil {
-			return
-		}
-	}
 
 }
 
-func tenantDetail(tenant *Tenant) {
+func (tenant *Tenanter) pushWshoto() {
+	log.Println("推送微盛运营平台")
+	// 将 []*Corp 转换为 []any
+	var data = make([]any, len(tenant.Corp))
+	for i, c := range tenant.Corp {
+		data[i] = c
+	}
+	inspectBody := notifier.InspectBody{
+		JobType: "tenant",
+		Data:    data,
+	}
+	err := notifier.SendWshoto(&inspectBody, tenant.ProxyURL)
+	if err != nil {
+		return
+	}
+}
+
+func (tenant *Tenanter) initData() {
 	// 当前时间
 	dateNow := time.Now()
 	log.Print("启动企微租户信息巡检任务")
@@ -83,12 +104,12 @@ func tenantDetail(tenant *Tenant) {
 	}
 }
 
-func tenantNotifier(t *Tenant, name string, userlist []string) []*notifier.WeChatMarkdown {
+func tenantRender(t *Tenanter, name string, userlist []string) []*notifier.WeChatMarkdown {
 
 	var inspectList []*notifier.WeChatMarkdown
 	isalert = false
 
-	headString := headCorpString(t, name)
+	headString := headCorpString(name)
 
 	length := len(t.Corp)
 	// 每次返回8个租户的信息
@@ -105,7 +126,7 @@ func tenantNotifier(t *Tenant, name string, userlist []string) []*notifier.WeCha
 	}
 	return inspectList
 }
-func tenantMarkdown(headString string, Corp []*Corp, users []string) *notifier.WeChatMarkdown {
+func tenantMarkdown(headString string, Corp []*config.Corp, users []string) *notifier.WeChatMarkdown {
 	var builder strings.Builder
 	// 添加巡检头文件
 	builder.WriteString(headString)
@@ -126,7 +147,7 @@ func tenantMarkdown(headString string, Corp []*Corp, users []string) *notifier.W
 	// fmt.Println("调试信息", builder.String())
 	return markdown
 }
-func generateCorpString(corp *Corp) string {
+func generateCorpString(corp *config.Corp) string {
 	var builder strings.Builder
 
 	builder.WriteString("> 企业名称：<font color='info'>" + corp.CorpName + "</font>\n")
@@ -147,7 +168,7 @@ func generateCorpString(corp *Corp) string {
 
 	return builder.String()
 }
-func headCorpString(t *Tenant, name string) string {
+func headCorpString(name string) string {
 	var builder strings.Builder
 	// 组装巡检内容
 	builder.WriteString("# 每日巡检报告 " + version + "\n")
@@ -159,9 +180,9 @@ func headCorpString(t *Tenant, name string) string {
 }
 
 // SetCustomerGroupUserNum 设置客户群人数
-func (t *Tenant) SetCustomerGroupUserNum(corpid string) {
-	customergroupusernum, _ := queryCustomerGroupUserNum(t.PGClient.Conn["customer"], corpid)
-	for _, corp := range t.Corp {
+func (tenant *Tenanter) SetCustomerGroupUserNum(corpid string) {
+	customergroupusernum, _ := queryCustomerGroupUserNum(tenant.PGClient.Conn["customer"], corpid)
+	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerGroupUserNum = customergroupusernum
 			return
@@ -170,9 +191,9 @@ func (t *Tenant) SetCustomerGroupUserNum(corpid string) {
 }
 
 // SetCustomerGroupNum 设置客户群数
-func (t *Tenant) SetCustomerGroupNum(corpid string) {
-	customergroupnum, _ := queryCustomerGroupNum(t.PGClient.Conn["customer"], corpid)
-	for _, corp := range t.Corp {
+func (tenant *Tenanter) SetCustomerGroupNum(corpid string) {
+	customergroupnum, _ := queryCustomerGroupNum(tenant.PGClient.Conn["customer"], corpid)
+	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerGroupNum = customergroupnum
 			return
@@ -181,16 +202,16 @@ func (t *Tenant) SetCustomerGroupNum(corpid string) {
 }
 
 // SetMessageNum 统计昨天的会话数
-func (t *Tenant) SetMessageNum(corpid string, dateNow time.Time) {
+func (tenant *Tenanter) SetMessageNum(corpid string, dateNow time.Time) {
 	date := dateNow.AddDate(0, 0, -1)
 	startTime := getZeroTime(date).UnixNano() / 1e6
 	endTime := getZeroTime(dateNow).UnixNano() / 1e6
 	var orgCorpId = corpid
 	if strings.HasPrefix(corpid, "wpIaoBE") {
-		orgCorpId, _ = queryOrgCorpId(t.PGClient.Conn["qv30"], corpid)
+		orgCorpId, _ = queryOrgCorpId(tenant.PGClient.Conn["qv30"], corpid)
 	}
-	messagenum, _ := countMessageNum(t.ESClient, orgCorpId, startTime, endTime)
-	for _, corp := range t.Corp {
+	messagenum, _ := countMessageNum(tenant.ESClient, orgCorpId, startTime, endTime)
+	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
 			corp.MessageNum = messagenum
 			return
@@ -199,9 +220,9 @@ func (t *Tenant) SetMessageNum(corpid string, dateNow time.Time) {
 }
 
 // SetCorpName 设置租户名称
-func (t *Tenant) SetCorpName(corpid string) {
-	corpName, _ := queryCorpName(t.PGClient.Conn["qv30"], corpid)
-	for _, corp := range t.Corp {
+func (tenant *Tenanter) SetCorpName(corpid string) {
+	corpName, _ := queryCorpName(tenant.PGClient.Conn["qv30"], corpid)
+	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
 			corp.CorpName = corpName
 			return
@@ -210,9 +231,9 @@ func (t *Tenant) SetCorpName(corpid string) {
 }
 
 // SetCustomerNum 设置客户数
-func (t *Tenant) SetCustomerNum(corpid string) {
-	customernum, _ := searchCustomerNum(t.ESClient, corpid)
-	for _, corp := range t.Corp {
+func (tenant *Tenanter) SetCustomerNum(corpid string) {
+	customernum, _ := searchCustomerNum(tenant.ESClient, corpid)
+	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerNum = customernum
 			return
@@ -221,9 +242,9 @@ func (t *Tenant) SetCustomerNum(corpid string) {
 }
 
 // SetUserNum 设置员工数
-func (t *Tenant) SetUserNum(corpid string) {
-	userNum, _ := queryUserNum(t.PGClient.Conn["user"], corpid)
-	for _, corp := range t.Corp {
+func (tenant *Tenanter) SetUserNum(corpid string) {
+	userNum, _ := queryUserNum(tenant.PGClient.Conn["user"], corpid)
+	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
 			corp.UserNum = userNum
 			return
@@ -232,15 +253,15 @@ func (t *Tenant) SetUserNum(corpid string) {
 }
 
 // SetActiveNum 设置活跃数
-func (t *Tenant) SetActiveNum(corpid string, dateNow time.Time) {
+func (tenant *Tenanter) SetActiveNum(corpid string, dateNow time.Time) {
 	dateDau := dateNow.AddDate(0, 0, -1)
 	dateWau := dateNow.AddDate(0, 0, -7)
 	dateMau := dateNow.AddDate(0, -1, 0)
-	for _, corp := range t.Corp {
+	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
-			corp.DauNum, _ = searchActiveNum(t.ESClient, corpid, dateDau, dateNow)
-			corp.WauNum, _ = searchActiveNum(t.ESClient, corpid, dateWau, dateNow)
-			corp.MauNum, _ = searchActiveNum(t.ESClient, corpid, dateMau, dateNow)
+			corp.DauNum, _ = searchActiveNum(tenant.ESClient, corpid, dateDau, dateNow)
+			corp.WauNum, _ = searchActiveNum(tenant.ESClient, corpid, dateWau, dateNow)
+			corp.MauNum, _ = searchActiveNum(tenant.ESClient, corpid, dateMau, dateNow)
 			return
 		}
 	}

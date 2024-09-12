@@ -13,7 +13,7 @@ type Server struct {
 
 type CreatorServer struct{}
 
-func (c *CreatorServer) factoryMethod(cfg *config.CfgType) config.Instances {
+func newServer(cfg *config.CfgType) *Server {
 	return &Server{
 		cfg.Global,
 		cfg.VictoriaMetrics,

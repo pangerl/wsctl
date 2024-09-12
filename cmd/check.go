@@ -6,6 +6,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"vhagar/task/host"
+	"vhagar/task/tenant"
 )
 
 var (
@@ -20,9 +21,9 @@ var checkCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		switch {
 		case _host:
-			host.CheckHost()
+			host.Check()
 		case _tenant:
-		//
+			tenant.Check()
 		default:
 			//
 		}

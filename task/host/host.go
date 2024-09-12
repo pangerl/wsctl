@@ -19,23 +19,22 @@ import (
 
 //var hosts = make(map[string]*Host)
 
-//var cfg = &config.Config
+// var cfg = &config.Config
 
+// TableRender 输出表格
 func (s *Server) TableRender() {
-	// 获取服务器信息
-	getHostInstance(s)
-	// 输出表格
 	tableRender(s.Hosts)
 }
 
-func CheckHost() {
-	creatorServer := &CreatorServer{}
+func Check() {
 	cfg := config.Config
-	server := creatorServer.factoryMethod(cfg)
+	server := newServer(cfg)
+	// 获取服务器信息
+	initData(server)
 	server.TableRender()
 }
 
-func getHostInstance(s *Server) {
+func initData(s *Server) {
 	// CPU 使用率
 	s.getHostData("cpu_usage_active")
 	// 内存 使用率
