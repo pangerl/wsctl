@@ -4,7 +4,6 @@
 package inspect
 
 import (
-	"database/sql"
 	"github.com/olivere/elastic/v7"
 	"vhagar/libs"
 )
@@ -41,34 +40,8 @@ type Corp struct {
 	MauNum               int64  `json:"mauNum"`
 }
 
-type Doris struct {
-	DorisCfg
-	MysqlClient        *sql.DB
-	FailedJobs         []string
-	StaffCount         int
-	UseAnalyseCount    int
-	CustomerGroupCount int
-	OnlineBackendNum   int
-	TotalBackendNum    int
-}
-
-type DorisCfg struct {
-	libs.DB
-	HttpPort int `toml:"httpport"`
-}
-
 type Notifier struct {
 	Robotkey []string `json:"robotkey"`
 	Userlist []string `json:"userlist"`
 	IsPush   bool     `json:"ispush"`
-}
-
-type dorisResponse struct {
-	Msg  string `json:"msg"`
-	Code int    `json:"code"`
-	Data struct {
-		OnlineBackendNum int `json:"online_backend_num"`
-		TotalBackendNum  int `json:"total_backend_num"`
-	} `json:"data"`
-	Count int `json:"count"`
 }

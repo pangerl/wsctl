@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	"vhagar/config"
 )
 
@@ -28,16 +29,19 @@ func Check() {
 		return
 	}
 	nacos.GetNacosInstance()
-	nacos.TableRender()
 	if nacos.Config.Writefile != "" {
 		nacos.WriteFile()
+		return
 	}
-}
-
-func newNacos(cfg *config.CfgType) *Nacos {
-	return &Nacos{
-		Config: cfg.Nacos,
+	if nacos.Watch {
+		log.Printf("监控模式 刷新时间:%s/次\n", nacos.Interval)
+		for {
+			nacos.GetNacosInstance()
+			nacos.TableRender()
+			time.Sleep(nacos.Interval)
+		}
 	}
+	nacos.TableRender()
 }
 
 func (nacos *Nacos) WithAuth() bool {

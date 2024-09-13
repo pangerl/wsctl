@@ -1,7 +1,7 @@
-// Package inspect @Author lanpang
+// Package doris @Author lanpang
 // @Date 2024/8/23 下午7:02:00
 // @Desc
-package inspect
+package doris
 
 import (
 	"database/sql"
@@ -13,8 +13,68 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/notifier"
+	"vhagar/task"
 )
+
+func Check() {
+	cfg := config.Config
+	doris := newDoris(cfg)
+	// 创建 mysqlClinet
+	mysqlClinet, _ := libs.NewMysqlClient(cfg.Doris.DB, "wshoto")
+	defer func() {
+		if mysqlClinet != nil {
+			err := mysqlClinet.Close()
+			if err != nil {
+				return
+			}
+		}
+	}()
+	doris.MysqlClient = mysqlClinet
+	// 初始化数据
+	initData(doris)
+	if doris.Report {
+		// 发送机器人
+		doris.ReportRobot(0)
+	}
+}
+
+func initData(doris *Doris) {
+	log.Print("启动 doris 巡检任务")
+	// 获取当前零点时间
+	todayTime := task.GetZeroTime(time.Now())
+	yesterday := todayTime.AddDate(0, 0, -1)
+	yesterdayTime := task.GetZeroTime(yesterday)
+	if doris.MysqlClient != nil {
+		// 失败任务
+		failedJobs := selectFailedJob(todayTime.String(), doris.MysqlClient)
+		doris.FailedJobs = failedJobs
+		// 员工统计表
+		staffCount := selectStaffCount(yesterdayTime.String(), doris.MysqlClient)
+		doris.StaffCount = staffCount
+		// 使用分析表
+		useAnalyseCount := selectUseAnalyseCount(yesterdayTime.String(), doris.MysqlClient)
+		doris.UseAnalyseCount = useAnalyseCount
+		// 客户群统计表
+		customerGroupCount := selectCustomerGroupCount(yesterdayTime.String(), doris.MysqlClient)
+		doris.CustomerGroupCount = customerGroupCount
+	}
+	// 检查 BE 节点健康
+	checkbehealth(doris)
+}
+
+func (doris *Doris) ReportRobot(duration time.Duration) {
+	// 发送巡检报告
+	markdown := dorisRender(doris, doris.ProjectName)
+	log.Println("任务等待时间", duration)
+	time.Sleep(duration)
+	for _, robotkey := range doris.Notifier["doris"].Robotkey {
+		_ = notifier.SendWecom(markdown, robotkey, doris.ProxyURL)
+	}
+
+}
 
 // 查询失败的job
 func selectFailedJob(queryTime string, db *sql.DB) []string {
@@ -124,7 +184,7 @@ func selectCustomerGroupCount(queryTime string, db *sql.DB) int {
 	return customerGroupCount
 }
 
-func dorisToMarkdown(doris *Doris, name string) *notifier.WeChatMarkdown {
+func dorisRender(doris *Doris, name string) *notifier.WeChatMarkdown {
 
 	var builder strings.Builder
 
@@ -160,7 +220,6 @@ func dorisToMarkdown(doris *Doris, name string) *notifier.WeChatMarkdown {
 }
 
 func checkbehealth(doris *Doris) {
-	//url := "http://10.166.3.35:18030/api/health"
 	healthUrl := fmt.Sprintf("http://%s:%d/api/health", doris.DB.Ip, doris.DorisCfg.HttpPort)
 
 	// 发起 HTTP GET 请求

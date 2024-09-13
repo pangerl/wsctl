@@ -3,10 +3,10 @@
 // @Desc
 package cmd
 
-var (
-	rocketmq bool
-	doris    bool
-)
+//var (
+//	rocketmq bool
+//	doris    bool
+//)
 
 // inspectCmd represents the version command
 //var inspectCmd = &cobra.Command{

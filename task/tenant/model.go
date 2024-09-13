@@ -21,9 +21,7 @@ type Tenanter struct {
 
 func newTenant(cfg *config.CfgType) *Tenanter {
 	return &Tenanter{
-		cfg.Global,
-		cfg.Tenant.Corp,
-		nil,
-		nil,
+		Global: cfg.Global,
+		Corp:   cfg.Tenant.Corp,
 	}
 }

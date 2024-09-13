@@ -15,6 +15,7 @@ import (
 	"vhagar/config"
 	"vhagar/libs"
 	"vhagar/notifier"
+	"vhagar/task"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/olivere/elastic/v7"
@@ -22,7 +23,7 @@ import (
 
 var isalert = false
 
-func Check(report bool) {
+func Check() {
 	cfg := config.Config
 	tenant := newTenant(cfg)
 	// 创建ESClient，PGClient
@@ -42,7 +43,7 @@ func Check(report bool) {
 	tenant.initData()
 	// 输出表格
 	tenant.TableRender()
-	if report {
+	if tenant.Report {
 		// 发送机器人
 		tenant.ReportRobot(0)
 	}
@@ -97,32 +98,35 @@ func (tenant *Tenanter) ReportWshoto() {
 }
 
 func (tenant *Tenanter) initData() {
-	// 当前时间
-	dateNow := time.Now()
 	log.Print("开始检查企微租户信息")
 	for _, corp := range tenant.Corp {
-		// fmt.Println(corp.Corpid)
-		if tenant.PGClient != nil {
-			// 获取租户名
-			tenant.SetCorpName(corp.Corpid)
-			// 获取用户数
-			tenant.SetUserNum(corp.Corpid)
-			// 获取客户群
-			tenant.SetCustomerGroupNum(corp.Corpid)
-			// 获取客户群人数
-			tenant.SetCustomerGroupUserNum(corp.Corpid)
+		tenant.getTenantData(corp)
+	}
+	log.Print("检查成功")
+}
+
+func (tenant *Tenanter) getTenantData(corp *config.Corp) {
+	// 当前时间
+	dateNow := time.Now()
+	if tenant.PGClient != nil {
+		// 获取租户名
+		tenant.SetCorpName(corp.Corpid)
+		// 获取用户数
+		tenant.SetUserNum(corp.Corpid)
+		// 获取客户群
+		tenant.SetCustomerGroupNum(corp.Corpid)
+		// 获取客户群人数
+		tenant.SetCustomerGroupUserNum(corp.Corpid)
+	}
+	if tenant.ESClient != nil {
+		// 获取客户数
+		tenant.SetCustomerNum(corp.Corpid)
+		// 获取活跃数
+		tenant.SetActiveNum(corp.Corpid, dateNow)
+		// 获取会话数
+		if corp.Convenabled {
+			tenant.SetMessageNum(corp.Corpid, dateNow)
 		}
-		if tenant.ESClient != nil {
-			// 获取客户数
-			tenant.SetCustomerNum(corp.Corpid)
-			// 获取活跃数
-			tenant.SetActiveNum(corp.Corpid, dateNow)
-			// 获取会话数
-			if corp.Convenabled {
-				tenant.SetMessageNum(corp.Corpid, dateNow)
-			}
-		}
-		//fmt.Println(*corp)
 	}
 }
 
@@ -157,7 +161,7 @@ func tenantMarkdown(headString string, Corp []*config.Corp, users []string) *not
 		builder.WriteString(generateCorpString(corp))
 	}
 	if isalert {
-		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + callUser(users))
+		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + task.CallUser(users))
 	}
 	markdown := &notifier.WeChatMarkdown{
 		MsgType: "markdown",
@@ -226,8 +230,8 @@ func (tenant *Tenanter) SetCustomerGroupNum(corpid string) {
 // SetMessageNum 统计昨天的会话数
 func (tenant *Tenanter) SetMessageNum(corpid string, dateNow time.Time) {
 	date := dateNow.AddDate(0, 0, -1)
-	startTime := getZeroTime(date).UnixNano() / 1e6
-	endTime := getZeroTime(dateNow).UnixNano() / 1e6
+	startTime := task.GetZeroTime(date).UnixNano() / 1e6
+	endTime := task.GetZeroTime(dateNow).UnixNano() / 1e6
 	var orgCorpId = corpid
 	if strings.HasPrefix(corpid, "wpIaoBE") {
 		orgCorpId, _ = queryOrgCorpId(tenant.PGClient.Conn["qv30"], corpid)
@@ -335,8 +339,8 @@ func countMessageNum(client *elastic.Client, corpid string, startTime, endTime i
 
 // 活跃数
 func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate time.Time) (int64, error) {
-	startTime := getZeroTime(startDate).UnixNano() / 1e6
-	endTime := getZeroTime(endDate).UnixNano() / 1e6
+	startTime := task.GetZeroTime(startDate).UnixNano() / 1e6
+	endTime := task.GetZeroTime(endDate).UnixNano() / 1e6
 	// 创建 bool 查询
 	query := elastic.NewBoolQuery().
 		Must(

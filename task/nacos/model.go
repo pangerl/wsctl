@@ -8,7 +8,15 @@ import (
 	"vhagar/config"
 )
 
+func newNacos(cfg *config.CfgType) *Nacos {
+	return &Nacos{
+		Global: cfg.Global,
+		Config: cfg.Nacos,
+	}
+}
+
 type Nacos struct {
+	config.Global
 	Config      config.NacosCfg
 	Client      http.Client
 	Host        string

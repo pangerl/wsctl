@@ -13,10 +13,6 @@ import (
 //	}
 //}
 
-func getZeroTime(d time.Time) time.Time {
-	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, d.Location())
-}
-
 func getRole(role string) string {
 	if role == "0" {
 		return "Master"

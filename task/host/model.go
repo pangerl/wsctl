@@ -13,9 +13,9 @@ type Server struct {
 
 func newServer(cfg *config.CfgType) *Server {
 	return &Server{
-		cfg.Global,
-		cfg.VictoriaMetrics,
-		make(map[string]*Host),
+		Global: cfg.Global,
+		vmUrl:  cfg.VictoriaMetrics,
+		Hosts:  make(map[string]*Host),
 	}
 }
 
