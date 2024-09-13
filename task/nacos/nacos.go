@@ -15,29 +15,42 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"vhagar/config"
 )
 
 var tablerow []string
 var mutex sync.Mutex
 
-func NewNacos(c Config, writefile string) *Nacos {
-	return &Nacos{
-		Config:    c,
-		Writefile: writefile,
+func Check() {
+	cfg := config.Config
+	nacos := newNacos(cfg)
+	if !nacos.WithAuth() {
+		return
+	}
+	nacos.GetNacosInstance()
+	nacos.TableRender()
+	if nacos.Config.Writefile != "" {
+		nacos.WriteFile()
 	}
 }
 
-func (d *Nacos) WithAuth() bool {
-	log.Println("更新 nacos 的 token")
-	_url := fmt.Sprintf("%s/nacos/v1/auth/login", d.Config.Server)
-	formData := map[string]string{
-		"username": d.Config.Username,
-		"password": d.Config.Password,
+func newNacos(cfg *config.CfgType) *Nacos {
+	return &Nacos{
+		Config: cfg.Nacos,
 	}
-	res := d.post(_url, formData)
+}
+
+func (nacos *Nacos) WithAuth() bool {
+	log.Println("更新 nacos 的 token")
+	_url := fmt.Sprintf("%s/nacos/v1/auth/login", nacos.Config.Server)
+	formData := map[string]string{
+		"username": nacos.Config.Username,
+		"password": nacos.Config.Password,
+	}
+	res := nacos.post(_url, formData)
 	if len(gjson.GetBytes(res, "accessToken").String()) != 0 {
 		//log.Println("Authentication successful...")
-		d.Token = gjson.GetBytes(res, "accessToken").String()
+		nacos.Token = gjson.GetBytes(res, "accessToken").String()
 	} else {
 		log.Println("Authentication failed!")
 		return false
@@ -45,16 +58,16 @@ func (d *Nacos) WithAuth() bool {
 	return true
 }
 
-func (d *Nacos) GetService(url string, namespaceId string, group string) []byte {
+func (nacos *Nacos) GetService(url string, namespaceId string, group string) []byte {
 	_url := fmt.Sprintf("%s/nacos/v1/ns/service/list?pageNo=1&pageSize=500&namespaceId=%s&groupName=%s", url, namespaceId, group)
-	res := d.get(_url)
+	res := nacos.get(_url)
 	return res
 }
 
-func (d *Nacos) GetInstance(url string, servicename string, namespaceId string, group string) []byte {
+func (nacos *Nacos) GetInstance(url string, servicename string, namespaceId string, group string) []byte {
 	_url := fmt.Sprintf("%s/nacos/v1/ns/instance/list?serviceName=%s&namespaceId=%s&groupName=%s", url, servicename, namespaceId, group)
 	//fmt.Println(_url)
-	res := d.get(_url)
+	res := nacos.get(_url)
 	return res
 }
 
@@ -67,7 +80,7 @@ func InString(filed string, array []string) bool {
 	return false
 }
 
-func (d *Nacos) tableAppend(table *tablewriter.Table, data []string) {
+func (nacos *Nacos) tableAppend(table *tablewriter.Table, data []string) {
 	datastr := strings.Join(data, "-")
 	if !InString(datastr, tablerow) {
 		tablerow = append(tablerow, datastr)
@@ -75,15 +88,17 @@ func (d *Nacos) tableAppend(table *tablewriter.Table, data []string) {
 	}
 }
 
-func (d *Nacos) TableRender() {
+func (nacos *Nacos) TableRender() {
 	tablerow = []string{}
-	nacosServer := d.Clusterdata
-	tabletitle := []string{"命名空间", "服务名称", "实例", "健康状态", "主机名", "权重", "组"}
+	nacosServer := nacos.Clusterdata
+	tabletitle := []string{"服务名称", "实例", "健康状态", "主机名", "权重", "组", "命名空间"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
+	table.SetRowLine(true)
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 1})
 	for _, v := range nacosServer.HealthInstance {
-		tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.GroupName}
-		d.tableAppend(table, tabledata)
+		tabledata := []string{v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.GroupName, v.NamespaceName}
+		nacos.tableAppend(table, tabledata)
 	}
 	fmt.Printf("健康实例:(%d 个)\n", table.NumLines())
 	table.Render()
@@ -92,27 +107,27 @@ func (d *Nacos) TableRender() {
 		table.SetHeader(tabletitle)
 		for _, v := range nacosServer.UnHealthInstance {
 			tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.GroupName}
-			d.tableAppend(table, tabledata)
+			nacos.tableAppend(table, tabledata)
 		}
-		fmt.Printf("异常实例:(%d 个)\n", table.NumLines())
+		fmt.Printf("异常实例:(%nacos 个)\n", table.NumLines())
 		table.Render()
 	}
 }
 
-func (d *Nacos) GetNacosInstance() {
+func (nacos *Nacos) GetNacosInstance() {
 	log.Println("更新服务数据")
 	var ser Service
 	var cluster ClusterStatus
-	_url := d.Config.Server
-	namespace := d.Config.Namespace
+	_url := nacos.Config.Server
+	namespace := nacos.Config.Namespace
 	group := "DEFAULT_GROUP"
-	res := d.GetService(_url, namespace, group)
+	res := nacos.GetService(_url, namespace, group)
 	err := json.Unmarshal(res, &ser)
 	if err != nil {
 		fmt.Println(err)
 	}
 	for _, se := range ser.Doms {
-		res := d.GetInstance(_url, se, namespace, group)
+		res := nacos.GetInstance(_url, se, namespace, group)
 		var in Instance
 		err := json.Unmarshal(res, &in)
 		if err != nil {
@@ -137,12 +152,12 @@ func (d *Nacos) GetNacosInstance() {
 			}
 			//fmt.Println(instance)
 		}
-		d.Clusterdata = cluster
+		nacos.Clusterdata = cluster
 	}
-	//fmt.Println(d.Clusterdata.HealthInstance)
+	//fmt.Println(nacos.Clusterdata.HealthInstance)
 }
 
-func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
+func (nacos *Nacos) GetJson(resultType string) (result interface{}, err error) {
 	mutex.Lock()
 	defer func() {
 		mutex.Unlock()
@@ -151,8 +166,8 @@ func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 			err = errors.New("error")
 		}
 	}()
-	var nacos Nacosfile
-	nacosServer := d.Clusterdata
+	var nacosfile Nacosfile
+	nacosServer := nacos.Clusterdata
 	if len(nacosServer.HealthInstance) != 0 {
 		for _, na := range nacosServer.HealthInstance {
 			var ta Nacostarget
@@ -165,16 +180,16 @@ func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 			ta.Labels["ip"] = na.Ip
 			ta.Labels["port"] = na.Port
 			ta.Labels["group"] = na.GroupName
-			nacos.Data = append(nacos.Data, ta)
+			nacosfile.Data = append(nacosfile.Data, ta)
 		}
 
 	}
 
 	if resultType == "json" {
-		result = nacos.Data
+		result = nacosfile.Data
 		return result, err
 	}
-	data, err := json.MarshalIndent(&nacos.Data, "", "  ")
+	data, err := json.MarshalIndent(&nacosfile.Data, "", "  ")
 	if err != nil {
 		fmt.Println("json序列化失败!")
 		result = []byte("[]")
@@ -184,11 +199,11 @@ func (d *Nacos) GetJson(resultType string) (result interface{}, err error) {
 	return result, err
 }
 
-func (d *Nacos) WriteFile() {
+func (nacos *Nacos) WriteFile() {
 	var basedir string
 	var filename string
-	basedir = path.Dir(d.Writefile)
-	filename = path.Base(d.Writefile)
+	basedir = path.Dir(nacos.Config.Writefile)
+	filename = path.Base(nacos.Config.Writefile)
 	if err := os.MkdirAll(basedir, os.ModePerm); err != nil {
 		os.Exit(1)
 	}
@@ -203,7 +218,7 @@ func (d *Nacos) WriteFile() {
 			fmt.Println(err)
 		}
 	}(file)
-	jsondata, err := d.GetJson("byte")
+	jsondata, err := nacos.GetJson("byte")
 	data := make([]byte, 0)
 	var check bool
 	if data, check = jsondata.([]byte); !check {

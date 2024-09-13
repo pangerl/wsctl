@@ -3,22 +3,17 @@
 // @Desc
 package nacos
 
-import "net/http"
+import (
+	"net/http"
+	"vhagar/config"
+)
 
 type Nacos struct {
-	Config      Config
-	Writefile   string
+	Config      config.NacosCfg
 	Client      http.Client
 	Host        string
 	Token       string
 	Clusterdata ClusterStatus
-}
-
-type Config struct {
-	Server    string `json:"server"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	Namespace string `json:"namespace"`
 }
 
 type ClusterStatus struct {

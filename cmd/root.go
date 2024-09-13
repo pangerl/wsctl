@@ -40,8 +40,6 @@ func preFunc() {
 	if _, err := config.InitConfig(cfgFile); err != nil {
 		log.Fatalln("F! failed to init config:", err)
 	}
-	// 初始化 inspect
-	//_inspect := config.NewInspect(cfg)
 }
 
 //func preFunc() {

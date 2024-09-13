@@ -1,0 +1,296 @@
+[
+  {
+    "targets": [
+      "192.9.253.56:%!n(int=6415)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.56",
+      "ip": "192.9.253.56",
+      "namespace": "qw-uat",
+      "port": "6415",
+      "service": "wshoto-bigapp-mall",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.99:%!n(int=6415)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.99",
+      "ip": "192.9.253.99",
+      "namespace": "qw-uat",
+      "port": "6415",
+      "service": "wshoto-bigapp-mall",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.231:%!n(int=8889)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.231",
+      "ip": "192.9.253.231",
+      "namespace": "qw-uat",
+      "port": "8889",
+      "service": "bigdata-apps-server",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.192:%!n(int=8889)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.192",
+      "ip": "192.9.253.192",
+      "namespace": "qw-uat",
+      "port": "8889",
+      "service": "bigdata-apps-server",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.192:%!n(int=6413)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.192",
+      "ip": "192.9.253.192",
+      "namespace": "qw-uat",
+      "port": "6413",
+      "service": "wshoto-bigapp-conversation",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.191:%!n(int=6413)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.191",
+      "ip": "192.9.253.191",
+      "namespace": "qw-uat",
+      "port": "6413",
+      "service": "wshoto-bigapp-conversation",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.99:%!n(int=6411)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.99",
+      "ip": "192.9.253.99",
+      "namespace": "qw-uat",
+      "port": "6411",
+      "service": "wshoto-bigapp-base",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.56:%!n(int=6411)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.56",
+      "ip": "192.9.253.56",
+      "namespace": "qw-uat",
+      "port": "6411",
+      "service": "wshoto-bigapp-base",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.191:%!n(int=6411)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.191",
+      "ip": "192.9.253.191",
+      "namespace": "qw-uat",
+      "port": "6411",
+      "service": "wshoto-bigapp-base",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.232:%!n(int=7044)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.232",
+      "ip": "192.9.253.232",
+      "namespace": "qw-uat",
+      "port": "7044",
+      "service": "wshoto-bigapp-finance",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.231:%!n(int=7044)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.231",
+      "ip": "192.9.253.231",
+      "namespace": "qw-uat",
+      "port": "7044",
+      "service": "wshoto-bigapp-finance",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.192:%!n(int=9806)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.192",
+      "ip": "192.9.253.192",
+      "namespace": "qw-uat",
+      "port": "9806",
+      "service": "wshoto-bigdata-statistics",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.191:%!n(int=9806)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.191",
+      "ip": "192.9.253.191",
+      "namespace": "qw-uat",
+      "port": "9806",
+      "service": "wshoto-bigdata-statistics",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.99:%!n(int=6414)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.99",
+      "ip": "192.9.253.99",
+      "namespace": "qw-uat",
+      "port": "6414",
+      "service": "wshoto-bigapp-uaa",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.56:%!n(int=6414)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.56",
+      "ip": "192.9.253.56",
+      "namespace": "qw-uat",
+      "port": "6414",
+      "service": "wshoto-bigapp-uaa",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.232:%!n(int=6412)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.232",
+      "ip": "192.9.253.232",
+      "namespace": "qw-uat",
+      "port": "6412",
+      "service": "wshoto-bigapp-marketing",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.231:%!n(int=6412)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.231",
+      "ip": "192.9.253.231",
+      "namespace": "qw-uat",
+      "port": "6412",
+      "service": "wshoto-bigapp-marketing",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.192:%!n(int=8182)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.192",
+      "ip": "192.9.253.192",
+      "namespace": "qw-uat",
+      "port": "8182",
+      "service": "wshoto-gateway",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.191:%!n(int=8182)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.191",
+      "ip": "192.9.253.191",
+      "namespace": "qw-uat",
+      "port": "8182",
+      "service": "wshoto-gateway",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.232:%!n(int=6417)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.232",
+      "ip": "192.9.253.232",
+      "namespace": "qw-uat",
+      "port": "6417",
+      "service": "wshoto-bigapp-qwproxy",
+      "weight": "1.0"
+    }
+  },
+  {
+    "targets": [
+      "192.9.253.231:%!n(int=6417)acos"
+    ],
+    "labels": {
+      "group": "DEFAULT_GROUP",
+      "hostname": "192.9.253.231",
+      "ip": "192.9.253.231",
+      "namespace": "qw-uat",
+      "port": "6417",
+      "service": "wshoto-bigapp-qwproxy",
+      "weight": "1.0"
+    }
+  }
+]
