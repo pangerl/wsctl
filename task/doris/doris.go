@@ -7,9 +7,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/olekukonko/tablewriter"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -35,9 +37,25 @@ func Check() {
 	doris.MysqlClient = mysqlClinet
 	// 初始化数据
 	initData(doris)
+	doris.TableRender()
 	if doris.Report {
 		// 发送机器人
 		doris.ReportRobot(0)
+	}
+}
+
+func (doris *Doris) TableRender() {
+	tabletitle := []string{"BE 节点总数", "BE 可用节点数", "员工统计表", "使用分析表", "客户群统计表"}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(tabletitle)
+	tabledata := []string{strconv.Itoa(doris.TotalBackendNum), strconv.Itoa(doris.OnlineBackendNum),
+		strconv.Itoa(doris.StaffCount), strconv.Itoa(doris.UseAnalyseCount), strconv.Itoa(doris.CustomerGroupCount)}
+	table.Append(tabledata)
+	caption := fmt.Sprintf("Job失败数: %d.", len(doris.FailedJobs))
+	table.SetCaption(true, caption)
+	table.Render()
+	for _, jobName := range doris.FailedJobs {
+		fmt.Println("JobName: ", jobName)
 	}
 }
 
