@@ -2,7 +2,6 @@ package inspect
 
 import (
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -12,27 +11,6 @@ import (
 //		log.Fatalf("Failed info: %s \n", err)
 //	}
 //}
-
-func getRole(role string) string {
-	if role == "0" {
-		return "Master"
-	}
-	return "Slave"
-}
-
-func convertAndCalculate(str1, str2 string) (int, error) {
-	num1, err := strconv.Atoi(str1)
-	if err != nil {
-		return 0, err
-	}
-
-	num2, err := strconv.Atoi(str2)
-	if err != nil {
-		return 0, err
-	}
-
-	return num1 - num2, nil
-}
 
 func GetRandomDuration() time.Duration {
 	// 创建一个新的随机数生成器，使用当前时间作为种子

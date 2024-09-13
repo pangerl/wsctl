@@ -16,8 +16,3 @@ type DB struct {
 type PGClient struct {
 	Conn map[string]*pgx.Conn
 }
-
-type Rocketmq struct {
-	RocketmqDashboard string `toml:"rocketmqdashboard"`
-	NameServer        string `toml:"nameserver"`
-}
