@@ -40,7 +40,7 @@ func (rocketmq *RocketMQ) ReportRobot(duration time.Duration) {
 
 func (rocketmq *RocketMQ) TableRender() {
 	// 输出RocketMQ巡检报告
-	tabletitle := []string{"Broker Name", "Role", "Version", "IP", "今天生产总数", "今天消费总数", "运行时间", "磁盘使用量"}
+	tabletitle := []string{"Broker Name", "Role", "Version", "IP", "今天生产总数", "今天消费总数", "运行时间", "磁盘可用空间"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 0})
@@ -65,13 +65,28 @@ func initData(rocketmq *RocketMQ) {
 				role:              getRole(role),
 				version:           broker.BrokerVersionDesc,
 				addr:              clusterdata.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role],
-				runTime:           broker.RunTime,
-				useDisk:           broker.CommitLogDirCapacity,
+				runTime:           formatRunTime(broker.RunTime),
+				useDisk:           formatUseDisk(broker.CommitLogDirCapacity),
 				todayProduceCount: convertAndCalculate(broker.MsgPutTotalTodayNow, broker.MsgPutTotalTodayMorning),
 				todayConsumeCount: convertAndCalculate(broker.MsgGetTotalTodayNow, broker.MsgGetTotalTodayMorning),
 			})
 		}
 	}
+}
+
+func formatRunTime(runTime string) string {
+	cleanedStr := strings.Trim(runTime, "[] ")
+	// 使用逗号分割字符串
+	items := strings.Split(cleanedStr, ",")
+	return items[0]
+}
+
+func formatUseDisk(useDisk string) string {
+	// 使用逗号分割字符串
+	items := strings.Split(useDisk, ",")
+	total := strings.TrimSpace(strings.Split(items[0], ":")[1])
+	free := strings.TrimSpace(strings.Split(items[1], ":")[1])
+	return free + "/" + total
 }
 
 func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
@@ -108,7 +123,7 @@ func mqDetailMarkdown(rocketmq *RocketMQ, ProjectName string) *notifier.WeChatMa
 		builder.WriteString("> 今天生产总数：<font color='info'>" + strconv.Itoa(broker.todayProduceCount) + "</font>\n")
 		builder.WriteString("> 今天消费总数：<font color='info'>" + strconv.Itoa(broker.todayConsumeCount) + "</font>\n")
 		builder.WriteString("> 运行时间：<font color='info'>" + broker.runTime + "</font>\n")
-		builder.WriteString("> 磁盘使用量：<font color='info'>" + broker.useDisk + "</font>")
+		builder.WriteString("> 磁盘可用空间：<font color='info'>" + broker.useDisk + "</font>")
 		builder.WriteString("\n\n")
 		builder.WriteString("========================\n\n")
 	}
