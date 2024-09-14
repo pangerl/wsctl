@@ -11,13 +11,14 @@ func newRocketMQ(cfg *config.CfgType) *RocketMQ {
 	return &RocketMQ{
 		Global:      cfg.Global,
 		RocketMQCfg: cfg.RocketMQ,
+		BrokerMap:   make(map[string]*BrokerDetail),
 	}
 }
 
 type RocketMQ struct {
 	config.Global
 	config.RocketMQCfg
-	BrokerList []*BrokerDetail
+	BrokerMap map[string]*BrokerDetail
 }
 
 type BrokerDetail struct {

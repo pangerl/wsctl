@@ -14,7 +14,7 @@ var cfg *config.CfgType
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "wsctl",
-	Short: "ws运维部署工具",
+	Short: "微盛运维部署工具",
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("wsctl go go go！！！")

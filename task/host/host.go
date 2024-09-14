@@ -185,7 +185,7 @@ func (s *Server) getHost(ident string) *Host {
 	}
 	newHost := Host{}
 	s.Hosts[ident] = &newHost
-	return s.Hosts[ident]
+	return &newHost
 }
 
 func formatToPercentage(value float64) string {

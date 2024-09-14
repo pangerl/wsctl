@@ -23,7 +23,7 @@ func setBrokerCount() {
 	m := rocketmq.GetRocketMQ()
 	for {
 		m.InitData()
-		conut := len(m.BrokerList)
+		conut := len(m.BrokerMap)
 		brokerCount.Set(float64(conut))
 		log.Printf("brokercount: %v", conut)
 		time.Sleep(30 * time.Second) // 每30秒探测一次

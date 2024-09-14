@@ -50,12 +50,12 @@ func (rocketmq *RocketMQ) TableRender() {
 	table.SetHeader(tabletitle)
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 0})
 	table.SetRowLine(true)
-	for _, broker := range rocketmq.BrokerList {
+	for _, broker := range rocketmq.BrokerMap {
 		tabledata := []string{broker.name, broker.role, broker.version, broker.addr,
 			strconv.Itoa(broker.todayProduceCount), strconv.Itoa(broker.todayConsumeCount), broker.runTime, broker.useDisk}
 		table.Append(tabledata)
 	}
-	caption := fmt.Sprintf("Broker 实例数: %d.", len(rocketmq.BrokerList))
+	caption := fmt.Sprintf("Broker 实例数: %d.", len(rocketmq.BrokerMap))
 	table.SetCaption(true, caption)
 	table.Render()
 }
@@ -65,18 +65,27 @@ func (rocketmq *RocketMQ) InitData() {
 	clusterdata, _ := GetMQDetail(rocketmq.RocketmqDashboard)
 	for brokername, brokerdata := range clusterdata.BrokerServer {
 		for role, broker := range brokerdata {
-			rocketmq.BrokerList = append(rocketmq.BrokerList, &BrokerDetail{
-				name:              brokername,
-				role:              getRole(role),
-				version:           broker.BrokerVersionDesc,
-				addr:              clusterdata.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role],
-				runTime:           formatRunTime(broker.RunTime),
-				useDisk:           formatUseDisk(broker.CommitLogDirCapacity),
-				todayProduceCount: convertAndCalculate(broker.MsgPutTotalTodayNow, broker.MsgPutTotalTodayMorning),
-				todayConsumeCount: convertAndCalculate(broker.MsgGetTotalTodayNow, broker.MsgGetTotalTodayMorning),
-			})
+			addr := clusterdata.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role]
+			_broker := rocketmq.getBroker(addr)
+			_broker.name = brokername
+			_broker.role = getRole(role)
+			_broker.version = broker.BrokerVersionDesc
+			_broker.addr = addr
+			_broker.runTime = formatRunTime(broker.RunTime)
+			_broker.useDisk = formatUseDisk(broker.CommitLogDirCapacity)
+			_broker.todayProduceCount = convertAndCalculate(broker.MsgPutTotalTodayNow, broker.MsgPutTotalTodayMorning)
+			_broker.todayConsumeCount = convertAndCalculate(broker.MsgGetTotalTodayNow, broker.MsgGetTotalTodayMorning)
 		}
 	}
+}
+
+func (rocketmq *RocketMQ) getBroker(addr string) *BrokerDetail {
+	if broker, exists := rocketmq.BrokerMap[addr]; exists {
+		return broker
+	}
+	newBroker := BrokerDetail{}
+	rocketmq.BrokerMap[addr] = &newBroker
+	return &newBroker
 }
 
 func formatRunTime(runTime string) string {
@@ -110,7 +119,7 @@ func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
 
 func mqDetailMarkdown(rocketmq *RocketMQ, ProjectName string) *notifier.WeChatMarkdown {
 
-	brokerList := rocketmq.BrokerList
+	brokerList := rocketmq.BrokerMap
 	var builder strings.Builder
 
 	// 组装巡检内容
