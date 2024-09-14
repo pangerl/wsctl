@@ -38,11 +38,12 @@ func Check() {
 	doris.MysqlClient = mysqlClinet
 	// 初始化数据
 	initData(doris)
-	doris.TableRender()
 	if doris.Report {
 		// 发送机器人
-		doris.ReportRobot(0)
+		doris.ReportRobot(cfg.Global.Duration)
+		return
 	}
+	doris.TableRender()
 }
 
 func (doris *Doris) TableRender() {

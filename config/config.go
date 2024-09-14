@@ -38,6 +38,7 @@ type Global struct {
 	Watch       bool
 	Report      bool
 	Interval    time.Duration
+	Duration    time.Duration
 }
 
 type crontab struct {
@@ -48,7 +49,7 @@ type crontab struct {
 type Notifier struct {
 	Robotkey []string `json:"robotkey"`
 	Userlist []string `json:"userlist"`
-	IsPush   bool     `json:"ispush"`
+	//IsPush   bool     `json:"ispush"`
 }
 
 func InitConfig(cfgFile string) (*CfgType, error) {
@@ -75,7 +76,7 @@ func InitConfig(cfgFile string) (*CfgType, error) {
 			//log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 			return nil, fmt.Errorf("failed to load configs of dir: %s err:%s", cfgFile, err)
 		}
-		//log.Println(Config.VictoriaMetrics)
+		//log.Println(Config.Duration)
 	}
 	return Config, nil
 }

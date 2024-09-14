@@ -42,12 +42,13 @@ func Check() {
 	tenant.ESClient = esClient
 	// 初始化数据
 	tenant.initData()
-	// 输出表格
-	tenant.TableRender()
 	if tenant.Report {
 		// 发送机器人
-		tenant.ReportRobot(0)
+		tenant.ReportRobot(cfg.Global.Duration)
+		return
 	}
+	// 输出表格
+	tenant.TableRender()
 }
 
 func (tenant *Tenanter) TableRender() {

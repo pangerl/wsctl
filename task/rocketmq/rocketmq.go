@@ -22,10 +22,11 @@ func Check() {
 	cfg := config.Config
 	rocketmq := newRocketMQ(cfg)
 	initData(rocketmq)
-	rocketmq.TableRender()
 	if rocketmq.Report {
-		rocketmq.ReportRobot(0)
+		rocketmq.ReportRobot(cfg.Global.Duration)
+		return
 	}
+	rocketmq.TableRender()
 }
 
 func (rocketmq *RocketMQ) ReportRobot(duration time.Duration) {
