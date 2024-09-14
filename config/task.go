@@ -9,6 +9,9 @@ import (
 	"vhagar/libs"
 )
 
+type Tasker interface {
+	Check()
+}
 type DorisCfg struct {
 	libs.DB
 	HttpPort int `toml:"httpport"`

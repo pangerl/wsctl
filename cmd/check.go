@@ -42,24 +42,23 @@ var checkCmd = &cobra.Command{
 		case _tenant:
 			tenant.Check()
 		case _nacos:
-			n := nacos.GetNacos()
-			n.Check()
+			nacos.GetNacos().Check()
 		case _doris:
-			d := doris.GetDoris()
-			d.Check()
+			doris.GetDoris().Check()
 		case _rocketmq:
-			m := rocketmq.GetRocketMQ()
-			m.Check()
+			rocketmq.GetRocketMQ().Check()
 		default:
 			// 默认执行所有服务检查
 			host.Check()
 			tenant.Check()
-			n := nacos.GetNacos()
-			n.Check()
-			d := doris.GetDoris()
-			d.Check()
-			m := rocketmq.GetRocketMQ()
-			m.Check()
+			taskers := []config.Tasker{
+				nacos.GetNacos(),
+				doris.GetDoris(),
+				rocketmq.GetRocketMQ(),
+			}
+			for _, task := range taskers {
+				task.Check()
+			}
 		}
 	},
 }
