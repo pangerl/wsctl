@@ -18,6 +18,7 @@ import (
 )
 
 func Check() {
+	task.EchoPrompt("开始巡检 RocketMQ 信息")
 	cfg := config.Config
 	rocketmq := newRocketMQ(cfg)
 	initData(rocketmq)

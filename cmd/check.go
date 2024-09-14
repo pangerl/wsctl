@@ -48,7 +48,12 @@ var checkCmd = &cobra.Command{
 		case _rocketmq:
 			rocketmq.Check()
 		default:
-			//
+			// 默认执行所有服务检查
+			host.Check()
+			tenant.Check()
+			nacos.Check()
+			doris.Check()
+			rocketmq.Check()
 		}
 	},
 }

@@ -17,12 +17,14 @@ import (
 	"sync"
 	"time"
 	"vhagar/config"
+	"vhagar/task"
 )
 
 var tablerow []string
 var mutex sync.Mutex
 
 func Check() {
+	task.EchoPrompt("开始巡检微服务状态信息")
 	cfg := config.Config
 	nacos := newNacos(cfg)
 	if !nacos.WithAuth() {
@@ -104,22 +106,12 @@ func (nacos *Nacos) TableRender() {
 		tabledata := []string{v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.GroupName, v.NamespaceName}
 		nacos.tableAppend(table, tabledata)
 	}
-	fmt.Printf("健康实例:(%d 个)\n", table.NumLines())
+	caption := fmt.Sprintf("健康实例: %d .", table.NumLines())
+	table.SetCaption(true, caption)
 	table.Render()
-	if len(nacosServer.UnHealthInstance) != 0 {
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader(tabletitle)
-		for _, v := range nacosServer.UnHealthInstance {
-			tabledata := []string{v.NamespaceName, v.ServiceName, v.IpAddr, v.Health, v.Hostname, v.Weight, v.GroupName}
-			nacos.tableAppend(table, tabledata)
-		}
-		fmt.Printf("异常实例:(%nacos 个)\n", table.NumLines())
-		table.Render()
-	}
 }
 
 func (nacos *Nacos) GetNacosInstance() {
-	log.Println("更新服务数据")
 	var ser Service
 	var cluster ClusterStatus
 	_url := nacos.Config.Server

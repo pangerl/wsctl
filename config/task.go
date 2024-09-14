@@ -5,6 +5,10 @@ package config
 
 import "vhagar/libs"
 
+type Task interface {
+	Check()
+}
+
 type DorisCfg struct {
 	libs.DB
 	HttpPort int `toml:"httpport"`

@@ -22,6 +22,7 @@ import (
 )
 
 func Check() {
+	task.EchoPrompt("开始巡检 Doris 状态信息")
 	cfg := config.Config
 	doris := newDoris(cfg)
 	// 创建 mysqlClinet

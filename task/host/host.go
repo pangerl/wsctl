@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"vhagar/config"
+	"vhagar/task"
 )
 
 //var hosts = make(map[string]*Host)
@@ -55,6 +56,7 @@ func (s *Server) TableRender() {
 func (s *Server) ReportRobot() {}
 
 func Check() {
+	task.EchoPrompt("开始巡检服务器状态")
 	cfg := config.Config
 	server := newServer(cfg)
 	// 获取服务器信息

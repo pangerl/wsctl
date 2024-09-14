@@ -51,3 +51,11 @@ func DoRequest(url string) []byte {
 		return body
 	}
 }
+
+func EchoPrompt(prompt string) {
+	taskPrompt := fmt.Sprintf(`
+================================================================
+			%s
+================================================================`, prompt)
+	fmt.Println("\033[34m", "\033[1m", taskPrompt, "\033[0m")
+}

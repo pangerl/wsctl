@@ -24,6 +24,7 @@ import (
 var isalert = false
 
 func Check() {
+	task.EchoPrompt("开始巡检企微租户信息")
 	cfg := config.Config
 	tenant := newTenant(cfg)
 	// 创建ESClient，PGClient
