@@ -5,22 +5,26 @@ package rocketmq
 
 import (
 	"encoding/json"
-	"io"
+	"fmt"
+	"github.com/olekukonko/tablewriter"
 	"log"
-	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 	"vhagar/config"
 	"vhagar/notifier"
+	"vhagar/task"
 )
 
 func Check() {
 	cfg := config.Config
 	rocketmq := newRocketMQ(cfg)
 	initData(rocketmq)
-	// 发送巡检报告
-	rocketmq.ReportRobot(0)
+	rocketmq.TableRender()
+	if rocketmq.Report {
+		rocketmq.ReportRobot(0)
+	}
 }
 
 func (rocketmq *RocketMQ) ReportRobot(duration time.Duration) {
@@ -31,38 +35,52 @@ func (rocketmq *RocketMQ) ReportRobot(duration time.Duration) {
 	for _, robotkey := range rocketmq.Notifier["rocketmq"].Robotkey {
 		_ = notifier.SendWecom(markdown, robotkey, rocketmq.ProxyURL)
 	}
+}
 
+func (rocketmq *RocketMQ) TableRender() {
+	// 输出RocketMQ巡检报告
+	tabletitle := []string{"Broker Name", "Role", "Version", "IP", "今天生产总数", "今天消费总数", "运行时间", "磁盘使用量"}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(tabletitle)
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 0})
+	table.SetRowLine(true)
+	for _, broker := range rocketmq.BrokerList {
+		tabledata := []string{broker.name, broker.role, broker.version, broker.addr,
+			strconv.Itoa(broker.todayProduceCount), strconv.Itoa(broker.todayConsumeCount), broker.runTime, broker.useDisk}
+		table.Append(tabledata)
+	}
+	caption := fmt.Sprintf("Broker 实例数: %d.", len(rocketmq.BrokerList))
+	table.SetCaption(true, caption)
+	table.Render()
 }
 
 func initData(rocketmq *RocketMQ) {
 	// 获取RocketMQ集群信息
 	clusterdata, _ := GetMQDetail(rocketmq.RocketmqDashboard)
-	rocketmq.ClusterData = clusterdata
+	for brokername, brokerdata := range clusterdata.BrokerServer {
+		for role, broker := range brokerdata {
+			rocketmq.BrokerList = append(rocketmq.BrokerList, &BrokerDetail{
+				name:              brokername,
+				role:              getRole(role),
+				version:           broker.BrokerVersionDesc,
+				addr:              clusterdata.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role],
+				runTime:           broker.RunTime,
+				useDisk:           broker.CommitLogDirCapacity,
+				todayProduceCount: convertAndCalculate(broker.MsgPutTotalTodayNow, broker.MsgPutTotalTodayMorning),
+				todayConsumeCount: convertAndCalculate(broker.MsgGetTotalTodayNow, broker.MsgGetTotalTodayMorning),
+			})
+		}
+	}
 }
 
 func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
 	// 第一步：发送HTTP请求到RocketMQ Dashboard接口
 	url := mqDashboard + "/cluster/list.query"
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Printf("Failed to send request: %v", err)
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Printf("Failed info : %v", err)
-		}
-	}(resp.Body)
-
-	// 读取响应数据
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Failed to read response body: %v", err)
-	}
+	body := task.DoRequest(url)
 	// 第二步：解析JSON响应
 	var responseData ResponseData
 	if err := json.Unmarshal(body, &responseData); err != nil {
-		log.Printf("Failed to unmarshal JSON response: %v", err)
+		log.Printf("E! fail to unmarshal JSON response: %v", err)
 	}
 	result = responseData.Data
 
@@ -71,34 +89,26 @@ func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
 
 func mqDetailMarkdown(rocketmq *RocketMQ, ProjectName string) *notifier.WeChatMarkdown {
 
-	data := rocketmq.ClusterData
+	brokerList := rocketmq.BrokerList
 	var builder strings.Builder
-	var brokercount int
 
-	brokercount = GetBrokerCount(data)
 	// 组装巡检内容
 	builder.WriteString("# RocketMQ 巡检 \n")
 	builder.WriteString("**项目名称：**<font color='info'>" + ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n\n")
-	builder.WriteString("**Broker 健康数：**<font color='info'>" + strconv.Itoa(brokercount) + "</font>\n")
+	builder.WriteString("**Broker 健康数：**<font color='info'>" + strconv.Itoa(len(brokerList)) + "</font>\n")
 	builder.WriteString("========================\n")
-
-	for brokername, brokerdata := range data.BrokerServer {
-		builder.WriteString("## Broker Name：<font color='info'>" + brokername + "</font>\n")
-		for role, broker := range brokerdata {
-			var produceCount, consumeCount int
-			produceCount, _ = convertAndCalculate(broker.MsgPutTotalTodayNow, broker.MsgPutTotalTodayMorning)
-			consumeCount, _ = convertAndCalculate(broker.MsgGetTotalTodayNow, broker.MsgGetTotalTodayMorning)
-			builder.WriteString("### " + getRole(role) + "\n")
-			builder.WriteString("> Broker 版本：<font color='info'>" + broker.BrokerVersionDesc + "</font>\n")
-			builder.WriteString("> Broker 地址：<font color='info'>" + data.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role] + "</font>\n")
-			builder.WriteString("> 今天生产总数：<font color='info'>" + strconv.Itoa(produceCount) + "</font>\n")
-			builder.WriteString("> 今天消费总数：<font color='info'>" + strconv.Itoa(consumeCount) + "</font>\n")
-			builder.WriteString("> 运行时间：<font color='info'>" + broker.RunTime + "</font>\n")
-			builder.WriteString("> 磁盘使用量：<font color='info'>" + broker.CommitLogDirCapacity + "</font>")
-			builder.WriteString("\n\n")
-		}
+	for _, broker := range brokerList {
+		builder.WriteString("## Broker Name：<font color='info'>" + broker.name + "</font>\n")
+		builder.WriteString("### " + broker.role + "\n")
+		builder.WriteString("> Broker 版本：<font color='info'>" + broker.version + "</font>\n")
+		builder.WriteString("> Broker 地址：<font color='info'>" + broker.addr + "</font>\n")
+		builder.WriteString("> 今天生产总数：<font color='info'>" + strconv.Itoa(broker.todayProduceCount) + "</font>\n")
+		builder.WriteString("> 今天消费总数：<font color='info'>" + strconv.Itoa(broker.todayConsumeCount) + "</font>\n")
+		builder.WriteString("> 运行时间：<font color='info'>" + broker.runTime + "</font>\n")
+		builder.WriteString("> 磁盘使用量：<font color='info'>" + broker.useDisk + "</font>")
+		builder.WriteString("\n\n")
 		builder.WriteString("========================\n\n")
 	}
 
@@ -112,26 +122,19 @@ func mqDetailMarkdown(rocketmq *RocketMQ, ProjectName string) *notifier.WeChatMa
 	return markdown
 }
 
-func GetBrokerCount(data ClusterData) int {
-	var brokercount int
-	for _, brokerdata := range data.BrokerServer {
-		brokercount += len(brokerdata)
-	}
-	return brokercount
-}
-
-func convertAndCalculate(str1, str2 string) (int, error) {
+func convertAndCalculate(str1, str2 string) int {
 	num1, err := strconv.Atoi(str1)
 	if err != nil {
-		return 0, err
+		log.Println("E! fail to str to int", err)
+		return -1
 	}
-
 	num2, err := strconv.Atoi(str2)
 	if err != nil {
-		return 0, err
+		log.Println("E! fail to str to int", err)
+		return -1
 	}
 
-	return num1 - num2, nil
+	return num1 - num2
 }
 
 func getRole(role string) string {

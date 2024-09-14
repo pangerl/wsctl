@@ -25,6 +25,7 @@ func CallUser(users []string) string {
 	}
 	return result
 }
+
 func DoRequest(url string) []byte {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

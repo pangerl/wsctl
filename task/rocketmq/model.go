@@ -17,7 +17,18 @@ func newRocketMQ(cfg *config.CfgType) *RocketMQ {
 type RocketMQ struct {
 	config.Global
 	config.RocketMQCfg
-	ClusterData ClusterData
+	BrokerList []*BrokerDetail
+}
+
+type BrokerDetail struct {
+	name              string
+	role              string
+	version           string
+	addr              string
+	runTime           string
+	useDisk           string
+	todayProduceCount int
+	todayConsumeCount int
 }
 
 type BrokerData struct {

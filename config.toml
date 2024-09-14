@@ -1,0 +1,74 @@
+projectname = "测试企业"
+# 可配置网络代理，支持 http/https 协议
+# proxyURL := "http://proxyuser:proxypassword@proxy_ip:proxy_port"
+proxyurl = ""
+# vm数据库地址
+victoriaMetrics = "http://xxxx:8428"
+
+# 租户配置，如果是服务商模式，租户填写加密 ID
+[tenant]
+    [[tenant.corp]]
+        corpid = "xxxxxxxx"
+        convenabled = true # 是否开通会话存档功能
+    [[tenant.corp]]
+        corpid = "xxxxxxxx"
+        convenabled = true
+
+# 定时任务
+[cron]
+    [cron.tenant]
+        crontab = true # 是否开启任务
+        scheducron = "30 09 * * *"
+    [cron.doris]
+        crontab = false
+        scheducron = "30 09 * * *"
+
+# 告警通知
+[notifier]
+    [notifier.tenant]
+        robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
+        userlist = []   # 告警@人 ["lanpang", "mark"]
+        ispush = false   # 是否推送运营平台
+    [notifier.doris]
+        robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
+    [notifier.rocketmq]
+        robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
+
+[pg]
+    ip = "x.x.x.x"
+    port = 5432
+    username = "postgres"
+    password = "xxx"
+    sslmode = false
+
+[es]
+    ip = "x.x.x.x"
+    port = 9200
+    username = "elastic"
+    password = "xxx"
+    sslmode = false
+
+[doris]
+    ip = "x.x.x.x"
+    port = 9030
+    username = "root"
+    password = "xxx"
+    sslmode = false
+    httpPort = 18030
+
+[nacos]
+    server = "http://x.x.x.x:8848"
+    username = "nacos"
+    password = "nacos"
+    namespace = "qw-uat"
+
+[rocketmq]
+    rocketmqDashboard = "http://x.x.x.x:8081"
+    nameServer = "x.x.x.x:9876"
+
+[metric]
+    port = "8090" # 定义 metric 的端口
+    wsapp = true # 启动微服务接口监控
+    rocketmq = true # rocketmq 监控
+    conversation = true # 当前会话数
+
