@@ -21,8 +21,7 @@ import (
 	"vhagar/task"
 )
 
-func Check() {
-	task.EchoPrompt("开始巡检 Doris 状态信息")
+func GetDoris() *Doris {
 	cfg := config.Config
 	doris := newDoris(cfg)
 	// 创建 mysqlClinet
@@ -37,10 +36,16 @@ func Check() {
 	}()
 	doris.MysqlClient = mysqlClinet
 	// 初始化数据
-	initData(doris)
+	doris.InitData()
+	return doris
+}
+
+func (doris *Doris) Check() {
+	task.EchoPrompt("开始巡检 Doris 状态信息")
+
 	if doris.Report {
 		// 发送机器人
-		doris.ReportRobot(cfg.Global.Duration)
+		doris.ReportRobot(doris.Global.Duration)
 		return
 	}
 	doris.TableRender()
@@ -61,7 +66,7 @@ func (doris *Doris) TableRender() {
 	}
 }
 
-func initData(doris *Doris) {
+func (doris *Doris) InitData() {
 	log.Print("启动 doris 巡检任务")
 	// 获取当前零点时间
 	todayTime := task.GetZeroTime(time.Now())

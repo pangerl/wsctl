@@ -26,27 +26,17 @@ var (
 	)
 )
 
-func setprobeHTTPStatusCode(config nacos.Config) {
+func setprobeHTTPStatusCode() {
 	// 注册 Prometheus 指标
 	prometheus.MustRegister(probeHTTPStatusCode)
-
-	// 实例化 nacos 对象
-	_nacos := &nacos.Nacos{
-		Config: config,
-	}
-	// 获取nacos认证信息
-	if _nacos.WithAuth() {
-		// 获取微服务实例的信息
-		_nacos.GetNacosInstance()
-	} else {
-		return
-	}
-
-	healthInstances := _nacos.Clusterdata.HealthInstance
+	// 获取 nacos 服务信息
+	n := nacos.GetNacos()
+	healthInstances := n.Clusterdata.HealthInstance
 
 	// 设置一个定时器来定期探测每个实例的健康状况
 	for {
 		log.Println("检查服务接口健康状态")
+		n.InitData()
 		for _, instance := range healthInstances {
 			probeInstance(instance)
 		}

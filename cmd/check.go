@@ -35,25 +35,31 @@ var checkCmd = &cobra.Command{
 		config.Config.Global.Watch = watch
 		config.Config.Global.Interval = interval
 		config.Config.Global.Report = report
+		config.Config.Nacos.Writefile = writefile
 		switch {
 		case _host:
 			host.Check()
 		case _tenant:
 			tenant.Check()
 		case _nacos:
-			config.Config.Nacos.Writefile = writefile
-			nacos.Check()
+			n := nacos.GetNacos()
+			n.Check()
 		case _doris:
-			doris.Check()
+			d := doris.GetDoris()
+			d.Check()
 		case _rocketmq:
-			rocketmq.Check()
+			m := rocketmq.GetRocketMQ()
+			m.Check()
 		default:
 			// 默认执行所有服务检查
 			host.Check()
 			tenant.Check()
-			nacos.Check()
-			doris.Check()
-			rocketmq.Check()
+			n := nacos.GetNacos()
+			n.Check()
+			d := doris.GetDoris()
+			d.Check()
+			m := rocketmq.GetRocketMQ()
+			m.Check()
 		}
 	},
 }

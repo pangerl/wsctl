@@ -433,3 +433,11 @@ func queryCustomerGroupUserNum(conn *pgx.Conn, corpid string) (int, error) {
 	}
 	return customerGroupUserNum, nil
 }
+
+func CurrentMessageNum(client *elastic.Client, corpid string, dateNow time.Time) int64 {
+	// 统计今天的会话数
+	startTime := task.GetZeroTime(dateNow).UnixNano() / 1e6
+	endTime := dateNow.UnixNano() / 1e6
+	messagenum, _ := countMessageNum(client, corpid, startTime, endTime)
+	return messagenum
+}

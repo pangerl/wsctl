@@ -23,14 +23,18 @@ import (
 var tablerow []string
 var mutex sync.Mutex
 
-func Check() {
-	task.EchoPrompt("开始巡检微服务状态信息")
+func GetNacos() *Nacos {
 	cfg := config.Config
 	nacos := newNacos(cfg)
 	if !nacos.WithAuth() {
-		return
+		return nil
 	}
-	nacos.GetNacosInstance()
+	nacos.InitData()
+	return nacos
+}
+
+func (nacos *Nacos) Check() {
+	task.EchoPrompt("开始巡检微服务状态信息")
 	if nacos.Config.Writefile != "" {
 		nacos.WriteFile()
 		return
@@ -38,7 +42,7 @@ func Check() {
 	if nacos.Watch {
 		log.Printf("监控模式 刷新时间:%s/次\n", nacos.Interval)
 		for {
-			nacos.GetNacosInstance()
+			nacos.InitData()
 			nacos.TableRender()
 			time.Sleep(nacos.Interval)
 		}
@@ -111,7 +115,7 @@ func (nacos *Nacos) TableRender() {
 	table.Render()
 }
 
-func (nacos *Nacos) GetNacosInstance() {
+func (nacos *Nacos) InitData() {
 	var ser Service
 	var cluster ClusterStatus
 	_url := nacos.Config.Server

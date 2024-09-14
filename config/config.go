@@ -28,7 +28,7 @@ type CfgType struct {
 	ES              libs.DB            `toml:"es"`
 	Doris           DorisCfg           `toml:"doris"`
 	RocketMQ        RocketMQCfg        `toml:"rocketmq"`
-	//Metric   metric.Config    `toml:"metric"`
+	Metric          MetricCfg          `toml:"metric"`
 }
 
 type Global struct {
@@ -50,6 +50,14 @@ type Notifier struct {
 	Robotkey []string `json:"robotkey"`
 	Userlist []string `json:"userlist"`
 	//IsPush   bool     `json:"ispush"`
+}
+
+type MetricCfg struct {
+	Port         string `json:"port"`
+	Wsapp        bool   `json:"wsapp"`
+	Rocketmq     bool   `json:"rocketmq"`
+	Conversation bool   `json:"conversation"`
+	//Interval     time.Duration
 }
 
 func InitConfig(cfgFile string) (*CfgType, error) {

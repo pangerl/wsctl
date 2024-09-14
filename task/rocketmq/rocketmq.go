@@ -17,13 +17,17 @@ import (
 	"vhagar/task"
 )
 
-func Check() {
-	task.EchoPrompt("开始巡检 RocketMQ 信息")
+func GetRocketMQ() *RocketMQ {
 	cfg := config.Config
 	rocketmq := newRocketMQ(cfg)
-	initData(rocketmq)
+	rocketmq.InitData()
+	return rocketmq
+}
+
+func (rocketmq *RocketMQ) Check() {
+	task.EchoPrompt("开始巡检 RocketMQ 信息")
 	if rocketmq.Report {
-		rocketmq.ReportRobot(cfg.Global.Duration)
+		rocketmq.ReportRobot(rocketmq.Global.Duration)
 		return
 	}
 	rocketmq.TableRender()
@@ -56,7 +60,7 @@ func (rocketmq *RocketMQ) TableRender() {
 	table.Render()
 }
 
-func initData(rocketmq *RocketMQ) {
+func (rocketmq *RocketMQ) InitData() {
 	// 获取RocketMQ集群信息
 	clusterdata, _ := GetMQDetail(rocketmq.RocketmqDashboard)
 	for brokername, brokerdata := range clusterdata.BrokerServer {

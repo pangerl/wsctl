@@ -48,7 +48,8 @@ func crontabJob() {
 	if config.Config.Cron["doris"].Crontab {
 		// 加入定时任务
 		_, err := c.AddFunc(config.Config.Cron["doris"].Scheducron, func() {
-			doris.Check()
+			d := doris.GetDoris()
+			d.Check()
 		})
 		if err != nil {
 			log.Fatalf("Failed to add crontab task: %s \n", err)

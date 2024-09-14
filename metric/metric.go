@@ -7,22 +7,23 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
+	"vhagar/config"
 )
 
-func StartMetric(m *Metric) {
-
-	if m.Metric.Wsapp {
-		go setprobeHTTPStatusCode(m.Nacos)
+func StartMetric() {
+	cfg := config.Config.Metric
+	if cfg.Wsapp {
+		go setprobeHTTPStatusCode()
 	}
 
-	if m.Metric.Rocketmq {
-		go setBrokerCount(m.Rocketmq.RocketmqDashboard)
+	if cfg.Rocketmq {
+		go setBrokerCount()
 	}
 
-	if m.Metric.Conversation {
-		go setMessageCount(m)
+	if cfg.Conversation {
+		go setMessageCount()
 	}
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), m.Metric.Port)
-	log.Fatal(http.ListenAndServe(":"+m.Metric.Port, nil))
+	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"time"
-	"vhagar/inspect"
+	"vhagar/task/rocketmq"
 )
 
 var (
@@ -18,13 +18,14 @@ var (
 		})
 )
 
-func setBrokerCount(mqDashboard string) {
+func setBrokerCount() {
 	prometheus.MustRegister(brokerCount)
+	m := rocketmq.GetRocketMQ()
 	for {
-		clusterdata, _ := inspect.GetMQDetail(mqDashboard)
-		brokercount := inspect.GetBrokerCount(clusterdata)
-		brokerCount.Set(float64(brokercount))
-		log.Printf("brokercount: %v", brokercount)
+		m.InitData()
+		conut := len(m.BrokerList)
+		brokerCount.Set(float64(conut))
+		log.Printf("brokercount: %v", conut)
 		time.Sleep(30 * time.Second) // 每30秒探测一次
 	}
 
