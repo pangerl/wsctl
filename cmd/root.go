@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"vhagar/config"
 
 	"github.com/spf13/cobra"
@@ -38,6 +39,20 @@ func init() {
 }
 
 func preFunc() {
+	// 如果提供的是相对路径,将其转换为绝对路径
+	if !filepath.IsAbs(cfgFile) {
+		currentDir, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("无法获取当前工作目录: %v", err)
+		}
+		cfgFile = filepath.Join(currentDir, cfgFile)
+	}
+
+	// 确保文件存在
+	if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
+		log.Fatalf("配置文件不存在: %s", cfgFile)
+	}
+
 	if _, err := config.InitConfig(cfgFile); err != nil {
 		log.Fatalln("F! failed to init config:", err)
 	}
