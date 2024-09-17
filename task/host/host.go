@@ -6,7 +6,6 @@ package host
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"io"
 	"log"
 	"net"
@@ -16,6 +15,8 @@ import (
 	"strconv"
 	"vhagar/config"
 	"vhagar/task"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 //var hosts = make(map[string]*Host)
@@ -55,12 +56,17 @@ func (s *Server) TableRender() {
 
 func (s *Server) ReportRobot() {}
 
-func Check() {
-	task.EchoPrompt("开始巡检服务器状态")
+func GetHost() *Server {
 	cfg := config.Config
 	server := newServer(cfg)
 	// 获取服务器信息
 	initData(server)
+	return server
+}
+
+func (server *Server) Check() {
+	task.EchoPrompt("开始巡检服务器状态")
+
 	server.TableRender()
 }
 

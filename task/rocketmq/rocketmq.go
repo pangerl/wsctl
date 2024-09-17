@@ -6,7 +6,6 @@ package rocketmq
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"log"
 	"os"
 	"strconv"
@@ -15,6 +14,8 @@ import (
 	"vhagar/config"
 	"vhagar/notifier"
 	"vhagar/task"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 func GetRocketMQ() *RocketMQ {

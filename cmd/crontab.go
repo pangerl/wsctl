@@ -4,12 +4,13 @@
 package cmd
 
 import (
-	"github.com/robfig/cron/v3"
-	"github.com/spf13/cobra"
 	"log"
 	"vhagar/config"
 	"vhagar/task/doris"
 	"vhagar/task/tenant"
+
+	"github.com/robfig/cron/v3"
+	"github.com/spf13/cobra"
 )
 
 var crontabCmd = &cobra.Command{
@@ -38,7 +39,7 @@ func crontabJob() {
 	if config.Config.Cron["tenant"].Crontab {
 		// 加入定时任务
 		_, err := c.AddFunc(config.Config.Cron["tenant"].Scheducron, func() {
-			tenant.Check()
+			tenant.GetTenant().Check()
 		})
 		if err != nil {
 			log.Fatalf("Failed to add crontab task: %s \n", err)

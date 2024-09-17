@@ -4,10 +4,11 @@
 package metric
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"time"
 	"vhagar/task/rocketmq"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (

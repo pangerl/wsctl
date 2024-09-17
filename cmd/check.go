@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"time"
 	"vhagar/config"
 	"vhagar/task/doris"
@@ -12,14 +11,12 @@ import (
 	"vhagar/task/nacos"
 	"vhagar/task/rocketmq"
 	"vhagar/task/tenant"
+
+	"github.com/spf13/cobra"
 )
 
 var (
-	_host     bool
-	_tenant   bool
-	_nacos    bool
-	_doris    bool
-	_rocketmq bool
+	task      string
 	report    bool
 	watch     bool
 	writefile string
@@ -36,43 +33,42 @@ var checkCmd = &cobra.Command{
 		config.Config.Global.Interval = interval
 		config.Config.Global.Report = report
 		config.Config.Nacos.Writefile = writefile
-		switch {
-		case _host:
-			host.Check()
-		case _tenant:
-			tenant.Check()
-		case _nacos:
-			nacos.GetNacos().Check()
-		case _doris:
-			doris.GetDoris().Check()
-		case _rocketmq:
-			rocketmq.GetRocketMQ().Check()
+
+		var tasks []config.Tasker
+
+		switch task {
+		case "host":
+			tasks = append(tasks, host.GetHost())
+		case "tenant":
+			tasks = append(tasks, tenant.GetTenant())
+		case "nacos":
+			tasks = append(tasks, nacos.GetNacos())
+		case "doris":
+			tasks = append(tasks, doris.GetDoris())
+		case "rocketmq":
+			tasks = append(tasks, rocketmq.GetRocketMQ())
 		default:
 			// 默认执行所有服务检查
-			host.Check()
-			tenant.Check()
-			taskers := []config.Tasker{
+			tasks = []config.Tasker{
+				host.GetHost(),
+				tenant.GetTenant(),
 				nacos.GetNacos(),
 				doris.GetDoris(),
 				rocketmq.GetRocketMQ(),
 			}
-			for _, task := range taskers {
-				task.Check()
-			}
+		}
+
+		for _, t := range tasks {
+			t.Check()
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(checkCmd)
-	checkCmd.Flags().BoolVarP(&_host, "svc", "s", false, "检查主机的健康状态")
-	checkCmd.Flags().BoolVarP(&_tenant, "tenant", "t", false, "检查企微租户的状态")
-	checkCmd.Flags().BoolVarP(&_doris, "doris", "d", false, "检查doris的状态")
-	checkCmd.Flags().BoolVarP(&_rocketmq, "rocketmq", "m", false, "检查rocketmq的状态")
-	checkCmd.Flags().BoolVarP(&_nacos, "nacos", "n", false, "检查nacos的服务状态")
+	checkCmd.Flags().StringVarP(&task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq)")
 	checkCmd.Flags().BoolVarP(&watch, "watch", "w", false, "监控服务，定时刷新")
 	checkCmd.Flags().DurationVarP(&interval, "second", "i", 5*time.Second, "自定义监控服务间隔刷新时间")
 	checkCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")
 	checkCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
-
 }

@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
-	"github.com/tidwall/gjson"
 	"log"
 	"os"
 	"path"
@@ -18,6 +16,9 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/task"
+
+	"github.com/olekukonko/tablewriter"
+	"github.com/tidwall/gjson"
 )
 
 var tablerow []string

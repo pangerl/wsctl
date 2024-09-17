@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"io"
 	"log"
 	"net/http"
@@ -19,9 +18,11 @@ import (
 	"vhagar/libs"
 	"vhagar/notifier"
 	"vhagar/task"
+
+	"github.com/olekukonko/tablewriter"
 )
 
-func GetDoris() *Doris {
+func GetDoris() config.Tasker {
 	cfg := config.Config
 	doris := newDoris(cfg)
 	// 创建 mysqlClinet

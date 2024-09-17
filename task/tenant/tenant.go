@@ -6,7 +6,6 @@ package tenant
 import (
 	"context"
 	"encoding/json"
-	"github.com/olekukonko/tablewriter"
 	"log"
 	"os"
 	"strconv"
@@ -17,14 +16,15 @@ import (
 	"vhagar/notifier"
 	"vhagar/task"
 
+	"github.com/olekukonko/tablewriter"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/olivere/elastic/v7"
 )
 
 var isalert = false
 
-func Check() {
-	task.EchoPrompt("开始巡检企微租户信息")
+func GetTenant() config.Tasker {
 	cfg := config.Config
 	tenant := newTenant(cfg)
 	// 创建ESClient，PGClient
@@ -42,9 +42,15 @@ func Check() {
 	tenant.ESClient = esClient
 	// 初始化数据
 	tenant.initData()
+	return tenant
+}
+
+func (tenant *Tenanter) Check() {
+	task.EchoPrompt("开始巡检企微租户信息")
+
 	if tenant.Report {
 		// 发送机器人
-		tenant.ReportRobot(cfg.Global.Duration)
+		tenant.ReportRobot(tenant.Global.Duration)
 		return
 	}
 	// 输出表格

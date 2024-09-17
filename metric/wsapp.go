@@ -5,7 +5,6 @@ package metric
 
 import (
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"log"
 	"net"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"time"
 	"vhagar/task/nacos"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // 定义 Prometheus 指标
