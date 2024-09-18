@@ -7,9 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -22,28 +20,22 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func GetDoris() config.Tasker {
+//var doriser *Doris
+
+func Work() config.Tasker {
 	cfg := config.Config
 	doris := newDoris(cfg)
-	// 创建 mysqlClinet
-	mysqlClinet, _ := libs.NewMysqlClient(cfg.Doris.DB, "wshoto")
-	defer func() {
-		if mysqlClinet != nil {
-			err := mysqlClinet.Close()
-			if err != nil {
-				return
-			}
-		}
-	}()
-	doris.MysqlClient = mysqlClinet
 	// 初始化数据
-	doris.InitData()
+	doris.Gather()
 	return doris
+}
+
+func (doris *Doris) Name() string {
+	return taskName
 }
 
 func (doris *Doris) Check() {
 	task.EchoPrompt("开始巡检 Doris 状态信息")
-
 	if doris.Report {
 		// 发送机器人
 		doris.ReportRobot(doris.Global.Duration)
@@ -67,8 +59,18 @@ func (doris *Doris) TableRender() {
 	}
 }
 
-func (doris *Doris) InitData() {
-	log.Print("启动 doris 巡检任务")
+func (doris *Doris) Gather() {
+	// 创建 mysqlClinet
+	mysqlClinet, _ := libs.NewMysqlClient(doris.DB, "wshoto")
+	defer func() {
+		if mysqlClinet != nil {
+			err := mysqlClinet.Close()
+			if err != nil {
+				return
+			}
+		}
+	}()
+	doris.MysqlClient = mysqlClinet
 	// 获取当前零点时间
 	todayTime := task.GetZeroTime(time.Now())
 	yesterday := todayTime.AddDate(0, 0, -1)
@@ -88,7 +90,7 @@ func (doris *Doris) InitData() {
 		doris.CustomerGroupCount = customerGroupCount
 	}
 	// 检查 BE 节点健康
-	checkbehealth(doris)
+	getBENum(doris)
 }
 
 func (doris *Doris) ReportRobot(duration time.Duration) {
@@ -245,32 +247,13 @@ func dorisRender(doris *Doris, name string) *notifier.WeChatMarkdown {
 	return markdown
 }
 
-func checkbehealth(doris *Doris) {
+func getBENum(doris *Doris) {
 	healthUrl := fmt.Sprintf("http://%s:%d/api/health", doris.DB.Ip, doris.DorisCfg.HttpPort)
 
 	// 发起 HTTP GET 请求
-	resp, err := http.Get(healthUrl)
-	if err != nil {
-		log.Printf("Error making request: %v", err)
-		return
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Printf("Failed info: %s \n", err)
-			return
-		}
-	}(resp.Body)
-
-	// 检查响应状态码
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("Error: received status code %d", resp.StatusCode)
-	}
-
-	// 读取响应体
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Error reading body: %v", err)
+	body := task.DoRequest(healthUrl)
+	if body == nil { // 请求失败
+		log.Printf("Failed to get response from %s", healthUrl)
 		return
 	}
 

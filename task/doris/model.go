@@ -8,6 +8,8 @@ import (
 	"vhagar/config"
 )
 
+const taskName = "doris"
+
 type Doris struct {
 	config.Global
 	config.DorisCfg

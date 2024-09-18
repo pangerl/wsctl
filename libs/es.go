@@ -7,6 +7,7 @@ import (
 	"context"
 	"log"
 	"strconv"
+	"vhagar/config"
 
 	"github.com/olivere/elastic/v7"
 )
@@ -34,4 +35,12 @@ func NewESClient(conf DB) (*elastic.Client, string) {
 	}
 	log.Println("ES 连接成功！")
 	return client, esurl
+}
+
+func GetESClient() (*elastic.Client, error) {
+	return elastic.NewClient(
+		elastic.SetURL(config.Config.ES.URL),
+		elastic.SetSniff(false),
+		elastic.SetHealthcheck(false),
+	)
 }
