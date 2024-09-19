@@ -3,8 +3,6 @@
 // @Desc
 package task
 
-import "fmt"
-
 var Creators = map[string]Creator{}
 
 type Creator func() Tasker
@@ -23,7 +21,6 @@ func Add(name string, creator Creator) {
 }
 
 func Get(name string) Tasker {
-	fmt.Println("task name:", name)
 	return Creators[name]()
 }
 

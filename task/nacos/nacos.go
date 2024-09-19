@@ -57,6 +57,7 @@ func (nacos *Nacos) Check() {
 	if nacos.Watch {
 		log.Printf("监控模式 刷新时间:%s/次\n", nacos.Interval)
 		for {
+			log.Println("")
 			nacos.Gather()
 			nacos.TableRender()
 			time.Sleep(nacos.Interval)

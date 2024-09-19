@@ -8,6 +8,11 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/task"
+	_ "vhagar/task/doris"
+	_ "vhagar/task/host"
+	_ "vhagar/task/nacos"
+	_ "vhagar/task/rocketmq"
+	_ "vhagar/task/tenant"
 )
 
 var (
@@ -39,7 +44,7 @@ var checkCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es)") // 更新帮助信息
-	checkCmd.Flags().BoolVarP(&watch, "watch", "w", false, "监控服务，定时刷新")
+	checkCmd.Flags().BoolVarP(&watch, "watch", "w", false, "nacos服务，定时刷新")
 	checkCmd.Flags().DurationVarP(&interval, "second", "i", 5*time.Second, "自定义监控服务间隔刷新时间")
 	checkCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")
 	checkCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")

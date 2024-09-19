@@ -43,7 +43,7 @@ func NewPGClient(conf DB, dbName string) (*pgx.Conn, error) {
 		log.Printf("Failed to connect to database %s: %s\n", dbName, err)
 		return nil, err
 	}
-	log.Println("PG 数据库连接成功！")
+	log.Printf("%s 数据库连接成功！", dbName)
 	return conn, nil
 }
 
