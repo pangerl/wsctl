@@ -24,36 +24,27 @@ import (
 
 var isalert = false
 
-func GetTenant() config.Tasker {
-	cfg := config.Config
-	tenant := newTenant(cfg)
-	// 创建ESClient，PGClient
-	esClient, _ := libs.NewESClient(cfg.ES)
-	pgClient, _ := libs.NewPGClient(cfg.PG)
-	defer func() {
-		if pgClient != nil {
-			pgClient.Close()
-		}
-		if esClient != nil {
-			esClient.Stop()
-		}
-	}()
-	tenant.PGClient = pgClient
-	tenant.ESClient = esClient
-	// 初始化数据
-	tenant.initData()
-	return tenant
+//func GetTenant() config.Tasker {
+//	cfg := config.Config
+//	tenant := newTenant(cfg)
+//
+//	// 初始化数据
+//	tenant.Gather()
+//	return tenant
+//}
+
+func init() {
+	task.Add(taskName, func() task.Tasker {
+		return newTenant(config.Config)
+	})
 }
 
 func (tenant *Tenanter) Check() {
 	task.EchoPrompt("开始巡检企微租户信息")
-
 	if tenant.Report {
-		// 发送机器人
-		tenant.ReportRobot(tenant.Global.Duration)
+		tenant.ReportRobot(tenant.Duration)
 		return
 	}
-	// 输出表格
 	tenant.TableRender()
 }
 
@@ -105,8 +96,28 @@ func (tenant *Tenanter) ReportWshoto() {
 	}
 }
 
-func (tenant *Tenanter) initData() {
-	log.Print("开始检查企微租户信息")
+func (tenant *Tenanter) Gather() {
+	// 创建ESClient，PGClienter
+	esClient, err := libs.NewESClient(config.Config.ES)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return
+	}
+	pgClient, err := libs.NewPGClienter(config.Config.PG)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return
+	}
+	defer func() {
+		if pgClient != nil {
+			pgClient.Close()
+		}
+		if esClient != nil {
+			esClient.Stop()
+		}
+	}()
+	tenant.PGClient = pgClient
+	tenant.ESClient = esClient
 	for _, corp := range tenant.Corp {
 		tenant.getTenantData(corp)
 	}

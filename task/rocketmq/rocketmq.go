@@ -18,17 +18,23 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func GetRocketMQ() *RocketMQ {
-	cfg := config.Config
-	rocketmq := newRocketMQ(cfg)
-	rocketmq.InitData()
-	return rocketmq
+//func GetRocketMQ() *RocketMQ {
+//	cfg := config.Config
+//	rocketmq := newRocketMQ(cfg)
+//	rocketmq.Gather()
+//	return rocketmq
+//}
+
+func init() {
+	task.Add(taskName, func() task.Tasker {
+		return NewRocketMQ(config.Config)
+	})
 }
 
 func (rocketmq *RocketMQ) Check() {
 	task.EchoPrompt("开始巡检 RocketMQ 信息")
 	if rocketmq.Report {
-		rocketmq.ReportRobot(rocketmq.Global.Duration)
+		rocketmq.ReportRobot(rocketmq.Duration)
 		return
 	}
 	rocketmq.TableRender()
@@ -61,7 +67,7 @@ func (rocketmq *RocketMQ) TableRender() {
 	table.Render()
 }
 
-func (rocketmq *RocketMQ) InitData() {
+func (rocketmq *RocketMQ) Gather() {
 	// 获取RocketMQ集群信息
 	clusterdata, _ := GetMQDetail(rocketmq.RocketmqDashboard)
 	for brokername, brokerdata := range clusterdata.BrokerServer {

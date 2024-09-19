@@ -13,6 +13,6 @@ type DB struct {
 	Sslmode  bool   `toml:"sslmode"`
 }
 
-type PGClient struct {
+type PGClienter struct {
 	Conn map[string]*pgx.Conn
 }

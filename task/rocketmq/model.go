@@ -7,7 +7,9 @@ import (
 	"vhagar/config"
 )
 
-func newRocketMQ(cfg *config.CfgType) *RocketMQ {
+const taskName = "rocketmq"
+
+func NewRocketMQ(cfg *config.CfgType) *RocketMQ {
 	return &RocketMQ{
 		Global:      cfg.Global,
 		RocketMQCfg: cfg.RocketMQ,

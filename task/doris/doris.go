@@ -22,12 +22,18 @@ import (
 
 //var doriser *Doris
 
-func Work() config.Tasker {
-	cfg := config.Config
-	doris := newDoris(cfg)
-	// 初始化数据
-	doris.Gather()
-	return doris
+//func Work() config.Tasker {
+//	cfg := config.Config
+//	doris := newDoris(cfg)
+//	// 初始化数据
+//	doris.Gather()
+//	return doris
+//}
+
+func init() {
+	task.Add(taskName, func() task.Tasker {
+		return newDoris(config.Config)
+	})
 }
 
 func (doris *Doris) Name() string {
@@ -61,7 +67,11 @@ func (doris *Doris) TableRender() {
 
 func (doris *Doris) Gather() {
 	// 创建 mysqlClinet
-	mysqlClinet, _ := libs.NewMysqlClient(doris.DB, "wshoto")
+	mysqlClinet, err := libs.NewMysqlClient(doris.DB, "wshoto")
+	if err != nil {
+		log.Println("Failed to create mysql client. err:", err)
+		return
+	}
 	defer func() {
 		if mysqlClinet != nil {
 			err := mysqlClinet.Close()
@@ -75,20 +85,18 @@ func (doris *Doris) Gather() {
 	todayTime := task.GetZeroTime(time.Now())
 	yesterday := todayTime.AddDate(0, 0, -1)
 	yesterdayTime := task.GetZeroTime(yesterday)
-	if doris.MysqlClient != nil {
-		// 失败任务
-		failedJobs := selectFailedJob(todayTime.String(), doris.MysqlClient)
-		doris.FailedJobs = failedJobs
-		// 员工统计表
-		staffCount := selectStaffCount(yesterdayTime.String(), doris.MysqlClient)
-		doris.StaffCount = staffCount
-		// 使用分析表
-		useAnalyseCount := selectUseAnalyseCount(yesterdayTime.String(), doris.MysqlClient)
-		doris.UseAnalyseCount = useAnalyseCount
-		// 客户群统计表
-		customerGroupCount := selectCustomerGroupCount(yesterdayTime.String(), doris.MysqlClient)
-		doris.CustomerGroupCount = customerGroupCount
-	}
+	// 失败任务
+	failedJobs := selectFailedJob(todayTime.String(), doris.MysqlClient)
+	doris.FailedJobs = failedJobs
+	// 员工统计表
+	staffCount := selectStaffCount(yesterdayTime.String(), doris.MysqlClient)
+	doris.StaffCount = staffCount
+	// 使用分析表
+	useAnalyseCount := selectUseAnalyseCount(yesterdayTime.String(), doris.MysqlClient)
+	doris.UseAnalyseCount = useAnalyseCount
+	// 客户群统计表
+	customerGroupCount := selectCustomerGroupCount(yesterdayTime.String(), doris.MysqlClient)
+	doris.CustomerGroupCount = customerGroupCount
 	// 检查 BE 节点健康
 	getBENum(doris)
 }

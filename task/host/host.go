@@ -19,10 +19,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-//var hosts = make(map[string]*Host)
-
-// var cfg = &config.Config
-
 // TableRender 输出表格
 func (s *Server) TableRender() {
 	hosts := s.Hosts
@@ -54,23 +50,33 @@ func (s *Server) TableRender() {
 	table.Render()
 }
 
+func init() {
+	task.Add(taskName, func() task.Tasker {
+		return newServer(config.Config)
+	})
+}
+
 func (s *Server) ReportRobot() {}
 
-func GetHost() *Server {
-	cfg := config.Config
-	server := newServer(cfg)
-	// 获取服务器信息
-	initData(server)
-	return server
-}
+//func GetHost() *Server {
+//	cfg := config.Config
+//	server := newServer(cfg)
+//	// 获取服务器信息
+//	initData(server)
+//	return server
+//}
 
-func (server *Server) Check() {
+func (s *Server) Check() {
 	task.EchoPrompt("开始巡检服务器状态")
-
-	server.TableRender()
+	if s.Report {
+		// 发送机器人
+		s.ReportRobot()
+		return
+	}
+	s.TableRender()
 }
 
-func initData(s *Server) {
+func (s *Server) Gather() {
 	// CPU 使用率
 	s.getHostData("cpu_usage_active")
 	// 内存 使用率

@@ -11,11 +11,9 @@ import (
 )
 
 // 连接数据库的编码格式
-var charset string = "utf8"
+//var charset string = "utf8"
 
 func NewMysqlClient(conf DB, dbName string) (*sql.DB, error) {
-	// 对密码进行 URL 编码
-	//encodedPassword := url.QueryEscape(conf.Password)
 	// 构建数据库连接字符串
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		conf.Username, conf.Password, conf.Ip, conf.Port, dbName)

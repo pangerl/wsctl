@@ -5,6 +5,8 @@ package host
 
 import "vhagar/config"
 
+const taskName = "host"
+
 type Server struct {
 	config.Global
 	vmUrl string

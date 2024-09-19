@@ -13,7 +13,7 @@ import (
 )
 
 // Close 关闭所有数据库连接
-func (dbClient *PGClient) Close() {
+func (dbClient *PGClienter) Close() {
 	for dbName, conn := range dbClient.Conn {
 		if err := conn.Close(context.Background()); err != nil {
 			log.Printf("Failed to close connection for database %s: %v", dbName, err)
@@ -21,22 +21,30 @@ func (dbClient *PGClient) Close() {
 	}
 }
 
-func NewPGClient(conf DB) (*PGClient, error) {
-	dbClient := &PGClient{
+func NewPGClienter(conf DB) (*PGClienter, error) {
+	clienter := &PGClienter{
 		Conn: make(map[string]*pgx.Conn),
 	}
 	databases := []string{"qv30", "user", "customer"}
 	for _, dbName := range databases {
-		connString := connStr(conf, dbName)
-		conn, err := pgx.Connect(context.Background(), connString)
+		conn, err := NewPGClient(conf, dbName)
 		if err != nil {
-			log.Printf("Failed to connect to database %s: %s\n", dbName, err)
 			return nil, err
 		}
-		dbClient.Conn[dbName] = conn
+		clienter.Conn[dbName] = conn
+	}
+	return clienter, nil
+}
+
+func NewPGClient(conf DB, dbName string) (*pgx.Conn, error) {
+	connString := connStr(conf, dbName)
+	conn, err := pgx.Connect(context.Background(), connString)
+	if err != nil {
+		log.Printf("Failed to connect to database %s: %s\n", dbName, err)
+		return nil, err
 	}
 	log.Println("PG 数据库连接成功！")
-	return dbClient, nil
+	return conn, nil
 }
 
 func connStr(conf DB, db string) string {

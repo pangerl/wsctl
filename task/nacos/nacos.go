@@ -24,14 +24,28 @@ import (
 var tablerow []string
 var mutex sync.Mutex
 
-func GetNacos() *Nacos {
-	cfg := config.Config
-	nacos := newNacos(cfg)
-	if !nacos.WithAuth() {
-		return nil
+func init() {
+	task.Add(taskName, func() task.Tasker {
+		return NewNacos(config.Config)
+	})
+}
+
+//func GetNacos() *Nacos {
+//	cfg := config.Config
+//	nacos := newNacos(cfg)
+//	if !nacos.WithAuth() {
+//		return nil
+//	}
+//	nacos.Gather()
+//	return nacos
+//}
+
+func (nacos *Nacos) Init() error {
+	err := nacos.WithAuth()
+	if err != nil {
+		return err
 	}
-	nacos.InitData()
-	return nacos
+	return nil
 }
 
 func (nacos *Nacos) Check() {
@@ -43,7 +57,7 @@ func (nacos *Nacos) Check() {
 	if nacos.Watch {
 		log.Printf("监控模式 刷新时间:%s/次\n", nacos.Interval)
 		for {
-			nacos.InitData()
+			nacos.Gather()
 			nacos.TableRender()
 			time.Sleep(nacos.Interval)
 		}
@@ -51,7 +65,7 @@ func (nacos *Nacos) Check() {
 	nacos.TableRender()
 }
 
-func (nacos *Nacos) WithAuth() bool {
+func (nacos *Nacos) WithAuth() error {
 	log.Println("更新 nacos 的 token")
 	_url := fmt.Sprintf("%s/nacos/v1/auth/login", nacos.Config.Server)
 	formData := map[string]string{
@@ -63,10 +77,10 @@ func (nacos *Nacos) WithAuth() bool {
 		//log.Println("Authentication successful...")
 		nacos.Token = gjson.GetBytes(res, "accessToken").String()
 	} else {
-		log.Println("Authentication failed!")
-		return false
+		//log.Println("Authentication failed!")
+		return fmt.Errorf("authentication failed")
 	}
-	return true
+	return nil
 }
 
 func (nacos *Nacos) GetService(url string, namespaceId string, group string) []byte {
@@ -116,7 +130,7 @@ func (nacos *Nacos) TableRender() {
 	table.Render()
 }
 
-func (nacos *Nacos) InitData() {
+func (nacos *Nacos) Gather() {
 	var ser Service
 	var cluster ClusterStatus
 	_url := nacos.Config.Server

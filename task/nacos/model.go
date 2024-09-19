@@ -8,7 +8,9 @@ import (
 	"vhagar/config"
 )
 
-func newNacos(cfg *config.CfgType) *Nacos {
+const taskName = "nacos"
+
+func NewNacos(cfg *config.CfgType) *Nacos {
 	return &Nacos{
 		Global: cfg.Global,
 		Config: cfg.Nacos,

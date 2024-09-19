@@ -12,11 +12,13 @@ import (
 // 每日巡检版本
 var version = "v4.6"
 
+const taskName = "tenant"
+
 type Tenanter struct {
 	config.Global
 	Corp     []*config.Corp
 	ESClient *elastic.Client
-	PGClient *libs.PGClient
+	PGClient *libs.PGClienter
 }
 
 func newTenant(cfg *config.CfgType) *Tenanter {
