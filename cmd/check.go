@@ -9,6 +9,7 @@ import (
 	"vhagar/config"
 	"vhagar/task"
 	_ "vhagar/task/doris"
+	_ "vhagar/task/es"
 	_ "vhagar/task/host"
 	_ "vhagar/task/nacos"
 	_ "vhagar/task/rocketmq"
