@@ -4,8 +4,9 @@
 package es
 
 import (
-	"github.com/olivere/elastic/v7"
 	"vhagar/config"
+
+	"github.com/olivere/elastic/v7"
 )
 
 type ES struct {
@@ -13,6 +14,10 @@ type ES struct {
 	ESClient *elastic.Client
 	NodeList []*NodeInfo
 	Status   string
+	// 新增字段
+	ClusterJVMUsage  float64
+	UnassignedShards int
+	TotalDataSize    int64
 }
 
 func newES(cfg *config.CfgType) *ES {
@@ -22,8 +27,12 @@ func newES(cfg *config.CfgType) *ES {
 }
 
 type NodeInfo struct {
-	Name      string
-	IP        string
-	JVMUsage  float64
-	DiskUsage float64
+	Name        string
+	IP          string
+	JVMUsage    float64
+	DiskUsage   float64
+	LoadAverage float64
+	IndexCount  int
+	Shards      int
+	DataSize    int64
 }
