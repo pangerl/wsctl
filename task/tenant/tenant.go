@@ -13,7 +13,7 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/libs"
-	"vhagar/notifier"
+	"vhagar/notify"
 	"vhagar/task"
 
 	"github.com/olekukonko/tablewriter"
@@ -65,16 +65,10 @@ func (tenant *Tenanter) TableRender() {
 
 func (tenant *Tenanter) ReportRobot(duration time.Duration) {
 	// 发送巡检报告
-	markdownList := tenantRender(tenant, tenant.ProjectName, tenant.Notifier["tenant"].Userlist)
-	log.Println("任务等待时间", duration)
-	time.Sleep(duration)
+	markdownList := tenantRender(tenant)
+
 	for _, markdown := range markdownList {
-		for _, robotkey := range tenant.Notifier["tenant"].Robotkey {
-			err := notifier.SendWecom(markdown, robotkey, tenant.ProxyURL)
-			if err != nil {
-				return
-			}
-		}
+		notify.Send(markdown, taskName)
 	}
 
 }
@@ -86,11 +80,11 @@ func (tenant *Tenanter) ReportWshoto() {
 	for i, c := range tenant.Corp {
 		data[i] = c
 	}
-	inspectBody := notifier.InspectBody{
+	inspectBody := notify.InspectBody{
 		JobType: "tenant",
 		Data:    data,
 	}
-	err := notifier.SendWshoto(&inspectBody, tenant.ProxyURL)
+	err := notify.SendWshoto(&inspectBody, tenant.ProxyURL)
 	if err != nil {
 		return
 	}
@@ -149,12 +143,12 @@ func (tenant *Tenanter) getTenantData(corp *config.Corp) {
 	}
 }
 
-func tenantRender(t *Tenanter, name string, userlist []string) []*notifier.WeChatMarkdown {
+func tenantRender(t *Tenanter) []*notify.WeChatMarkdown {
 
-	var inspectList []*notifier.WeChatMarkdown
+	var inspectList []*notify.WeChatMarkdown
 	isalert = false
 
-	headString := headCorpString(name)
+	headString := headCorpString()
 
 	length := len(t.Corp)
 	// 每次返回8个租户的信息
@@ -166,12 +160,12 @@ func tenantRender(t *Tenanter, name string, userlist []string) []*notifier.WeCha
 			end = length
 		}
 		slice := t.Corp[n:end]
-		markdown := tenantMarkdown(headString, slice, userlist)
+		markdown := tenantMarkdown(headString, slice)
 		inspectList = append(inspectList, markdown)
 	}
 	return inspectList
 }
-func tenantMarkdown(headString string, Corp []*config.Corp, users []string) *notifier.WeChatMarkdown {
+func tenantMarkdown(headString string, Corp []*config.Corp) *notify.WeChatMarkdown {
 	var builder strings.Builder
 	// 添加巡检头文件
 	builder.WriteString(headString)
@@ -180,11 +174,11 @@ func tenantMarkdown(headString string, Corp []*config.Corp, users []string) *not
 		builder.WriteString(generateCorpString(corp))
 	}
 	if isalert {
-		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + task.CallUser(users))
+		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + task.CallUser(config.Config.Notify.Userlist))
 	}
-	markdown := &notifier.WeChatMarkdown{
+	markdown := &notify.WeChatMarkdown{
 		MsgType: "markdown",
-		Markdown: &notifier.Markdown{
+		Markdown: &notify.Markdown{
 			Content: builder.String(),
 		},
 	}
@@ -213,11 +207,11 @@ func generateCorpString(corp *config.Corp) string {
 
 	return builder.String()
 }
-func headCorpString(name string) string {
+func headCorpString() string {
 	var builder strings.Builder
 	// 组装巡检内容
 	builder.WriteString("# 每日巡检报告 " + version + "\n")
-	builder.WriteString("**项目名称：**<font color='info'>" + name + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n")
 

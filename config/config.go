@@ -34,9 +34,9 @@ type CfgType struct {
 }
 
 type Global struct {
-	ProjectName string              `toml:"projectname"`
-	ProxyURL    string              `toml:"proxyurl"`
-	Notifier    map[string]Notifier `toml:"notifier"`
+	ProjectName string `toml:"projectname"`
+	ProxyURL    string `toml:"proxyurl"`
+	Notify      Notify `toml:"notify"`
 	Watch       bool
 	Report      bool
 	Interval    time.Duration
@@ -48,9 +48,15 @@ type crontab struct {
 	Scheducron string `toml:"scheducron"`
 }
 
+type Notify struct {
+	Robotkey []string
+	Userlist []string
+	Notifier map[string]Notifier `toml:"notifier"`
+}
+
 type Notifier struct {
 	Robotkey []string `json:"robotkey"`
-	Userlist []string `json:"userlist"`
+	//Userlist []string `json:"userlist"`
 	//IsPush   bool     `json:"ispush"`
 }
 
@@ -86,7 +92,7 @@ func InitConfig(cfgFile string) (*CfgType, error) {
 			//log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 			return nil, fmt.Errorf("failed to load configs of dir: %s err:%s", cfgFile, err)
 		}
-		//log.Println(Config.Duration)
+		//log.Println(Config.Notify)
 	}
 	return Config, nil
 }

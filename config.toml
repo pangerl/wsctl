@@ -24,13 +24,12 @@ victoriaMetrics = "http://xxxx:8428"
         scheducron = "30 09 * * *"
 
 # 告警通知
-[notifier]
-    [notifier.tenant]
+[notify]
+    robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]   # 默认机器人
+    userlist = [] # 默认告警@人 ["lanpang", "mark"]
+    [notify.notifier.tenant]
         robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
-        userlist = []   # 告警@人 ["lanpang", "mark"]
-    [notifier.doris]
-        robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
-    [notifier.rocketmq]
+    [notify.notifier.doris]
         robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
 
 [pg]

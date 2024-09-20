@@ -14,7 +14,7 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/libs"
-	"vhagar/notifier"
+	"vhagar/notify"
 	"vhagar/task"
 
 	"github.com/olekukonko/tablewriter"
@@ -42,9 +42,9 @@ func (doris *Doris) Name() string {
 
 func (doris *Doris) Check() {
 	task.EchoPrompt("开始巡检 Doris 状态信息")
-	if doris.Report {
+	if config.Config.Report {
 		// 发送机器人
-		doris.ReportRobot(doris.Duration)
+		doris.ReportRobot()
 		return
 	}
 	doris.TableRender()
@@ -101,15 +101,38 @@ func (doris *Doris) Gather() {
 	getBENum(doris)
 }
 
-func (doris *Doris) ReportRobot(duration time.Duration) {
-	// 发送巡检报告
-	markdown := dorisRender(doris, doris.ProjectName)
-	log.Println("任务等待时间", duration)
-	time.Sleep(duration)
-	for _, robotkey := range doris.Notifier["doris"].Robotkey {
-		_ = notifier.SendWecom(markdown, robotkey, doris.ProxyURL)
+func (doris *Doris) ReportRobot() {
+	var builder strings.Builder
+
+	failedJobCount := len(doris.FailedJobs)
+	// 组装巡检内容
+	builder.WriteString("# Doris 巡检 \n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
+	builder.WriteString("**BE节点总数：**<font color='info'>" + strconv.Itoa(doris.TotalBackendNum) + "</font>\n")
+	builder.WriteString("**在线节点数：**<font color='info'>" + strconv.Itoa(doris.OnlineBackendNum) + "</font>\n")
+
+	builder.WriteString("==================\n")
+
+	builder.WriteString("**Job失败数：**<font color='info'>" + strconv.Itoa(failedJobCount) + "</font>\n")
+
+	for _, jobName := range doris.FailedJobs {
+		builder.WriteString("> <font color='red'>" + jobName + "</font>\n")
+	}
+	builder.WriteString("==================\n")
+	builder.WriteString("**昨天各表增量数据**\n\n")
+	builder.WriteString("**员工统计表：**<font color='info'>" + strconv.Itoa(doris.StaffCount) + "</font>\n")
+	builder.WriteString("**使用分析表：**<font color='info'>" + strconv.Itoa(doris.UseAnalyseCount) + "</font>\n")
+	builder.WriteString("**客户群统计表：**<font color='info'>" + strconv.Itoa(doris.CustomerGroupCount) + "</font>\n")
+
+	markdown := &notify.WeChatMarkdown{
+		MsgType: "markdown",
+		Markdown: &notify.Markdown{
+			Content: builder.String(),
+		},
 	}
 
+	notify.Send(markdown, taskName)
 }
 
 // 查询失败的job
@@ -218,41 +241,6 @@ func selectCustomerGroupCount(queryTime string, db *sql.DB) int {
 		return -1
 	}
 	return customerGroupCount
-}
-
-func dorisRender(doris *Doris, name string) *notifier.WeChatMarkdown {
-
-	var builder strings.Builder
-
-	failedJobCount := len(doris.FailedJobs)
-	// 组装巡检内容
-	builder.WriteString("# Doris 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + name + "</font>\n")
-	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
-	builder.WriteString("**BE节点总数：**<font color='info'>" + strconv.Itoa(doris.TotalBackendNum) + "</font>\n")
-	builder.WriteString("**在线节点数：**<font color='info'>" + strconv.Itoa(doris.OnlineBackendNum) + "</font>\n")
-
-	builder.WriteString("==================\n")
-
-	builder.WriteString("**Job失败数：**<font color='info'>" + strconv.Itoa(failedJobCount) + "</font>\n")
-
-	for _, jobName := range doris.FailedJobs {
-		builder.WriteString("> <font color='red'>" + jobName + "</font>\n")
-	}
-	builder.WriteString("==================\n")
-	builder.WriteString("**昨天各表增量数据**\n\n")
-	builder.WriteString("**员工统计表：**<font color='info'>" + strconv.Itoa(doris.StaffCount) + "</font>\n")
-	builder.WriteString("**使用分析表：**<font color='info'>" + strconv.Itoa(doris.UseAnalyseCount) + "</font>\n")
-	builder.WriteString("**客户群统计表：**<font color='info'>" + strconv.Itoa(doris.CustomerGroupCount) + "</font>\n")
-
-	markdown := &notifier.WeChatMarkdown{
-		MsgType: "markdown",
-		Markdown: &notifier.Markdown{
-			Content: builder.String(),
-		},
-	}
-
-	return markdown
 }
 
 func getBENum(doris *Doris) {

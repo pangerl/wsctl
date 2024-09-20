@@ -11,14 +11,14 @@ const taskName = "rocketmq"
 
 func NewRocketMQ(cfg *config.CfgType) *RocketMQ {
 	return &RocketMQ{
-		Global:      cfg.Global,
+		//Global:      cfg.Global,
 		RocketMQCfg: cfg.RocketMQ,
 		BrokerMap:   make(map[string]*BrokerDetail),
 	}
 }
 
 type RocketMQ struct {
-	config.Global
+	//config.Global
 	config.RocketMQCfg
 	BrokerMap map[string]*BrokerDetail
 }

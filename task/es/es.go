@@ -11,7 +11,7 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/libs"
-	"vhagar/notifier"
+	"vhagar/notify"
 	"vhagar/task"
 
 	"github.com/olekukonko/tablewriter"
@@ -21,7 +21,7 @@ const taskName = "es"
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return newES(config.Config)
+		return &ES{}
 	})
 }
 
@@ -42,9 +42,9 @@ func (es *ES) Gather() {
 
 func (es *ES) Check() {
 	task.EchoPrompt("开始巡检 ES 状态信息")
-	if es.Report {
+	if config.Config.Report {
 		// 发送机器人
-		es.ReportRobot(es.Duration)
+		es.ReportRobot()
 		return
 	}
 	es.TableRender()
@@ -131,21 +131,10 @@ func (es *ES) TableRender() {
 	table.Render()
 }
 
-func (es *ES) ReportRobot(duration time.Duration) {
-	// 发送巡检报告
-	markdown := esRender(es, es.ProjectName)
-	log.Println("任务等待时间", duration)
-	time.Sleep(duration)
-	for _, robotkey := range es.Notifier["doris"].Robotkey {
-		_ = notifier.SendWecom(markdown, robotkey, es.ProxyURL)
-	}
-
-}
-
-func esRender(es *ES, name string) *notifier.WeChatMarkdown {
+func (es *ES) ReportRobot() {
 	var builder strings.Builder
 	builder.WriteString("# ES 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + name + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**集群状态：<font color='info'>" + es.Status + "</font>**\n")
 
@@ -175,14 +164,15 @@ func esRender(es *ES, name string) *notifier.WeChatMarkdown {
 		}
 	}
 
-	markdown := &notifier.WeChatMarkdown{
+	markdown := &notify.WeChatMarkdown{
 		MsgType: "markdown",
-		Markdown: &notifier.Markdown{
+		Markdown: &notify.Markdown{
 			Content: builder.String(),
 		},
 	}
 
-	return markdown
+	notify.Send(markdown, taskName)
+
 }
 
 func (es *ES) generateWarnings() []string {

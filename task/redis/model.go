@@ -11,7 +11,7 @@ import (
 const taskName = "redis"
 
 type Redis struct {
-	config.Global
+	//config.Global
 	Config         libs.RedisConfig
 	Version        string
 	Role           string
@@ -24,7 +24,7 @@ type Redis struct {
 
 func NewRedis(cfg *config.CfgType) *Redis {
 	return &Redis{
-		Global: cfg.Global,
+		//Global: cfg.Global,
 		Config: cfg.Redis,
 	}
 }

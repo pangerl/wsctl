@@ -11,7 +11,7 @@ import (
 const taskName = "doris"
 
 type Doris struct {
-	config.Global
+	//config.Global
 	config.DorisCfg
 	MysqlClient        *sql.DB
 	FailedJobs         []string
@@ -34,7 +34,7 @@ type dorisResponse struct {
 
 func newDoris(cfg *config.CfgType) *Doris {
 	return &Doris{
-		Global:   cfg.Global,
+		//Global:   cfg.Global,
 		DorisCfg: cfg.Doris,
 	}
 }

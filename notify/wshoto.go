@@ -1,7 +1,7 @@
-// Package notifier @Author lanpang
+// Package notify @Author lanpang
 // @Date 2024/9/3 下午2:08:00
 // @Desc
-package notifier
+package notify
 
 import (
 	"bytes"

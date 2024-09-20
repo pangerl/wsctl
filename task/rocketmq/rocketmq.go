@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 	"vhagar/config"
-	"vhagar/notifier"
+	"vhagar/notify"
 	"vhagar/task"
 
 	"github.com/olekukonko/tablewriter"
@@ -33,21 +33,44 @@ func init() {
 
 func (rocketmq *RocketMQ) Check() {
 	task.EchoPrompt("开始巡检 RocketMQ 信息")
-	if rocketmq.Report {
-		rocketmq.ReportRobot(rocketmq.Duration)
+	if config.Config.Report {
+		rocketmq.ReportRobot()
 		return
 	}
 	rocketmq.TableRender()
 }
 
-func (rocketmq *RocketMQ) ReportRobot(duration time.Duration) {
-	// 发送巡检报告
-	markdown := mqDetailMarkdown(rocketmq, rocketmq.ProjectName)
-	log.Println("任务等待时间", duration)
-	time.Sleep(duration)
-	for _, robotkey := range rocketmq.Notifier["rocketmq"].Robotkey {
-		_ = notifier.SendWecom(markdown, robotkey, rocketmq.ProxyURL)
+func (rocketmq *RocketMQ) ReportRobot() {
+	brokerList := rocketmq.BrokerMap
+	var builder strings.Builder
+
+	// 组装巡检内容
+	builder.WriteString("# RocketMQ 巡检 \n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
+	builder.WriteString("**巡检内容：**\n\n")
+	builder.WriteString("**Broker 健康数：**<font color='info'>" + strconv.Itoa(len(brokerList)) + "</font>\n")
+	builder.WriteString("========================\n")
+	for _, broker := range brokerList {
+		builder.WriteString("## Broker Name：<font color='info'>" + broker.name + "</font>\n")
+		builder.WriteString("### " + broker.role + "\n")
+		builder.WriteString("> Broker 版本：<font color='info'>" + broker.version + "</font>\n")
+		builder.WriteString("> Broker 地址：<font color='info'>" + broker.addr + "</font>\n")
+		builder.WriteString("> 今天生产总数：<font color='info'>" + strconv.Itoa(broker.todayProduceCount) + "</font>\n")
+		builder.WriteString("> 今天消费总数：<font color='info'>" + strconv.Itoa(broker.todayConsumeCount) + "</font>\n")
+		builder.WriteString("> 运行时间：<font color='info'>" + broker.runTime + "</font>\n")
+		builder.WriteString("> 磁盘可用空间：<font color='info'>" + broker.useDisk + "</font>")
+		builder.WriteString("\n\n")
+		builder.WriteString("========================\n\n")
 	}
+
+	markdown := &notify.WeChatMarkdown{
+		MsgType: "markdown",
+		Markdown: &notify.Markdown{
+			Content: builder.String(),
+		},
+	}
+	notify.Send(markdown, taskName)
 }
 
 func (rocketmq *RocketMQ) TableRender() {
@@ -122,41 +145,6 @@ func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
 	result = responseData.Data
 
 	return result, err
-}
-
-func mqDetailMarkdown(rocketmq *RocketMQ, ProjectName string) *notifier.WeChatMarkdown {
-
-	brokerList := rocketmq.BrokerMap
-	var builder strings.Builder
-
-	// 组装巡检内容
-	builder.WriteString("# RocketMQ 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + ProjectName + "</font>\n")
-	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
-	builder.WriteString("**巡检内容：**\n\n")
-	builder.WriteString("**Broker 健康数：**<font color='info'>" + strconv.Itoa(len(brokerList)) + "</font>\n")
-	builder.WriteString("========================\n")
-	for _, broker := range brokerList {
-		builder.WriteString("## Broker Name：<font color='info'>" + broker.name + "</font>\n")
-		builder.WriteString("### " + broker.role + "\n")
-		builder.WriteString("> Broker 版本：<font color='info'>" + broker.version + "</font>\n")
-		builder.WriteString("> Broker 地址：<font color='info'>" + broker.addr + "</font>\n")
-		builder.WriteString("> 今天生产总数：<font color='info'>" + strconv.Itoa(broker.todayProduceCount) + "</font>\n")
-		builder.WriteString("> 今天消费总数：<font color='info'>" + strconv.Itoa(broker.todayConsumeCount) + "</font>\n")
-		builder.WriteString("> 运行时间：<font color='info'>" + broker.runTime + "</font>\n")
-		builder.WriteString("> 磁盘可用空间：<font color='info'>" + broker.useDisk + "</font>")
-		builder.WriteString("\n\n")
-		builder.WriteString("========================\n\n")
-	}
-
-	markdown := &notifier.WeChatMarkdown{
-		MsgType: "markdown",
-		Markdown: &notifier.Markdown{
-			Content: builder.String(),
-		},
-	}
-
-	return markdown
 }
 
 func convertAndCalculate(str1, str2 string) int {

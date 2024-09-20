@@ -9,7 +9,7 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/libs"
-	"vhagar/notifier"
+	"vhagar/notify"
 	"vhagar/task"
 
 	"os"
@@ -26,9 +26,9 @@ func init() {
 func (redis *Redis) Check() {
 	task.EchoPrompt("开始巡检 Redis 状态信息")
 	redis.Gather()
-	if redis.Report {
+	if config.Config.Report {
 		// 发送机器人
-		redis.ReportRobot(redis.Duration)
+		redis.ReportRobot()
 		return
 	}
 	redis.TableRender()
@@ -110,24 +110,11 @@ func formatMemory(memoryStr string) string {
 	}
 }
 
-func (redis *Redis) ReportRobot(duration time.Duration) {
-	var content string
-	content += fmt.Sprintf("### Redis 状态报告\n\n")
-
-	markdown := redisRender(redis, redis.ProjectName)
-	log.Println("任务等待时间", duration)
-	time.Sleep(duration)
-	for _, robotkey := range redis.Notifier["doris"].Robotkey {
-		_ = notifier.SendWecom(markdown, robotkey, redis.ProxyURL)
-	}
-}
-
-func redisRender(redis *Redis, name string) *notifier.WeChatMarkdown {
-
+func (redis *Redis) ReportRobot() {
 	var builder strings.Builder
 	// 组装巡检内容
 	builder.WriteString("# Redis 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + name + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**版本：**<font color='info'>" + redis.Version + "</font>\n")
 	builder.WriteString("**角色：**<font color='info'>" + redis.Role + "</font>\n")
@@ -137,12 +124,12 @@ func redisRender(redis *Redis, name string) *notifier.WeChatMarkdown {
 	builder.WriteString("**使用内存：**<font color='info'>" + redis.UsedMemory + "</font>\n")
 	builder.WriteString("**键数量：**<font color='info'>" + strconv.Itoa(redis.KeyCount) + "</font>\n")
 
-	markdown := &notifier.WeChatMarkdown{
+	markdown := &notify.WeChatMarkdown{
 		MsgType: "markdown",
-		Markdown: &notifier.Markdown{
+		Markdown: &notify.Markdown{
 			Content: builder.String(),
 		},
 	}
-
-	return markdown
+	
+	notify.Send(markdown, taskName)
 }

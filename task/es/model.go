@@ -4,13 +4,11 @@
 package es
 
 import (
-	"vhagar/config"
-
 	"github.com/olivere/elastic/v7"
 )
 
 type ES struct {
-	config.Global
+	//config.Global
 	ESClient *elastic.Client
 	NodeList []*NodeInfo
 	Status   string
@@ -20,11 +18,11 @@ type ES struct {
 	TotalDataSize    int64
 }
 
-func newES(cfg *config.CfgType) *ES {
-	return &ES{
-		Global: cfg.Global,
-	}
-}
+//func newES(cfg *config.CfgType) *ES {
+//	return &ES{
+//		//Global: cfg.Global,
+//	}
+//}
 
 type NodeInfo struct {
 	Name        string

@@ -1,7 +1,7 @@
-// Package notifier @Author lanpang
+// Package notify @Author lanpang
 // @Date 2024/8/8 下午5:14:00
 // @Desc
-package notifier
+package notify
 
 import (
 	"bytes"
@@ -21,15 +21,14 @@ type Markdown struct {
 	Content string `json:"content"`
 }
 
-func SendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
+func sendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 
 	jsonStr, _ := json.Marshal(markdown)
 	//fmt.Println("jsonStr长度：", len(jsonStr))
-	wechatRobotURL := "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=" + robotKey
+	robotURL := wechatRobotURL + robotKey
 
-	req, err := http.NewRequest("POST", wechatRobotURL, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", robotURL, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
 		return err
 	}
 
@@ -50,7 +49,6 @@ func SendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
 		return err
 	}
 	defer func(Body io.ReadCloser) {
