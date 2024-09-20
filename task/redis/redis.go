@@ -40,7 +40,15 @@ func (redis *Redis) Gather() {
 		log.Println("Failed to create redis client. err:", err)
 		return
 	}
-	defer redisClient.Close()
+
+	defer func() {
+		if redisClient != nil {
+			err := redisClient.Close()
+			if err != nil {
+				return
+			}
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -130,6 +138,6 @@ func (redis *Redis) ReportRobot() {
 			Content: builder.String(),
 		},
 	}
-	
+
 	notify.Send(markdown, taskName)
 }
