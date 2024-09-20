@@ -44,7 +44,7 @@ func (doris *Doris) Check() {
 	task.EchoPrompt("开始巡检 Doris 状态信息")
 	if doris.Report {
 		// 发送机器人
-		doris.ReportRobot(doris.Global.Duration)
+		doris.ReportRobot(doris.Duration)
 		return
 	}
 	doris.TableRender()

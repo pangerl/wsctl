@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"time"
 	"vhagar/config"
 	"vhagar/task"
@@ -12,8 +11,11 @@ import (
 	_ "vhagar/task/es"
 	_ "vhagar/task/host"
 	_ "vhagar/task/nacos"
+	_ "vhagar/task/redis" // 确保这个包已经创建
 	_ "vhagar/task/rocketmq"
 	_ "vhagar/task/tenant"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -44,7 +46,7 @@ var checkCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(checkCmd)
-	checkCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es)") // 更新帮助信息
+	checkCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es, redis)") // 更新帮助信息
 	checkCmd.Flags().BoolVarP(&watch, "watch", "w", false, "nacos服务，定时刷新")
 	checkCmd.Flags().DurationVarP(&interval, "second", "i", 5*time.Second, "自定义监控服务间隔刷新时间")
 	checkCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")

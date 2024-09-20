@@ -16,3 +16,9 @@ type DB struct {
 type PGClienter struct {
 	Conn map[string]*pgx.Conn
 }
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+}

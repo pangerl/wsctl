@@ -44,7 +44,7 @@ func (es *ES) Check() {
 	task.EchoPrompt("开始巡检 ES 状态信息")
 	if es.Report {
 		// 发送机器人
-		es.ReportRobot(es.Global.Duration)
+		es.ReportRobot(es.Duration)
 		return
 	}
 	es.TableRender()

@@ -30,6 +30,7 @@ type CfgType struct {
 	Doris           DorisCfg           `toml:"doris"`
 	RocketMQ        RocketMQCfg        `toml:"rocketmq"`
 	Metric          MetricCfg          `toml:"metric"`
+	Redis           libs.RedisConfig   `toml:"redis"`
 }
 
 type Global struct {
