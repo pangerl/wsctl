@@ -1,7 +1,7 @@
-// Package network @Author lanpang
+// Package tcpdump @Author lanpang
 // @Date 2024/9/24 下午1:56:00
 // @Desc
-package main
+package tcpdump
 
 import "net"
 

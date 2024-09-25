@@ -1,7 +1,7 @@
-// Package network @Author lanpang
+// Package tcpdump @Author lanpang
 // @Date 2024/9/24 下午12:19:00
 // @Desc
-package main
+package tcpdump
 
 import (
 	"fmt"
@@ -15,16 +15,14 @@ import (
 )
 
 var (
-	device         = "utun4"          //网卡名
-	snapshot int32 = 65535            //读取一个数据包的最大值，一般设置成这65535即可
-	promisc        = false            //是否开启混杂模式
-	timeout        = time.Second * -1 //抓取数据包的超时时间，负数表示立即刷新，一般都设为负数
+	snapshot int32 = 65535 //读取一个数据包的最大值，一般设置成这65535即可
+	//promisc        = false            //是否开启混杂模式
+	timeout = time.Second * 10 //抓取数据包的超时时间，负数表示立即刷新，一般都设为负数
+	writer  *pcapgo.Writer
 )
 
-func handle() {
-	//filter := "tcp and port 8081" // 可以根据需求设置过滤条件
-	filter := "tcp" // 不设置过滤条件
-	handle, err := pcap.OpenLive(device, snapshot, promisc, timeout)
+func TcpDump(device, filter, pcapFile string) {
+	handle, err := pcap.OpenLive(device, snapshot, false, timeout)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,21 +35,7 @@ func handle() {
 	fmt.Println("开始抓包...")
 
 	// 创建一个 .pcap 文件用于保存捕获的数据包
-	f, err := os.Create("captured_packets.pcap")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(f)
-	w := pcapgo.NewWriter(f)
-	err = w.WriteFileHeader(uint32(snapshot), layers.LinkTypeEthernet)
-	if err != nil {
-		return
-	}
+	writer = newWriter(pcapFile)
 
 	// 初始化解码器层和解析器
 	var ethLayer layers.Ethernet
@@ -73,14 +57,16 @@ func handle() {
 
 	for packet := range packetSource.Packets() {
 		// 写入 .pcap 文件
-		if err := w.WritePacket(packet.Metadata().CaptureInfo, packet.Data()); err != nil {
-			log.Println("写入文件失败:", err)
+		if writer != nil {
+			if err := writer.WritePacket(packet.Metadata().CaptureInfo, packet.Data()); err != nil {
+				log.Println("写入文件失败:", err)
+			}
 		}
 
 		// 解析数据包
 		err := parser.DecodeLayers(packet.Data(), &decodedLayers)
 		if err != nil {
-			log.Println("解码失败:", err)
+			//log.Println("解码失败:", err)
 			continue
 		}
 
@@ -164,8 +150,24 @@ func getDevices() {
 	}
 }
 
-func main() {
-	//getDevices()
-	//device = "en0"
-	handle()
+func newWriter(fileName string) *pcapgo.Writer {
+	if fileName == "" {
+		return nil
+	}
+	f, err := os.Create(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(f)
+	w := pcapgo.NewWriter(f)
+	err = w.WriteFileHeader(uint32(snapshot), layers.LinkTypeEthernet)
+	if err != nil {
+		return nil
+	}
+	return w
 }
