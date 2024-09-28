@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	orientation = "regular"
 	animation   = "parrot"
 	delay       = 75
 	loops       = 0
@@ -20,7 +19,7 @@ var (
 	color_index = 0
 )
 
-func RunParrot() {
+func RunParrot(orientation string) {
 	inventory := NewInventory()
 
 	err := termbox.Init()
