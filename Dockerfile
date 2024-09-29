@@ -4,6 +4,9 @@ LABEL org.opencontainers.image.authors="lanpang@wshoto.com"
 ENV GOPROXY https://goproxy.cn
 ENV GO111MODULE on
 
+# 安装必要的系统依赖
+RUN apk add --no-cache gcc musl-dev libpcap-dev
+
 WORKDIR /build
 
 ADD go.mod .
