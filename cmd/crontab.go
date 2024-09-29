@@ -13,13 +13,19 @@ import (
 
 var crontabCmd = &cobra.Command{
 	Use:   "cron",
-	Short: " 启动定时任务",
+	Short: "启动定时任务",
 	Long: `可自定义周期性运行 task
 相关配置见配置文件的 [crontab]
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Print("启动任务调度")
 		crontabJob()
+	},
+	PreRun: func(cmd *cobra.Command, args []string) {
+		// 获取等待时间
+		duration := config.GetRandomDuration()
+		config.Config.Global.Duration = duration
+		config.Config.Global.Report = true
 	},
 }
 
@@ -29,31 +35,22 @@ func init() {
 
 func crontabJob() {
 	c := cron.New() //创建一个cron实例
-	// 获取等待时间
-	duration := config.GetRandomDuration()
-	config.Config.Global.Duration = duration
-	config.Config.Global.Report = true
-	// 租户巡检 task
-	if config.Config.Cron["tenant"].Crontab {
-		// 加入定时任务
-		_, err := c.AddFunc(config.Config.Cron["tenant"].Scheducron, func() {
-			task.Do("tenant")
-		})
-		if err != nil {
-			log.Fatalf("Failed to add crontab task: %s \n", err)
+	cronCfg := config.Config.Cron
+	// 添加任务
+	for name, cronJob := range cronCfg {
+		// 判断是否是定时任务
+		taskName := name
+		if cronJob.Crontab {
+			log.Println("添加定时任务", taskName)
+			_, err := c.AddFunc(cronJob.Scheducron, func() {
+				task.Do(taskName)
+			})
+			if err != nil {
+				log.Fatalf("Failed to add cronJob task: %s \n", err)
+			}
 		}
 	}
-	//  doris 巡检 task
-	if config.Config.Cron["doris"].Crontab {
-		// 加入定时任务
-		_, err := c.AddFunc(config.Config.Cron["doris"].Scheducron, func() {
-			task.Do("doris")
-		})
-		if err != nil {
-			log.Fatalf("Failed to add crontab task: %s \n", err)
-		}
-	}
-
+	log.Println("启动任务调度")
 	//启动/关闭
 	c.Start()
 	defer c.Stop()
@@ -61,7 +58,3 @@ func crontabJob() {
 	//查询语句，保持程序运行，在这里等同于for{}
 	}
 }
-
-//func testjob() {
-//	log.Printf("大王叫我来巡山，巡了南山巡北山。。。 \n")
-//}

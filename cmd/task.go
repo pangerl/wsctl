@@ -11,7 +11,7 @@ import (
 	_ "vhagar/task/es"
 	_ "vhagar/task/host"
 	_ "vhagar/task/nacos"
-	_ "vhagar/task/redis" // 确保这个包已经创建
+	_ "vhagar/task/redis"
 	_ "vhagar/task/rocketmq"
 	_ "vhagar/task/tenant"
 
@@ -26,8 +26,8 @@ var (
 	interval  time.Duration
 )
 
-var checkCmd = &cobra.Command{
-	Use:   "check",
+var taskCmd = &cobra.Command{
+	Use:   "task",
 	Short: "检查服务",
 	Long:  `支持各种服务的健康检测`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -45,12 +45,12 @@ var checkCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(checkCmd)
-	checkCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es, redis)") // 更新帮助信息
-	checkCmd.Flags().BoolVarP(&watch, "watch", "w", false, "nacos服务，定时刷新")
-	checkCmd.Flags().DurationVarP(&interval, "second", "i", 5*time.Second, "自定义监控服务间隔刷新时间")
-	checkCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")
-	checkCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
+	rootCmd.AddCommand(taskCmd)
+	taskCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es, redis)") // 更新帮助信息
+	taskCmd.Flags().BoolVarP(&watch, "watch", "w", false, "nacos服务，定时刷新")
+	taskCmd.Flags().DurationVarP(&interval, "second", "i", 5*time.Second, "自定义监控服务间隔刷新时间")
+	taskCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")
+	taskCmd.Flags().StringVarP(&writefile, "write", "o", "", "导出json文件, prometheus 自动发现文件路径")
 }
 
 func setEnv() {

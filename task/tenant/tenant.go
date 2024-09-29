@@ -24,15 +24,6 @@ import (
 
 var isalert = false
 
-//func GetTenant() config.Tasker {
-//	cfg := config.Config
-//	tenant := newTenant(cfg)
-//
-//	// 初始化数据
-//	tenant.Gather()
-//	return tenant
-//}
-
 func init() {
 	task.Add(taskName, func() task.Tasker {
 		return newTenant(config.Config)
