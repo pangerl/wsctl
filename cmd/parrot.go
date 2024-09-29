@@ -1,7 +1,7 @@
-// Package libs @Author lanpang
+// Package cmd @Author lanpang
 // @Date 2024/9/28 下午21:28:00
 // @Desc
-package libs
+package cmd
 
 import (
 	"bytes"
@@ -12,14 +12,35 @@ import (
 )
 
 var (
-	animation   = "parrot"
-	delay       = 75
-	loops       = 0
-	frame_index = 0
-	color_index = 0
+	animation  = "parrot"
+	delay      = 75
+	loops      = 0
+	frameIndex = 0
+	colorIndex = 0
 )
 
-func RunParrot(orientation string) {
+type Inventory map[string]Animation
+
+type Animation struct {
+	Metadata map[string]string
+	Frames   [][]byte
+}
+
+var colors = []termbox.Attribute{
+	// approx colors from original gif
+	termbox.Attribute(210), // peach
+	termbox.Attribute(222), // orange
+	termbox.Attribute(120), // green
+	termbox.Attribute(123), // cyan
+	termbox.Attribute(111), // blue
+	termbox.Attribute(134), // purple
+	termbox.Attribute(177), // pink
+	termbox.Attribute(207), // fuschia
+	termbox.Attribute(206), // magenta
+	termbox.Attribute(204), // red
+}
+
+func runParrot(orientation string) {
 	inventory := NewInventory()
 
 	err := termbox.Init()
@@ -28,28 +49,28 @@ func RunParrot(orientation string) {
 	}
 	defer termbox.Close()
 
-	event_queue := make(chan termbox.Event)
+	eventQueue := make(chan termbox.Event)
 	go func() {
 		for {
-			event_queue <- termbox.PollEvent()
+			eventQueue <- termbox.PollEvent()
 		}
 	}()
 
 	termbox.SetOutputMode(termbox.Output256)
 
-	loop_index := 0
+	loopIndex := 0
 	draw(inventory[animation], orientation)
 
 loop:
 	for {
 		select {
-		case ev := <-event_queue:
+		case ev := <-eventQueue:
 			if (ev.Type == termbox.EventKey && (ev.Key == termbox.KeyEsc || ev.Key == termbox.KeyCtrlC || ev.Ch == 'q')) || ev.Type == termbox.EventInterrupt {
 				break loop
 			}
 		default:
-			loop_index++
-			if loops > 0 && (loop_index/9) >= loops {
+			loopIndex++
+			if loops > 0 && (loopIndex/9) >= loops {
 				break loop
 			}
 			draw(inventory[animation], orientation)
@@ -60,7 +81,7 @@ loop:
 
 func draw(animation Animation, orientation string) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	lines := bytes.Split(animation.Frames[frame_index], []byte{'\n'})
+	lines := bytes.Split(animation.Frames[frameIndex], []byte{'\n'})
 
 	if orientation == "aussie" {
 		lines = reverse(lines)
@@ -68,18 +89,18 @@ func draw(animation Animation, orientation string) {
 
 	for x, line := range lines {
 		for y, cell := range line {
-			termbox.SetCell(y, x, rune(cell), colors[color_index], termbox.ColorDefault)
+			termbox.SetCell(y, x, rune(cell), colors[colorIndex], termbox.ColorDefault)
 		}
 	}
 
 	termbox.Flush()
-	frame_index++
-	color_index++
-	if frame_index >= len(animation.Frames) {
-		frame_index = 0
+	frameIndex++
+	colorIndex++
+	if frameIndex >= len(animation.Frames) {
+		frameIndex = 0
 	}
-	if color_index >= len(colors) {
-		color_index = 0
+	if colorIndex >= len(colors) {
+		colorIndex = 0
 	}
 }
 

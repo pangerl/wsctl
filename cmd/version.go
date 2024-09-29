@@ -6,8 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"vhagar/libs"
-
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +21,7 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("vhagar version: ", VERSION)
 		if parrot {
-			libs.RunParrot(orientation)
+			runParrot(orientation)
 		}
 	},
 }
