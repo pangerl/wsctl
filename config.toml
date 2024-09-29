@@ -20,7 +20,7 @@ victoriaMetrics = "http://xxxx:8428"
         crontab = true # 是否开启任务
         scheducron = "30 09 * * *"
     [cron.doris]
-        crontab = false
+        crontab = true
         scheducron = "30 09 * * *"
 
 # 告警通知
