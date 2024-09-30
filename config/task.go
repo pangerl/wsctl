@@ -16,7 +16,6 @@ type DorisCfg struct {
 
 type RocketMQCfg struct {
 	RocketmqDashboard string `toml:"rocketmqdashboard"`
-	NameServer        string `toml:"nameserver"`
 }
 
 type NacosCfg struct {

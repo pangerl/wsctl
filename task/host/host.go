@@ -154,13 +154,12 @@ func (s *Server) getHostData(key ...string) {
 	var baseUrl = s.vmUrl
 	if len(key) == 1 {
 		url = baseUrl + "/api/v1/query?query=" + key[0]
-	} else if len(key) == 2 {
+	}
+	if key[0] == "disk_used_percent" {
 		url = fmt.Sprintf("%s/api/v1/query?query=%s{path='%s'}", baseUrl, key[0], key[1])
-	} else if len(key) == 3 {
+	}
+	if key[0] == "rate" {
 		url = fmt.Sprintf("%s/api/v1/query?query=%s(%s{interface='%s'}[1m])", baseUrl, key[0], key[1], key[2])
-	} else {
-		log.Printf("不支持的参数")
-		return
 	}
 	//fmt.Println(url)
 	response, _ := queryVictoriaMetrics(url)

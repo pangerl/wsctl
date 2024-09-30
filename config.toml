@@ -25,7 +25,7 @@ victoriaMetrics = "http://xxxx:8428"
 
 # 告警通知
 [notify]
-    robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]   # 默认机器人
+    robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]   # 默认机器人，支持配置多 "5c8daf9d-bebb-4453-bab4-aa3fe56eeac3"
     userlist = [] # 默认告警@人 ["lanpang", "mark"]
     [notify.notifier.tenant]
         robotkey = ["xxxxxx-d86f-4c99-b95f-5d23a30eb351"]
@@ -67,7 +67,6 @@ victoriaMetrics = "http://xxxx:8428"
 
 [rocketmq]
     rocketmqDashboard = "http://x.x.x.x:8081"
-    nameServer = "x.x.x.x:9876"
 
 [metric]
     port = "8090" # 定义 metric 的端口
