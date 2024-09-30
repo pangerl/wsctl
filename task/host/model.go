@@ -27,7 +27,7 @@ type MetricsResponse struct {
 }
 
 type Response struct {
-	Result []MetricData `json:"result"`
+	Result []*MetricData `json:"result"`
 }
 
 type MetricData struct {
@@ -37,10 +37,11 @@ type MetricData struct {
 
 type Host struct {
 	//Ident           string
-	CpuUsageActive  float64
-	MemUsedPercent  float64
-	MemTotal        float64
-	netBytesRecv    float64
-	netBytesSent    float64
-	DiskUsedPercent map[string]float64
+	cpuUsageActive      float64
+	MemUsedPercent      float64
+	MemTotal            float64
+	netBytesRecv        float64
+	netBytesSent        float64
+	rootDiskUsedPercent float64
+	dataDiskUsedPercent float64
 }

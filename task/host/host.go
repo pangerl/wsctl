@@ -6,10 +6,8 @@ package host
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -33,10 +31,10 @@ func (s *Server) TableRender() {
 	var alarmNum int
 	for _, ident := range identList {
 		data := hosts[ident]
-		tabledata := []string{ident, formatToPercentage(data.CpuUsageActive),
+		tabledata := []string{ident, formatToPercentage(data.cpuUsageActive),
 			formatToPercentage(data.MemUsedPercent), formatBytes(data.MemTotal),
 			formatBytes(data.netBytesRecv), formatBytes(data.netBytesSent),
-			formatToPercentage(data.DiskUsedPercent["/"]), formatToPercentage(data.DiskUsedPercent["/data"])}
+			formatToPercentage(data.rootDiskUsedPercent), formatToPercentage(data.dataDiskUsedPercent)}
 		// 异常标红
 		if isAlarm(data) {
 			table.Rich(tabledata, tableColor)
@@ -78,19 +76,19 @@ func (s *Server) Check() {
 
 func (s *Server) Gather() {
 	// CPU 使用率
-	s.getHostData("cpu_usage_active")
+	getHostCpuUsageActive(s)
 	// 内存 使用率
-	s.getHostData("mem_used_percent")
+	getHostMemUsedPercent(s)
 	// 内存 大小
-	s.getHostData("mem_total")
+	getHostMemTotal(s)
 	// 入网流量
-	s.getHostData("rate", "net_bytes_recv", "eth0")
+	getHostNetBytesRecv(s)
 	// 出网流量
-	s.getHostData("rate", "net_bytes_sent", "eth0")
+	getHostNetBytesSent(s)
 	// 系统盘
-	s.getHostData("disk_used_percent", "/")
+	getHostRootDiskUsedPercent(s)
 	// 数据盘
-	s.getHostData("disk_used_percent", "/data")
+	getHostDataDiskUsedPercent(s)
 }
 
 func ipSort(hosts map[string]*Host) []string {
@@ -110,93 +108,162 @@ func ipSort(hosts map[string]*Host) []string {
 }
 
 func isAlarm(host *Host) bool {
-	if host.CpuUsageActive > 90 {
+	if host.cpuUsageActive > 90 {
 		return true
 	}
 	if host.MemUsedPercent > 85 {
 		return true
 	}
-	if host.DiskUsedPercent["/"] > 80 {
+	if host.rootDiskUsedPercent > 80 {
 		return true
 	}
-	if host.DiskUsedPercent["/data"] > 85 {
+	if host.dataDiskUsedPercent > 85 {
 		return true
 	}
 	return false
 }
 
-func queryVictoriaMetrics(url string) (*MetricsResponse, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Printf("Failed info: %s \n", err)
-			return
-		}
-	}(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to query VictoriaMetrics: %s", resp.Status)
-	}
-
+func queryVmData(url string) []*MetricData {
+	body := task.DoRequest(url)
 	var metricsResponse MetricsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&metricsResponse); err != nil {
-		return nil, err
+	if err := json.Unmarshal(body, &metricsResponse); err != nil {
+		return nil
+	}
+	res := metricsResponse
+	if res.Status != "success" {
+		log.Printf("查询报错，Status: %s \n", res.Status)
+		return nil
 	}
 
-	return &metricsResponse, nil
+	return res.Data.Result
 }
 
-func (s *Server) getHostData(key ...string) {
+//	func (s *Server) getHostData(key ...string) {
+//		var url string
+//		var baseUrl = s.vmUrl
+//		if len(key) == 1 {
+//			url = baseUrl + "/api/v1/query?query=" + key[0]
+//		}
+//		if key[0] == "disk_used_percent" {
+//			url = fmt.Sprintf("%s/api/v1/query?query=%s{path='%s'}", baseUrl, key[0], key[1])
+//		}
+//		if key[0] == "rate" {
+//			url = fmt.Sprintf("%s/api/v1/query?query=%s(%s{interface='%s'}[1m])", baseUrl, key[0], key[1], key[2])
+//		}
+//		//fmt.Println(url)
+//		response, _ := queryVictoriaMetrics(url)
+//		if response.Status != "success" {
+//			log.Printf("查询报错，Status: %s \n", response.Status)
+//			return
+//		}
+//		for _, result := range response.Data.Result {
+//			ident := result.Metric["ident"]
+//			host := s.getHost(ident)
+//			switch {
+//			case key[0] == "cpu_usage_active":
+//				host.cpuUsageActive, _ = strconv.ParseFloat(result.Value[1].(string), 64)
+//			case key[0] == "mem_used_percent":
+//				host.MemUsedPercent, _ = strconv.ParseFloat(result.Value[1].(string), 64)
+//			case key[0] == "mem_total":
+//				host.MemTotal, _ = strconv.ParseFloat(result.Value[1].(string), 64)
+//			case key[1] == "net_bytes_recv":
+//				host.netBytesRecv, _ = strconv.ParseFloat(result.Value[1].(string), 64)
+//			case key[1] == "net_bytes_sent":
+//				host.netBytesSent, _ = strconv.ParseFloat(result.Value[1].(string), 64)
+//			case key[0] == "disk_used_percent":
+//				host.DiskUsedPercent = make(map[string]float64)
+//				host.DiskUsedPercent[key[1]], _ = strconv.ParseFloat(result.Value[1].(string), 64)
+//			default:
+//				fmt.Printf("xxx")
+//			}
+//		}
+//	}
+func getHostCpuUsageActive(s *Server) {
+	key := "cpu_usage_active"
+	setHostData(s, key)
+}
+
+func getHostMemUsedPercent(s *Server) {
+	key := "mem_used_percent"
+	setHostData(s, key)
+}
+
+func getHostMemTotal(s *Server) {
+	key := "mem_total"
+	setHostData(s, key)
+}
+
+func getHostNetBytesRecv(s *Server) {
+	key := "net_bytes_recv"
+	nic := "eth0"
+	url := fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface='%s'}[1m])", s.vmUrl, key, nic)
+	setHostData(s, key, url)
+}
+
+func getHostNetBytesSent(s *Server) {
+	key := "net_bytes_sent"
+	nic := "eth0"
+	url := fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface='%s'}[1m])", s.vmUrl, key, nic)
+	setHostData(s, key, url)
+}
+
+func getHostRootDiskUsedPercent(s *Server) {
+	key := "root_disk_used_percent"
+	path := "/"
+	url := fmt.Sprintf("%s/api/v1/query?query=disk_used_percent{path='%s'}", s.vmUrl, path)
+	setHostData(s, key, url)
+}
+
+func getHostDataDiskUsedPercent(s *Server) {
+	key := "data_disk_used_percent"
+	path := "/data"
+	url := fmt.Sprintf("%s/api/v1/query?query=disk_used_percent{path='%s'}", s.vmUrl, path)
+	setHostData(s, key, url)
+}
+
+func setHostData(s *Server, key ...string) {
 	var url string
-	var baseUrl = s.vmUrl
 	if len(key) == 1 {
-		url = baseUrl + "/api/v1/query?query=" + key[0]
+		url = s.vmUrl + "/api/v1/query?query=" + key[0]
+	} else {
+		url = key[1]
 	}
-	if key[0] == "disk_used_percent" {
-		url = fmt.Sprintf("%s/api/v1/query?query=%s{path='%s'}", baseUrl, key[0], key[1])
-	}
-	if key[0] == "rate" {
-		url = fmt.Sprintf("%s/api/v1/query?query=%s(%s{interface='%s'}[1m])", baseUrl, key[0], key[1], key[2])
-	}
-	//fmt.Println(url)
-	response, _ := queryVictoriaMetrics(url)
-	if response.Status != "success" {
-		log.Printf("查询报错，Status: %s \n", response.Status)
-		return
-	}
-	for _, result := range response.Data.Result {
+	fmt.Printf("url: %s\n", url)
+	results := queryVmData(url)
+	for _, result := range results {
 		ident := result.Metric["ident"]
-		host := s.getHost(ident)
+		value := result.Value[1].(string)
+		fmt.Printf("ident: %s, key: %s, value: %s\n", ident, key[0], value)
+		AddOrUpdateHost(s.Hosts, ident, key[0], value)
+	}
+}
+
+func AddOrUpdateHost(hosts map[string]*Host, ident, key, value string) {
+	if host, exists := hosts[ident]; exists {
+		newValue, _ := strconv.ParseFloat(value, 64)
 		switch {
-		case key[0] == "cpu_usage_active":
-			host.CpuUsageActive, _ = strconv.ParseFloat(result.Value[1].(string), 64)
-		case key[0] == "mem_used_percent":
-			host.MemUsedPercent, _ = strconv.ParseFloat(result.Value[1].(string), 64)
-		case key[0] == "mem_total":
-			host.MemTotal, _ = strconv.ParseFloat(result.Value[1].(string), 64)
-		case key[1] == "net_bytes_recv":
-			host.netBytesRecv, _ = strconv.ParseFloat(result.Value[1].(string), 64)
-		case key[1] == "net_bytes_sent":
-			host.netBytesSent, _ = strconv.ParseFloat(result.Value[1].(string), 64)
-		case key[0] == "disk_used_percent":
-			host.DiskUsedPercent = make(map[string]float64)
-			host.DiskUsedPercent[key[1]], _ = strconv.ParseFloat(result.Value[1].(string), 64)
+		case key == "cpu_usage_active":
+			host.cpuUsageActive = newValue
+			fmt.Printf("cpu_usage_active: %f\n", newValue)
+		case key == "mem_used_percent":
+			host.MemUsedPercent = newValue
+		case key == "mem_total":
+			host.MemTotal = newValue
+		case key == "net_bytes_recv":
+			host.netBytesRecv = newValue
+		case key == "net_bytes_sent":
+			host.netBytesSent = newValue
+		case key == "root_disk_used_percent":
+			host.rootDiskUsedPercent = newValue
+		case key == "data_disk_used_percent":
+			host.dataDiskUsedPercent = newValue
 		default:
 			fmt.Printf("xxx")
 		}
+	} else {
+		newHost := Host{}
+		hosts[ident] = &newHost
 	}
-}
-
-func (s *Server) getHost(ident string) *Host {
-	if host, exists := s.Hosts[ident]; exists {
-		return host
-	}
-	newHost := Host{}
-	s.Hosts[ident] = &newHost
-	return &newHost
 }
 
 func formatToPercentage(value float64) string {
