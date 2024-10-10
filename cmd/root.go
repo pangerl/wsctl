@@ -88,16 +88,6 @@ func startWeb() {
 }
 
 func response(c *gin.Context) {
-	err := c.Request.ParseForm()
-	if err != nil {
-		log.Printf("Failed to parse form: %v", err)
-		return
-	}
-	err = c.Request.ParseMultipartForm(33554432)
-	if err != nil {
-		log.Printf("Failed to parse form: %v", err)
-		return
-	}
 	responseCode := 200
 	format := c.DefaultQuery("format", "json")
 	httpCode := c.DefaultQuery("http_code", "200")
