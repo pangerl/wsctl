@@ -28,7 +28,9 @@ var rootCmd = &cobra.Command{
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("wsctl go go go！！！")
+		log.Print("启动调试 web 服务")
 		startWeb()
+
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		preFunc()
@@ -73,13 +75,8 @@ func startWeb() {
 	r := gin.Default()
 	t, _ := template.ParseFS(tmpl, "templates/*.tmpl")
 	r.SetHTMLTemplate(t)
-	v1 := r.Group("/")
-	v1.GET("/*router", response)
-	v1.HEAD("/*router", response)
-	v1.POST("/*router", response)
-	v1.PUT("/*router", response)
-	v1.DELETE("/*router", response)
-	v1.OPTIONS("/*router", response)
+	v1 := r.Group("/ping")
+	v1.Any("/*router", response)
 	err := r.Run(":" + config.Config.Port)
 	if err != nil {
 		log.Printf("Failed to start server: %v", err)

@@ -21,12 +21,6 @@ var crontabCmd = &cobra.Command{
 		log.Print("启动任务调度")
 		crontabJob()
 	},
-	PreRun: func(cmd *cobra.Command, args []string) {
-		// 获取等待时间
-		duration := config.GetRandomDuration()
-		config.Config.Global.Duration = duration
-		config.Config.Global.Report = true
-	},
 }
 
 func init() {
@@ -35,6 +29,10 @@ func init() {
 
 func crontabJob() {
 	c := cron.New() //创建一个cron实例
+	// 获取等待时间
+	duration := config.GetRandomDuration()
+	config.Config.Global.Duration = duration
+	config.Config.Global.Report = true
 	cronCfg := config.Config.Cron
 	// 添加任务
 	for name, cronJob := range cronCfg {
@@ -50,11 +48,7 @@ func crontabJob() {
 			}
 		}
 	}
-	log.Println("启动任务调度")
 	//启动/关闭
-	c.Start()
+	c.Run()
 	defer c.Stop()
-	select {
-	//查询语句，保持程序运行，在这里等同于for{}
-	}
 }
