@@ -76,7 +76,9 @@ func startWeb() {
 	t, _ := template.ParseFS(tmpl, "templates/*.tmpl")
 	r.SetHTMLTemplate(t)
 	v1 := r.Group("/ping")
-	v1.Any("/*router", response)
+	//v1.Any("/*router", response)
+	v1.GET("/*router", response)
+
 	err := r.Run(":" + config.Config.Port)
 	if err != nil {
 		log.Printf("Failed to start server: %v", err)
