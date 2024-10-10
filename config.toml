@@ -4,6 +4,8 @@ projectname = "测试企业"
 proxyurl = ""
 # vm数据库地址
 victoriaMetrics = "http://xxxx:8428"
+# web 端口
+port = "8090"
 
 # 租户配置，如果是服务商模式，租户填写加密 ID
 [tenant]

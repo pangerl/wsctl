@@ -1,17 +1,25 @@
 package cmd
 
 import (
+	"embed"
+	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/cobra"
+	"github.com/tomasen/realip"
+	"html/template"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"vhagar/config"
-
-	"github.com/spf13/cobra"
 )
 
-var cfgFile string
-
-// var cfg *config.CfgType
+var (
+	cfgFile  string
+	Hostname string
+	//go:embed templates/*.tmpl
+	tmpl embed.FS
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -20,6 +28,7 @@ var rootCmd = &cobra.Command{
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("wsctl go go go！！！")
+		startWeb()
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		preFunc()
@@ -58,29 +67,87 @@ func preFunc() {
 	}
 }
 
-//func preFunc() {
-//	//homedir := "."
-//	//configfile := filepath.Join(homedir, "config.toml")
-//	log.Printf("读取配置文件 %s \n", cfgFile)
-//	defer func() {
-//		if err := recover(); err != nil {
-//			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
-//		}
-//	}()
-//	if _, err := os.Stat(cfgFile); err != nil {
-//		if os.IsNotExist(err) {
-//			log.Printf("读取配置文件 %s 失败，报错：%s", cfgFile, err)
-//			createTempConfig()
-//		}
-//	} else {
-//		if _, err := toml.DecodeFile(cfgFile, CONFIG); err != nil {
-//
-//			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
-//		}
-//		log.Println(CONFIG.VictoriaMetrics)
-//		//log.Println(CONFIG.Cron["tenant"])
-//		//log.Println(CONFIG.Tenant.Scheducron)
-//		//fmt.Printf("租户信息: %+v\n", CONFIG.PG)
-//		//fmt.Printf("租户信息: %+v\n", CONFIG.ES)
-//	}
-//}
+func startWeb() {
+	Hostname, _ = os.Hostname()
+	gin.SetMode(gin.DebugMode)
+	r := gin.Default()
+	t, _ := template.ParseFS(tmpl, "templates/*.tmpl")
+	r.SetHTMLTemplate(t)
+	v1 := r.Group("/")
+	v1.GET("/*router", response)
+	v1.HEAD("/*router", response)
+	v1.POST("/*router", response)
+	v1.PUT("/*router", response)
+	v1.DELETE("/*router", response)
+	v1.OPTIONS("/*router", response)
+	err := r.Run(":" + config.Config.Port)
+	if err != nil {
+		log.Printf("Failed to start server: %v", err)
+		return
+	}
+}
+
+func response(c *gin.Context) {
+	err := c.Request.ParseForm()
+	if err != nil {
+		log.Printf("Failed to parse form: %v", err)
+		return
+	}
+	err = c.Request.ParseMultipartForm(33554432)
+	if err != nil {
+		log.Printf("Failed to parse form: %v", err)
+		return
+	}
+	responseCode := 200
+	format := c.DefaultQuery("format", "json")
+	httpCode := c.DefaultQuery("http_code", "200")
+	if value, err := strconv.Atoi(httpCode); err == nil {
+		responseCode = value
+	}
+	ip := c.ClientIP()
+	djson := make(map[string]interface{})
+	contentType := c.GetHeader("Content-Type")
+	if err := c.ShouldBindJSON(&djson); err != nil && contentType == "application/json" {
+		djson["message"] = "Submit json format error"
+	}
+	RealIp := realip.FromRequest(c.Request)
+	responseJson := make(map[string]interface{})
+	responseJson["ClientIp"] = ip
+	responseJson["RequestURI"] = c.Request.RequestURI
+	responseJson["Header"] = c.Request.Header
+	responseJson["Method"] = c.Request.Method
+	responseJson["RealIp"] = RealIp
+	responseJson["RequestJson"] = djson
+	responseJson["RequestPostForm"] = c.Request.PostForm
+	responseJson["Response_code"] = responseCode
+	responseJson["Content-Type"] = c.Request.Header.Get("Content-Type")
+	responseJson["Hostname"] = Hostname
+	bytejson, _ := json.MarshalIndent(&djson, "", "  ")
+	log.Printf("\n============================================================================\n"+
+		"Header:%s\n"+
+		"IP:%s\n"+
+		"X-Forwarded-For:%s\n"+
+		"X-Real-Ip:%s\n"+
+		"X-Forwarded-Host:%s\n"+
+		"RemoteAddr:%s\n"+
+		"Content-Type:%s\n"+
+		"RequestJson::%s\n"+
+		"RequestPostForm::%s\n",
+		c.Request.Header,
+		c.ClientIP(),
+		c.Request.Header.Get("X-Forwarded-For"),
+		c.Request.Header.Get("X-Real-Ip"),
+		c.Request.Header.Get("X-Forwarded-Host:"),
+		c.Request.RemoteAddr,
+		c.Request.Header.Get("Content-Type"),
+		string(bytejson),
+		c.Request.PostForm)
+	if format == "json" {
+		c.JSON(responseCode, responseJson)
+	} else {
+		c.HTML(responseCode, "index.tmpl", gin.H{
+			"response_json": responseJson,
+			"Header":        c.Request.Header,
+		})
+	}
+}

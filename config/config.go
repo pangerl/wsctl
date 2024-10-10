@@ -20,7 +20,7 @@ var (
 
 type CfgType struct {
 	Global
-	CfgFile         string
+	Port            string             `toml:"port"`
 	VictoriaMetrics string             `toml:"victoriaMetrics"`
 	Cron            map[string]crontab `toml:"cron"`
 	Nacos           NacosCfg           `toml:"nacos"`
@@ -70,9 +70,7 @@ type MetricCfg struct {
 
 func InitConfig(cfgFile string) (*CfgType, error) {
 	//configFile := path.Join(configDir, "config.toml")
-	Config = &CfgType{
-		CfgFile: cfgFile,
-	}
+	Config = &CfgType{}
 
 	log.Printf("读取配置文件 %s \n", cfgFile)
 	defer func() {
