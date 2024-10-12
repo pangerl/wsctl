@@ -7,59 +7,59 @@ vhagar
 特性
 ------
 
-* 企微租户巡检
-* 中间件监控
+* 网络测试
+* 定时任务
+* 中间件巡检
+* metrics 监控指标
 
 安装
 ------
 #### 二进制文件
 
+下载最新版本的[二进制文件](https://private-1253767630.cos.ap-shanghai.myqcloud.com/tools/archive/binary_tag/bin/wsctl)和[配置模版](https://private-1253767630.cos.ap-shanghai.myqcloud.com/tools/archive/binary_tag/bin/config.toml)
+
 ```bash
 # 修改配置文件
 vim config.toml
-# 调试模式，单次运行
-[root@localhost vhagar]# ./wsctl inspect
-2024/08/19 18:07:41 Info: 读取配置文件 config.toml
-2024/08/19 18:07:41 开始项目巡检
-2024/08/19 18:07:41 启动企微租户巡检任务
-2024/08/19 18:07:44 任务等待时间 0s
-2024/08/19 18:07:44 推送企微机器人 response Status:200 OK
-2024/08/19 18:07:44 推送企微机器人 response Status:200 OK
-# 调度模式，定时任务
-[root@localhost vhagar]# ./wsctl crontab
-2024/08/19 18:08:40 Info: 读取配置文件 config.toml
-2024/08/19 18:08:40 启动任务调度
-# 后台运行
-nohup ./wsctl crontab > /dev/null 2>&1 &
+# 授权
+chmod +x wsctl
+# 启动
+./wsctl
 ```
 
-#### 源码编译
+#### Docker 启动
 
-```bash
-git clone https://github.com/pangerl/vhagar.git
-cd vhagar
-go build -o wsctl
+调整配置文件 config.toml，挂载到容器内部
+
+```yaml
+version: "3.8"
+services:
+  vhagar:
+    image: ka-tcr.tencentcloudcr.com/middleware/vhagar:v1.0
+    container_name: vhagar
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./config.toml:/app/config.toml
+    restart: unless-stopped
 ```
-#### Docker
-```bash
-# 修改配置文件
-vim config.toml
-# 后台启动
-docker-compose up -d
-```
+**启动：`docker-compose up -d`**
 
 快速上手
 ------
 
-### 生成模板配置
+### 网络测试
 
+默认端口 8099，可通过 -p 参数指定端口
 ```bash
-[root@localhost vhagar]# ./wsctl
-2024/09/03 11:22:18 读取配置文件 config.toml
-2024/09/03 11:22:18 config.toml 文件不存在，创建模板配置文件
-2024/09/03 11:22:18 config.toml.tml：创建成功
-2024/09/03 11:22:18 wsctl go go go！！！
+[root@localhost vhagar]# ./wsctl -p 8888
+2024/10/12 18:30:35 读取配置文件 /opt/vhagar/config.toml
+2024/10/12 18:30:35 wsctl go go go！！！
+2024/10/12 18:30:35 Starting server at http://192.9.253.198:8888/
 ```
+
+![ping](doc/images/ping.png)
+
 
 ### 查看帮助
 
@@ -72,20 +72,28 @@ Usage:
   wsctl [command]
 
 Available Commands:
-  check       检查服务
   completion  Generate the autocompletion script for the specified shell
-  crontab      启动定时任务
+  cron        启动定时任务
   help        Help about any command
-  inspect     项目巡检
   metric      监控指标
-  nacos       服务健康检查工具
+  task        检查服务
   version     查看版本
 
 Flags:
   -c, --config string   config file (default "config.toml")
   -h, --help            help for wsctl
+  -p, --port string     web 端口 (default "8099")
 
 Use "wsctl [command] --help" for more information about a command.
 ```
 
-### 项目巡检
+### 定时任务
+
+```bash
+# 调度模式，定时任务
+[root@localhost vhagar]# ./wsctl crontab
+2024/08/19 18:08:40 Info: 读取配置文件 config.toml
+2024/08/19 18:08:40 启动任务调度
+# 后台运行
+nohup ./wsctl crontab > /dev/null 2>&1 &
+```
