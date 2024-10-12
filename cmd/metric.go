@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"vhagar/config"
 	"vhagar/metric"
 )
 
@@ -14,7 +15,7 @@ var metricCmd = &cobra.Command{
 	Long:  `监控指标metric`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// 启动 metric 服务
-		metric.StartMetric()
+		metric.StartMetric(config.Config.Port)
 	},
 }
 

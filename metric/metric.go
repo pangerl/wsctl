@@ -10,7 +10,7 @@ import (
 	"vhagar/config"
 )
 
-func StartMetric() {
+func StartMetric(port string) {
 	cfg := config.Config.Metric
 	if cfg.Wsapp {
 		go setprobeHTTPStatusCode()
@@ -24,6 +24,6 @@ func StartMetric() {
 		go setMessageCount()
 	}
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
+	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

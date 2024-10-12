@@ -75,7 +75,7 @@ func startWeb() {
 	r := gin.Default()
 	t, _ := template.ParseFS(tmpl, "templates/*.tmpl")
 	r.SetHTMLTemplate(t)
-	v1 := r.Group("/ping")
+	v1 := r.Group("/")
 	//v1.Any("/*router", response)
 	v1.GET("/*router", response)
 

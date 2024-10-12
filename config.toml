@@ -71,7 +71,7 @@ port = "8090"
     rocketmqDashboard = "http://x.x.x.x:8081"
 
 [metric]
-    port = "8090" # 定义 metric 的端口
+    enable = false
     wsapp = true # 启动微服务接口监控
     rocketmq = true # rocketmq 监控
     conversation = true # 当前会话数

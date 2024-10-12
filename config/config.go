@@ -61,10 +61,10 @@ type Notifier struct {
 }
 
 type MetricCfg struct {
-	Port         string `json:"port"`
-	Wsapp        bool   `json:"wsapp"`
-	Rocketmq     bool   `json:"rocketmq"`
-	Conversation bool   `json:"conversation"`
+	Enable       bool
+	Wsapp        bool `json:"wsapp"`
+	Rocketmq     bool `json:"rocketmq"`
+	Conversation bool `json:"conversation"`
 	//Interval     time.Duration
 }
 
