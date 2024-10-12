@@ -10,20 +10,15 @@ import (
 	"vhagar/config"
 )
 
-func StartMetric(port string) {
+func StartMetric() {
 	cfg := config.Config.Metric
-	if cfg.Wsapp {
-		go setprobeHTTPStatusCode()
-	}
-
-	if cfg.Rocketmq {
-		go setBrokerCount()
-	}
-
-	if cfg.Conversation {
-		go setMessageCount()
-	}
+	// 服务健康检查
+	go setprobeHTTPStatusCode()
+	// rocketmq 指标
+	go setBrokerCount()
+	// 会话数统计
+	go setMessageCount()
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("Starting server at http://%s:%s/metrics\n", getLocalIp(), port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("Starting server at http://%s:%s/metrics\n", getClientIp(), cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
 }

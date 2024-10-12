@@ -1,24 +1,22 @@
 package cmd
 
 import (
-	"embed"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/tomasen/realip"
-	"html/template"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"vhagar/config"
 )
 
 var (
 	cfgFile  string
 	Hostname string
-	//go:embed templates/*.tmpl
-	tmpl embed.FS
+	port     string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -28,8 +26,7 @@ var rootCmd = &cobra.Command{
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("wsctl go go go！！！")
-		log.Print("启动调试 web 服务")
-		startWeb()
+		startWeb(port)
 
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -47,6 +44,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "config.toml", "config file")
+	rootCmd.Flags().StringVarP(&port, "port", "p", "8099", "web 端口")
 }
 
 func preFunc() {
@@ -69,74 +67,54 @@ func preFunc() {
 	}
 }
 
-func startWeb() {
+func startWeb(port string) {
 	Hostname, _ = os.Hostname()
-	gin.SetMode(gin.DebugMode)
-	r := gin.Default()
-	t, _ := template.ParseFS(tmpl, "templates/*.tmpl")
-	r.SetHTMLTemplate(t)
-	v1 := r.Group("/")
-	//v1.Any("/*router", response)
-	v1.GET("/*router", response)
+	http.HandleFunc("/", ping)
+	log.Printf("Starting server at http://%s:%s/\n", getClientIp(), port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
 
-	err := r.Run(":" + config.Config.Port)
+func ping(w http.ResponseWriter, r *http.Request) {
+	responseCode := 200
+	ip := getClientIp()
+	RealIp := realip.FromRequest(r)
+	responseJson := make(map[string]interface{})
+	responseJson["ClientIp"] = ip
+	responseJson["RequestURI"] = r.RequestURI
+	responseJson["Header"] = r.Header
+	responseJson["Method"] = r.Method
+	responseJson["RealIp"] = RealIp
+	djson := make(map[string]interface{})
+	if err := r.ParseForm(); err != nil {
+		djson["message"] = "Submit json format error"
+	}
+	responseJson["RequestJson"] = djson
+	responseJson["Response_code"] = responseCode
+	responseJson["Content-Type"] = r.Header.Get("Content-Type")
+	responseJson["Hostname"] = Hostname
+	// 输出 json 数据
+	bytejson, _ := json.MarshalIndent(&responseJson, "", "  ")
+	_, err := fmt.Fprintln(w, string(bytejson))
 	if err != nil {
 		log.Printf("Failed to start server: %v", err)
 		return
 	}
 }
 
-func response(c *gin.Context) {
-	responseCode := 200
-	format := c.DefaultQuery("format", "json")
-	httpCode := c.DefaultQuery("http_code", "200")
-	if value, err := strconv.Atoi(httpCode); err == nil {
-		responseCode = value
+func getClientIp() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Println("获取本机 IP 地址失败:", err)
 	}
-	ip := c.ClientIP()
-	djson := make(map[string]interface{})
-	contentType := c.GetHeader("Content-Type")
-	if err := c.ShouldBindJSON(&djson); err != nil && contentType == "application/json" {
-		djson["message"] = "Submit json format error"
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				//fmt.Println("本机 IP 地址:", ipnet.IP.String())
+				return ipnet.IP.String()
+			}
+		}
 	}
-	RealIp := realip.FromRequest(c.Request)
-	responseJson := make(map[string]interface{})
-	responseJson["ClientIp"] = ip
-	responseJson["RequestURI"] = c.Request.RequestURI
-	responseJson["Header"] = c.Request.Header
-	responseJson["Method"] = c.Request.Method
-	responseJson["RealIp"] = RealIp
-	responseJson["RequestJson"] = djson
-	responseJson["RequestPostForm"] = c.Request.PostForm
-	responseJson["Response_code"] = responseCode
-	responseJson["Content-Type"] = c.Request.Header.Get("Content-Type")
-	responseJson["Hostname"] = Hostname
-	bytejson, _ := json.MarshalIndent(&djson, "", "  ")
-	log.Printf("\n============================================================================\n"+
-		"Header:%s\n"+
-		"IP:%s\n"+
-		"X-Forwarded-For:%s\n"+
-		"X-Real-Ip:%s\n"+
-		"X-Forwarded-Host:%s\n"+
-		"RemoteAddr:%s\n"+
-		"Content-Type:%s\n"+
-		"RequestJson::%s\n"+
-		"RequestPostForm::%s\n",
-		c.Request.Header,
-		c.ClientIP(),
-		c.Request.Header.Get("X-Forwarded-For"),
-		c.Request.Header.Get("X-Real-Ip"),
-		c.Request.Header.Get("X-Forwarded-Host:"),
-		c.Request.RemoteAddr,
-		c.Request.Header.Get("Content-Type"),
-		string(bytejson),
-		c.Request.PostForm)
-	if format == "json" {
-		c.JSON(responseCode, responseJson)
-	} else {
-		c.HTML(responseCode, "index.tmpl", gin.H{
-			"response_json": responseJson,
-			"Header":        c.Request.Header,
-		})
-	}
+
+	return ""
 }

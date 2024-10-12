@@ -4,8 +4,6 @@ projectname = "测试企业"
 proxyurl = ""
 # vm数据库地址
 victoriaMetrics = "http://xxxx:8428"
-# web 端口
-port = "8090"
 
 # 租户配置，如果是服务商模式，租户填写加密 ID
 [tenant]
@@ -19,7 +17,7 @@ port = "8090"
 # 定时任务
 [cron]
     [cron.tenant]
-        crontab = true # 是否开启任务
+        crontab = true # 是否启动
         scheducron = "30 09 * * *"
     [cron.doris]
         crontab = true
@@ -72,7 +70,5 @@ port = "8090"
 
 [metric]
     enable = false
-    wsapp = true # 启动微服务接口监控
-    rocketmq = true # rocketmq 监控
-    conversation = true # 当前会话数
+    port = "8090"
 

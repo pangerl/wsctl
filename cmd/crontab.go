@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"vhagar/config"
+	"vhagar/metric"
 	"vhagar/task"
 )
 
@@ -18,6 +19,11 @@ var crontabCmd = &cobra.Command{
 相关配置见配置文件的 [crontab]
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		// 启动 metric 服务
+		if config.Config.Metric.Enable {
+			go metric.StartMetric()
+		}
+		// 启动定时任务
 		log.Print("启动任务调度")
 		crontabJob()
 	},

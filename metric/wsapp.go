@@ -82,7 +82,7 @@ func probeInstance(instance nacos.ServerInstance) {
 	}
 }
 
-func getLocalIp() string {
+func getClientIp() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		log.Println("获取本机 IP 地址失败:", err)
