@@ -30,5 +30,5 @@ COPY config.toml .
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
-# CMD ["/alarm-go", "crontab"] 
 ENTRYPOINT ["/entrypoint.sh"]
+CMD ["cron"]

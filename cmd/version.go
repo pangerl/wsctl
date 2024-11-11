@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const VERSION = "v3.0"
+const VERSION = "v3.2"
 
 var parrot bool
 var orientation string
