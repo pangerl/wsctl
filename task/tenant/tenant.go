@@ -94,6 +94,7 @@ func (tenant *Tenanter) Gather() {
 		return
 	}
 	if config.Config.Customer.HasValue() {
+		log.Println("读取新的customer库")
 		conn, err := libs.NewPGClient(config.Config.Customer, "customer")
 		if err != nil {
 			log.Printf("Failed info: %s \n", err)

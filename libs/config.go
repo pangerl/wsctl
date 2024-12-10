@@ -16,7 +16,7 @@ type DB struct {
 }
 
 func (db DB) HasValue() bool {
-	return db.Ip != "" && db.Port != 0 && db.Username != "" && db.Password != "" && db.Sslmode
+	return db.Ip != "" && db.Port != 0 && db.Username != "" && db.Password != ""
 }
 
 type PGClienter struct {
