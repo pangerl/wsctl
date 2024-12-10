@@ -72,10 +72,10 @@ victoriaMetrics = "http://xxxx:8428"
     enable = false
     port = "8090"
 
-# PG 拆库的配置，老百姓项目需要配置
+# PG 拆库的配置，老百姓项目专用
 [customer]
-    ip = "x.x.x.x"
+    ip = ""
     port = 5432
-    username = "postgres"
-    password = "xxx"
+    username = ""
+    password = ""
     sslmode = false
