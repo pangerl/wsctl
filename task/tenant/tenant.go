@@ -93,6 +93,14 @@ func (tenant *Tenanter) Gather() {
 		log.Printf("Failed info: %s \n", err)
 		return
 	}
+	if config.Config.Customer.HasValue() {
+		conn, err := libs.NewPGClient(config.Config.Customer, "customer")
+		if err != nil {
+			log.Printf("Failed info: %s \n", err)
+			return
+		}
+		pgClient.Conn["customer"] = conn
+	}
 	defer func() {
 		if pgClient != nil {
 			pgClient.Close()

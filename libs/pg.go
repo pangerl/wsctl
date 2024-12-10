@@ -26,8 +26,20 @@ func NewPGClienter(conf DB) (*PGClienter, error) {
 		Conn: make(map[string]*pgx.Conn),
 	}
 	databases := []string{"qv30", "user", "customer"}
-	for _, dbName := range databases {
+
+	connectDB := func(dbName string) (*pgx.Conn, error) {
 		conn, err := NewPGClient(conf, dbName)
+		if err != nil {
+			if dbName == "user" {
+				// 如果连接 'user' 数据库失败，尝试连接 'users' 数据库
+				conn, err = NewPGClient(conf, "users")
+			}
+		}
+		return conn, err
+	}
+	for _, dbName := range databases {
+		//conn, err := NewPGClient(conf, dbName)
+		conn, err := connectDB(dbName)
 		if err != nil {
 			return nil, err
 		}

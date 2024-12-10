@@ -15,6 +15,10 @@ type DB struct {
 	Sslmode  bool   `toml:"sslmode"`
 }
 
+func (db DB) HasValue() bool {
+	return db.Ip != "" && db.Port != 0 && db.Username != "" && db.Password != "" && db.Sslmode
+}
+
 type PGClienter struct {
 	Conn map[string]*pgx.Conn
 }

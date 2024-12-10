@@ -27,6 +27,7 @@ type CfgType struct {
 	Tenant          Tenant             `toml:"tenant"`
 	PG              libs.DB            `toml:"pg"`
 	ES              libs.DB            `toml:"es"`
+	Customer        libs.DB            `toml:"customer"`
 	Doris           DorisCfg           `toml:"doris"`
 	RocketMQ        RocketMQCfg        `toml:"rocketmq"`
 	Metric          MetricCfg          `toml:"metric"`
