@@ -7,9 +7,8 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"vhagar/config"
 )
-
-const VERSION = "v3.3"
 
 var parrot bool
 var orientation string
@@ -19,7 +18,7 @@ var versionCmd = &cobra.Command{
 	Short: "查看版本",
 	Long:  `查看版本`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("vhagar version: ", VERSION)
+		fmt.Println("vhagar version: ", config.VERSION)
 		if parrot {
 			runParrot(orientation)
 		}

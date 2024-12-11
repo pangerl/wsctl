@@ -10,7 +10,7 @@ import (
 )
 
 // 每日巡检版本
-var version = "v4.6"
+var version = config.VERSION
 
 const taskName = "tenant"
 

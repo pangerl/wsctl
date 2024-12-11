@@ -14,6 +14,8 @@ import (
 	//"vhagar/task/nacos"
 )
 
+const VERSION = "v3.5"
+
 var (
 	Config *CfgType
 )
