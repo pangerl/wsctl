@@ -86,16 +86,16 @@ func (doris *Doris) Gather() {
 	yesterday := todayTime.AddDate(0, 0, -1)
 	yesterdayTime := task.GetZeroTime(yesterday)
 	// 失败任务
-	failedJobs := selectFailedJob(todayTime.String(), doris.MysqlClient)
+	failedJobs := selectFailedJob(todayTime.Format("2006-01-02 15:04:05"), doris.MysqlClient)
 	doris.FailedJobs = failedJobs
 	// 员工统计表
-	staffCount := selectStaffCount(yesterdayTime.String(), doris.MysqlClient)
+	staffCount := selectStaffCount(yesterdayTime.Format("2006-01-02 15:04:05"), doris.MysqlClient)
 	doris.StaffCount = staffCount
 	// 使用分析表
-	useAnalyseCount := selectUseAnalyseCount(yesterdayTime.String(), doris.MysqlClient)
+	useAnalyseCount := selectUseAnalyseCount(yesterdayTime.Format("2006-01-02 15:04:05"), doris.MysqlClient)
 	doris.UseAnalyseCount = useAnalyseCount
 	// 客户群统计表
-	customerGroupCount := selectCustomerGroupCount(yesterdayTime.String(), doris.MysqlClient)
+	customerGroupCount := selectCustomerGroupCount(yesterdayTime.Format("2006-01-02 15:04:05"), doris.MysqlClient)
 	doris.CustomerGroupCount = customerGroupCount
 	// 检查 BE 节点健康
 	getBENum(doris)
@@ -181,6 +181,8 @@ func selectFailedJob(queryTime string, db *sql.DB) []string {
 
 // 查询员工统计表
 func selectStaffCount(queryTime string, db *sql.DB) int {
+	// 打印 queryTime
+	//fmt.Println("queryTime:", queryTime)
 	// 定义查询语句
 	query := `
 	SELECT
