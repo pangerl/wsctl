@@ -54,19 +54,13 @@ func init() {
 	})
 }
 
-func (s *Server) ReportRobot() {}
-
-//func GetHost() *Server {
-//	cfg := config.Config
-//	server := newServer(cfg)
-//	// 获取服务器信息
-//	initData(server)
-//	return server
-//}
+func (s *Server) ReportRobot() {
+	log.Println("暂不支持发送企微机器人")
+}
 
 func (s *Server) Check() {
-	task.EchoPrompt("开始巡检服务器状态")
-	if s.Report {
+	//task.EchoPrompt("开始巡检服务器状态")
+	if config.Config.Report {
 		// 发送机器人
 		s.ReportRobot()
 		return
@@ -200,11 +194,11 @@ func setHostData(s *Server, key ...string) {
 		value := result.Value[1].(string)
 		//fmt.Printf("ident: %s, key: %s, value: %s\n", ident, key[0], value)
 		host := getHost(s, ident)
-		AddOrUpdateHost(host, ident, key[0], value)
+		AddOrUpdateHost(host, key[0], value)
 	}
 }
 
-func AddOrUpdateHost(host *Host, ident, key, value string) {
+func AddOrUpdateHost(host *Host, key, value string) {
 	newValue, _ := strconv.ParseFloat(value, 64)
 	switch {
 	case key == "cpu_usage_active":

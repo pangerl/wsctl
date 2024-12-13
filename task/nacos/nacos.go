@@ -49,9 +49,14 @@ func (nacos *Nacos) Init() error {
 }
 
 func (nacos *Nacos) Check() {
-	task.EchoPrompt("开始巡检微服务状态信息")
+	//task.EchoPrompt("开始巡检微服务状态信息")
 	if nacos.Config.Writefile != "" {
 		nacos.WriteFile()
+		return
+	}
+	if config.Config.Report {
+		// 发送机器人
+		nacos.ReportRobot()
 		return
 	}
 	if nacos.Watch {
@@ -64,6 +69,10 @@ func (nacos *Nacos) Check() {
 		}
 	}
 	nacos.TableRender()
+}
+
+func (nacos *Nacos) ReportRobot() {
+	log.Println("暂不支持发送企微机器人")
 }
 
 func (nacos *Nacos) WithAuth() error {

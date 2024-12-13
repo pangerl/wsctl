@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 	"vhagar/config"
 	"vhagar/task"
@@ -35,6 +36,8 @@ var taskCmd = &cobra.Command{
 			task.Do(_task)
 		} else {
 			for name := range task.Creators {
+				message := fmt.Sprintf("开始巡检 %s 状态信息", name)
+				task.EchoPrompt(message)
 				task.Do(name)
 			}
 		}

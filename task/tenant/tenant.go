@@ -31,7 +31,7 @@ func init() {
 }
 
 func (tenant *Tenanter) Check() {
-	task.EchoPrompt("开始巡检企微租户信息")
+	//task.EchoPrompt("开始巡检企微租户信息")
 	if tenant.Report {
 		tenant.ReportRobot(tenant.Duration)
 		return

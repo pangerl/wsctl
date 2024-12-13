@@ -24,7 +24,7 @@ func init() {
 }
 
 func (redis *Redis) Check() {
-	task.EchoPrompt("开始巡检 Redis 状态信息")
+	//task.EchoPrompt("开始巡检 Redis 状态信息")
 	redis.Gather()
 	if config.Config.Report {
 		// 发送机器人

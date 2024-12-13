@@ -41,7 +41,7 @@ func (doris *Doris) Name() string {
 }
 
 func (doris *Doris) Check() {
-	task.EchoPrompt("开始巡检 Doris 状态信息")
+	//task.EchoPrompt("开始巡检 Doris 状态信息")
 	if config.Config.Report {
 		// 发送机器人
 		doris.ReportRobot()

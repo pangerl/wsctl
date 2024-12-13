@@ -41,7 +41,7 @@ func (es *ES) Gather() {
 }
 
 func (es *ES) Check() {
-	task.EchoPrompt("开始巡检 ES 状态信息")
+	//task.EchoPrompt("开始巡检 ES 状态信息")
 	if config.Config.Report {
 		// 发送机器人
 		es.ReportRobot()

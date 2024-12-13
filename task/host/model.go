@@ -8,16 +8,16 @@ import "vhagar/config"
 const taskName = "host"
 
 type Server struct {
-	config.Global
+	//config.Global
 	vmUrl string
 	Hosts map[string]*Host
 }
 
 func newServer(cfg *config.CfgType) *Server {
 	return &Server{
-		Global: cfg.Global,
-		vmUrl:  cfg.VictoriaMetrics,
-		Hosts:  make(map[string]*Host),
+		//Global: cfg.Global,
+		vmUrl: cfg.VictoriaMetrics,
+		Hosts: make(map[string]*Host),
 	}
 }
 

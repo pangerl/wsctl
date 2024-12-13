@@ -32,7 +32,7 @@ func init() {
 }
 
 func (rocketmq *RocketMQ) Check() {
-	task.EchoPrompt("开始巡检 RocketMQ 信息")
+	//task.EchoPrompt("开始巡检 RocketMQ 信息")
 	if config.Config.Report {
 		rocketmq.ReportRobot()
 		return

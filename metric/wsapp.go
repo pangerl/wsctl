@@ -21,7 +21,7 @@ import (
 var (
 	probeHTTPStatusCode = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "probe_http_status_code",
+			Name: "probe_success",
 			Help: "Status code of the HTTP probe for each server instance",
 		},
 		[]string{"namespace", "service", "ip", "port", "url"},
