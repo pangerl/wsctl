@@ -3,6 +3,8 @@
 // @Desc
 package task
 
+import "fmt"
+
 var Creators = map[string]Creator{}
 
 type Creator func() Tasker
@@ -32,6 +34,8 @@ func MayInit(t interface{}) error {
 }
 
 func Do(name string) {
+	message := fmt.Sprintf("开始巡检 %s 状态信息", name)
+	echoPrompt(message)
 	tasker := Get(name)
 	err := MayInit(tasker)
 	if err != nil {

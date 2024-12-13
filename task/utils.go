@@ -52,7 +52,7 @@ func DoRequest(url string) []byte {
 	}
 }
 
-func EchoPrompt(prompt string) {
+func echoPrompt(prompt string) {
 	date := time.Now().Format("2006-01-02 15:04:05")
 	taskPrompt := fmt.Sprintf(`
 ================================================================
