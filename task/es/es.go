@@ -76,7 +76,7 @@ func (es *ES) getESInfo() {
 	if err != nil {
 		log.Printf("获取集群健康状态失败: %s\n", err)
 	} else {
-		es.UnassignedShards = int(clusterHealth.UnassignedShards)
+		es.UnassignedShards = clusterHealth.UnassignedShards
 	}
 
 	// 获取总数据大小
@@ -97,7 +97,7 @@ func (es *ES) getESInfo() {
 			JVMUsage:    float64(node.JVM.Mem.HeapUsedInBytes) / float64(node.JVM.Mem.HeapMaxInBytes) * 100,
 			DiskUsage:   float64(node.FS.Total.TotalInBytes-node.FS.Total.AvailableInBytes) / float64(node.FS.Total.TotalInBytes) * 100,
 			LoadAverage: node.OS.CPU.LoadAverage["5m"],
-			IndexCount:  int(clusterStats.Indices.Count),
+			IndexCount:  clusterStats.Indices.Count,
 			Shards:      clusterStats.Indices.Shards.Total,
 			DataSize:    node.Indices.Store.SizeInBytes,
 		}

@@ -22,8 +22,6 @@ import (
 	"github.com/olivere/elastic/v7"
 )
 
-var isalert = false
-
 func init() {
 	task.Add(taskName, func() task.Tasker {
 		return newTenant(config.Config)
@@ -33,20 +31,20 @@ func init() {
 func (tenant *Tenanter) Check() {
 	//task.EchoPrompt("开始巡检企微租户信息")
 	if tenant.Report {
-		tenant.ReportRobot(tenant.Duration)
+		tenant.ReportRobot()
 		return
 	}
 	tenant.TableRender()
 }
 
 func (tenant *Tenanter) TableRender() {
-	tabletitle := []string{"企业名称", "会话数", "员工数", "客户数", "客户群数", "客户群人数", "日活", "周活", "月活"}
+	tabletitle := []string{"企业名称", "员工数", "客户数", "客户群数", "客户群人数", "日活", "周活", "月活"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
 	//color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
 	//tableColor := []tablewriter.Colors{color, color, color, color, color, color, color, color}
 	for _, corp := range tenant.Corp {
-		tabledata := []string{corp.CorpName, strconv.FormatInt(corp.MessageNum, 10), strconv.Itoa(corp.UserNum),
+		tabledata := []string{corp.CorpName, strconv.Itoa(corp.UserNum),
 			strconv.FormatInt(corp.CustomerNum, 10), strconv.Itoa(corp.CustomerGroupNum), strconv.Itoa(corp.CustomerGroupUserNum),
 			strconv.FormatInt(corp.DauNum, 10), strconv.FormatInt(corp.WauNum, 10), strconv.FormatInt(corp.MauNum, 10)}
 		table.Append(tabledata)
@@ -54,7 +52,7 @@ func (tenant *Tenanter) TableRender() {
 	table.Render()
 }
 
-func (tenant *Tenanter) ReportRobot(duration time.Duration) {
+func (tenant *Tenanter) ReportRobot() {
 	// 发送巡检报告
 	markdownList := tenantRender(tenant)
 
@@ -136,17 +134,12 @@ func (tenant *Tenanter) getTenantData(corp *config.Corp) {
 		tenant.SetCustomerNum(corp.Corpid)
 		// 获取活跃数
 		tenant.SetActiveNum(corp.Corpid, dateNow)
-		// 获取会话数
-		if corp.Convenabled {
-			tenant.SetMessageNum(corp.Corpid, dateNow)
-		}
 	}
 }
 
 func tenantRender(t *Tenanter) []*notify.WeChatMarkdown {
 
 	var inspectList []*notify.WeChatMarkdown
-	isalert = false
 
 	headString := headCorpString()
 
@@ -173,9 +166,7 @@ func tenantMarkdown(headString string, Corp []*config.Corp) *notify.WeChatMarkdo
 		// 组装租户巡检信息
 		builder.WriteString(generateCorpString(corp))
 	}
-	if isalert {
-		builder.WriteString("\n<font color='red'>**注意！巡检结果异常！**</font>" + task.CallUser(config.Config.Notify.Userlist))
-	}
+
 	markdown := &notify.WeChatMarkdown{
 		MsgType: "markdown",
 		Markdown: &notify.Markdown{
@@ -190,12 +181,6 @@ func generateCorpString(corp *config.Corp) string {
 	var builder strings.Builder
 
 	builder.WriteString("> 企业名称：<font color='info'>" + corp.CorpName + "</font>\n")
-	if corp.Convenabled {
-		builder.WriteString("> 昨天拉取会话数：<font color='info'>" + strconv.FormatInt(corp.MessageNum, 10) + "</font>\n")
-		if corp.MessageNum <= 0 {
-			isalert = true
-		}
-	}
 	builder.WriteString("> 员工人数：<font color='info'>" + strconv.Itoa(corp.UserNum) + "</font>\n")
 	builder.WriteString("> 客户人数：<font color='info'>" + strconv.FormatInt(corp.CustomerNum, 10) + "</font>\n")
 	builder.WriteString("> 客户群数：<font color='info'>" + strconv.Itoa(corp.CustomerGroupNum) + "</font>\n")
@@ -235,24 +220,6 @@ func (tenant *Tenanter) SetCustomerGroupNum(corpid string) {
 	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
 			corp.CustomerGroupNum = customergroupnum
-			return
-		}
-	}
-}
-
-// SetMessageNum 统计昨天的会话数
-func (tenant *Tenanter) SetMessageNum(corpid string, dateNow time.Time) {
-	date := dateNow.AddDate(0, 0, -1)
-	startTime := task.GetZeroTime(date).UnixNano() / 1e6
-	endTime := task.GetZeroTime(dateNow).UnixNano() / 1e6
-	var orgCorpId = corpid
-	if strings.HasPrefix(corpid, "wpIaoBE") {
-		orgCorpId, _ = queryOrgCorpId(tenant.PGClient.Conn["qv30"], corpid)
-	}
-	messagenum, _ := countMessageNum(tenant.ESClient, orgCorpId, startTime, endTime)
-	for _, corp := range tenant.Corp {
-		if corp.Corpid == corpid {
-			corp.MessageNum = messagenum
 			return
 		}
 	}
@@ -328,28 +295,6 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 	return searchResult.TotalHits(), nil
 }
 
-// 会话数
-func countMessageNum(client *elastic.Client, corpid string, startTime, endTime int64) (int64, error) {
-
-	// Define the query
-	query := elastic.NewBoolQuery().
-		Must(elastic.NewRangeQuery("msgtime").
-			From(startTime). // from timestamp for yesterday 0:00:00
-			To(endTime),     // to timestamp for today 0:00:00
-		)
-	// Make the count request
-	countResult, err := client.Count().
-		Index("conversation_" + corpid).
-		Query(query).
-		Do(context.Background())
-	if err != nil {
-		log.Printf("Failed info: %s \n", err)
-		return -1, err
-	}
-	//fmt.Printf("昨天消息数: %d\n", countResult)
-	return countResult, nil
-}
-
 // 活跃数
 func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate time.Time) (int64, error) {
 	startTime := task.GetZeroTime(startDate).UnixNano() / 1e6
@@ -397,18 +342,6 @@ func queryCorpName(conn *pgx.Conn, corpid string) (string, error) {
 	return corpName, nil
 }
 
-// 解密 ID
-func queryOrgCorpId(conn *pgx.Conn, corpid string) (string, error) {
-	var orgCorpId string
-	query := "SELECT org_corp_id FROM qw_base_tenant_corp_info WHERE tenant_id=$1 LIMIT 1"
-	err := conn.QueryRow(context.Background(), query, corpid).Scan(&orgCorpId)
-	if err != nil {
-		log.Printf("Failed info: %s \n", err)
-		return "-1", err
-	}
-	return orgCorpId, nil
-}
-
 // 员工数
 func queryUserNum(conn *pgx.Conn, corpid string) (int, error) {
 	var userNum int
@@ -443,12 +376,4 @@ func queryCustomerGroupUserNum(conn *pgx.Conn, corpid string) (int, error) {
 		return -1, err
 	}
 	return customerGroupUserNum, nil
-}
-
-func CurrentMessageNum(client *elastic.Client, corpid string, dateNow time.Time) int64 {
-	// 统计今天的会话数
-	startTime := task.GetZeroTime(dateNow).UnixNano() / 1e6
-	endTime := dateNow.UnixNano() / 1e6
-	messagenum, _ := countMessageNum(client, corpid, startTime, endTime)
-	return messagenum
 }

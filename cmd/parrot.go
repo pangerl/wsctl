@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	animation  = "parrot"
-	delay      = 75
-	loops      = 0
+	animation = "parrot"
+	delay     = 75
+	//loops      = 0
 	frameIndex = 0
 	colorIndex = 0
 )
@@ -70,9 +70,6 @@ loop:
 			}
 		default:
 			loopIndex++
-			if loops > 0 && (loopIndex/9) >= loops {
-				break loop
-			}
 			draw(inventory[animation], orientation)
 			time.Sleep(time.Duration(delay) * time.Millisecond)
 		}
@@ -80,7 +77,10 @@ loop:
 }
 
 func draw(animation Animation, orientation string) {
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	err := termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	if err != nil {
+		return
+	}
 	lines := bytes.Split(animation.Frames[frameIndex], []byte{'\n'})
 
 	if orientation == "aussie" {
@@ -93,7 +93,10 @@ func draw(animation Animation, orientation string) {
 		}
 	}
 
-	termbox.Flush()
+	err = termbox.Flush()
+	if err != nil {
+		return
+	}
 	frameIndex++
 	colorIndex++
 	if frameIndex >= len(animation.Frames) {

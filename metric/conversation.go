@@ -9,7 +9,7 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/libs"
-	"vhagar/task/tenant"
+	"vhagar/task/message"
 )
 
 var (
@@ -40,7 +40,7 @@ func setMessageCount() {
 		dateNow := time.Now()
 		for _, corp := range corpList {
 			if corp.Convenabled {
-				messagenum := tenant.CurrentMessageNum(esclient, corp.Corpid, dateNow)
+				messagenum := message.CurrentMessageNum(esclient, corp.Corpid, dateNow)
 				messageCount.WithLabelValues(corp.Corpid).Set(float64(messagenum))
 				log.Printf("corp %s messagenum: %v", corp.Corpid, messagenum)
 			}

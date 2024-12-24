@@ -12,6 +12,7 @@ type Corp struct {
 	Convenabled          bool   `json:"convenabled"`
 	CorpName             string `json:"corpName"`
 	MessageNum           int64  `json:"messageNum"`
+	YesterdayMessageNum  int64  `json:"yesterdayMessageNum"`
 	UserNum              int    `json:"userNum"`
 	CustomerNum          int64  `json:"customerNum"`
 	CustomerGroupNum     int    `json:"customerGroupNum"`
