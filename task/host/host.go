@@ -20,7 +20,7 @@ import (
 // TableRender 输出表格
 func (s *Server) TableRender() {
 	hosts := s.Hosts
-	tabletitle := []string{"IP", "CPU使用率", "内存使用率", "内存大小", "入网流量", "出网流量", "系统盘使用率", "数据盘使用率"}
+	tabletitle := []string{"IP", "CPU", "mem", "cpu使用率", "mem使用率", "入网流量", "出网流量", "时间偏移", "系统盘使用率", "数据盘使用率"}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(tabletitle)
 	color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
@@ -31,9 +31,9 @@ func (s *Server) TableRender() {
 	var alarmNum int
 	for _, ident := range identList {
 		data := hosts[ident]
-		tabledata := []string{ident, formatToPercentage(data.cpuUsageActive),
-			formatToPercentage(data.MemUsedPercent), formatBytes(data.MemTotal),
-			formatBytes(data.netBytesRecv), formatBytes(data.netBytesSent),
+		tabledata := []string{ident, formatToString(data.cpuCores), formatBytes(data.MemTotal),
+			formatToPercentage(data.cpuUsageActive), formatToPercentage(data.MemUsedPercent),
+			formatBytes(data.netBytesRecv), formatBytes(data.netBytesSent), formatToTime(data.ntpOffsetMs),
 			formatToPercentage(data.rootDiskUsedPercent), formatToPercentage(data.dataDiskUsedPercent)}
 		// 异常标红
 		if isAlarm(data) {
@@ -71,6 +71,10 @@ func (s *Server) Check() {
 func (s *Server) Gather() {
 	// CPU 使用率
 	getHostCpuUsageActive(s)
+	// CPU 核心数
+	getHostCpuCores(s)
+	// NTP 时间差
+	getHostNtpOffset(s)
 	// 内存 使用率
 	getHostMemUsedPercent(s)
 	// 内存 大小
@@ -114,6 +118,9 @@ func isAlarm(host *Host) bool {
 	if host.dataDiskUsedPercent > 85 {
 		return true
 	}
+	if host.ntpOffsetMs > 1000 {
+		return true
+	}
 	return false
 }
 
@@ -133,6 +140,16 @@ func queryVmData(url string) []*MetricData {
 
 func getHostCpuUsageActive(s *Server) {
 	key := "cpu_usage_active"
+	setHostData(s, key)
+}
+
+func getHostCpuCores(s *Server) {
+	key := "system_n_cpus"
+	setHostData(s, key)
+}
+
+func getHostNtpOffset(s *Server) {
+	key := "ntp_offset_ms"
 	setHostData(s, key)
 }
 
@@ -203,6 +220,8 @@ func AddOrUpdateHost(host *Host, key, value string) {
 	switch {
 	case key == "cpu_usage_active":
 		host.cpuUsageActive = newValue
+	case key == "system_n_cpus":
+		host.cpuCores = newValue
 	case key == "mem_used_percent":
 		host.MemUsedPercent = newValue
 	case key == "mem_total":
@@ -215,6 +234,8 @@ func AddOrUpdateHost(host *Host, key, value string) {
 		host.rootDiskUsedPercent = newValue
 	case key == "data_disk_used_percent":
 		host.dataDiskUsedPercent = newValue
+	case key == "ntp_offset_ms":
+		host.ntpOffsetMs = newValue
 	default:
 		fmt.Printf("暂不支持的 key: %s\n", key)
 	}
@@ -231,6 +252,16 @@ func getHost(s *Server, ident string) *Host {
 
 func formatToPercentage(value float64) string {
 	result := fmt.Sprintf("%.1f%%", value)
+	return result
+}
+
+func formatToString(value float64) string {
+	result := fmt.Sprintf("%.0f", value)
+	return result
+}
+
+func formatToTime(value float64) string {
+	result := fmt.Sprintf("%.0f ms", value)
 	return result
 }
 

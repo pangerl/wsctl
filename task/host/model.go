@@ -37,6 +37,7 @@ type MetricData struct {
 
 type Host struct {
 	//Ident           string
+	cpuCores            float64
 	cpuUsageActive      float64
 	MemUsedPercent      float64
 	MemTotal            float64
@@ -44,4 +45,5 @@ type Host struct {
 	netBytesSent        float64
 	rootDiskUsedPercent float64
 	dataDiskUsedPercent float64
+	ntpOffsetMs         float64
 }
