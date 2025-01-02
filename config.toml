@@ -28,11 +28,11 @@ victoriaMetrics = ""
 
 # 告警通知
 [notify]
-    # 默认机器人，支持配置多个
-    # 老板群机器人："5c8daf9d-bebb-4453-bab4-aa3fe56eeac3"
+    # 默认机器人，支持配置多个，["xxx", "xxx"]
+    # 租户巡检机器人："5c8daf9d-bebb-4453-bab4-aa3fe56eeac3"
     # 大数据机器人："58d6b94c-27bc-46d2-bb64-788c7329b1a1"
     # 会话数机器人："4fbb66be-21c7-42f2-aa27-e90256d540da"
-    robotkey = ["ed234722-6889-4047-a56c-02dd58d0d11b"]
+    robotkey = ["ed234722-6889-4047-a56c-02dd58d0d11b"] # 默认为部署组机器人，也可配置个人机器人
     # 默认告警@人 示例：["lanpang", "mark"]
     userlist = []
     [notify.notifier.tenant]
