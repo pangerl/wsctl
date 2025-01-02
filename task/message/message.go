@@ -57,10 +57,10 @@ func (tenant *Tenanter) TableRender() {
 
 func (tenant *Tenanter) ReportRobot() {
 	// 发送巡检报告
-	markdownList := tenantRender(tenant)
-	for _, markdown := range markdownList {
-		notify.Send(markdown, taskName)
-	}
+	isalert = false
+	headString := headCorpString()
+	markdown := tenantMarkdown(headString, tenant.Corp)
+	notify.Send(markdown, taskName)
 }
 
 func (tenant *Tenanter) ReportWshoto() {
@@ -135,28 +135,11 @@ func (tenant *Tenanter) getTenantData(corp *config.Corp) {
 	}
 }
 
-func tenantRender(t *Tenanter) []*notify.WeChatMarkdown {
+//func tenantRender(t *Tenanter) *notify.WeChatMarkdown {
+//
+//	return markdown
+//}
 
-	var inspectList []*notify.WeChatMarkdown
-	isalert = false
-
-	headString := headCorpString()
-
-	length := len(t.Corp)
-	// 每次返回8个租户的信息
-	chunkSize := 8
-
-	for n := 0; n < length; n += chunkSize {
-		end := n + chunkSize
-		if end > length {
-			end = length
-		}
-		slice := t.Corp[n:end]
-		markdown := tenantMarkdown(headString, slice)
-		inspectList = append(inspectList, markdown)
-	}
-	return inspectList
-}
 func tenantMarkdown(headString string, Corp []*config.Corp) *notify.WeChatMarkdown {
 	var builder strings.Builder
 	// 添加巡检头文件
