@@ -28,7 +28,7 @@ var (
 	)
 )
 
-func setprobeHTTPStatusCode() {
+func setprobeHTTPStatusCode(healthApi string) {
 	// 注册 Prometheus 指标
 	prometheus.MustRegister(probeHTTPStatusCode)
 	// 获取 nacos 服务信息
@@ -46,15 +46,15 @@ func setprobeHTTPStatusCode() {
 		log.Println("检查服务接口健康状态")
 		n.Gather()
 		for _, instance := range healthInstances {
-			probeInstance(instance)
+			probeInstance(instance, healthApi)
 		}
 		time.Sleep(30 * time.Second) // 每30秒探测一次
 	}
 }
 
 // probeInstance 发送 HTTP 请求并检查返回值
-func probeInstance(instance nacos.ServerInstance) {
-	url := fmt.Sprintf("http://%s:%s/actuator/test", instance.Ip, instance.Port)
+func probeInstance(instance nacos.ServerInstance, healthApi string) {
+	url := fmt.Sprintf("http://%s:%s%s", instance.Ip, instance.Port, healthApi)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Error requesting URL %s: %v\n", url, err)
@@ -71,14 +71,14 @@ func probeInstance(instance nacos.ServerInstance) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading response body from %s: %v\n", url, err)
-		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
+		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
 		return
 	}
 
 	if strings.TrimSpace(string(body)) == "success" {
-		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
-	} else {
 		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
+	} else {
+		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
 	}
 }
 

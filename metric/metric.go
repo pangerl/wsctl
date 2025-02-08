@@ -13,7 +13,7 @@ import (
 func StartMetric() {
 	cfg := config.Config.Metric
 	// 服务健康检查
-	go setprobeHTTPStatusCode()
+	go setprobeHTTPStatusCode(cfg.HealthApi)
 	// rocketmq 指标
 	go setBrokerCount()
 	// 会话数统计

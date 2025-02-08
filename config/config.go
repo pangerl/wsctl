@@ -64,8 +64,9 @@ type Notifier struct {
 }
 
 type MetricCfg struct {
-	Enable bool
-	Port   string
+	Enable    bool
+	Port      string
+	HealthApi string
 	//Wsapp        bool `json:"wsapp"`
 	//Rocketmq     bool `json:"rocketmq"`
 	//Conversation bool `json:"conversation"`

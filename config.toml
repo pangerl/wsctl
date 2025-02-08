@@ -81,6 +81,7 @@ victoriaMetrics = ""
 [metric]
     enable = false
     port = "8090"
+    healthApi = "/actuator/test"
 
 # PG 拆库的配置，老百姓项目专用
 [customer]
