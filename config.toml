@@ -27,7 +27,7 @@ nasDir = ""
         scheducron = "30 09 * * *"
     [cron.message]
         crontab = true
-        scheducron = "30 10 * * *"
+        scheducron = "0 10 * * *"
 
 # 告警通知
 [notify]
