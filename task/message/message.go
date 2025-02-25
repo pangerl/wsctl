@@ -65,8 +65,8 @@ func (tenant *Tenanter) ReportRobot() {
 	isalert = false
 	headString := headCorpString()
 	if tenant.NasDir != "" {
-		caption := fmt.Sprintf("**数据目录状态: ** %s", strconv.FormatBool(tenant.DirIsExis))
-		headString += "\n" + caption + "\n"
+		caption := fmt.Sprintf("**数据目录状态: ** <font color='warning'>%s</font>", strconv.FormatBool(tenant.DirIsExis))
+		headString += caption + "\n"
 	}
 	markdown := tenantMarkdown(headString, tenant.Corp)
 	notify.Send(markdown, taskName)
