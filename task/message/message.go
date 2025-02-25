@@ -5,6 +5,7 @@ package message
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -52,6 +53,10 @@ func (tenant *Tenanter) TableRender() {
 			table.Append(tabledata)
 		}
 	}
+	if tenant.NasDir != "" {
+		caption := fmt.Sprintf("当天目录创建状态: %s .", strconv.FormatBool(tenant.DirIsExis))
+		table.SetCaption(true, caption)
+	}
 	table.Render()
 }
 
@@ -59,6 +64,10 @@ func (tenant *Tenanter) ReportRobot() {
 	// 发送巡检报告
 	isalert = false
 	headString := headCorpString()
+	if tenant.NasDir != "" {
+		caption := fmt.Sprintf("**数据目录状态: ** %s", strconv.FormatBool(tenant.DirIsExis))
+		headString += "\n" + caption + "\n"
+	}
 	markdown := tenantMarkdown(headString, tenant.Corp)
 	notify.Send(markdown, taskName)
 }
@@ -117,6 +126,9 @@ func (tenant *Tenanter) Gather() {
 			ispush = true
 			tenant.getTenantData(corp)
 		}
+	}
+	if tenant.NasDir != "" {
+		tenant.DirIsExis = checkDirectoryExistence(tenant.NasDir)
 	}
 	log.Print("检查成功")
 }
@@ -282,4 +294,20 @@ func CurrentMessageNum(client *elastic.Client, corpid string, dateNow time.Time)
 	endTime := dateNow.UnixNano() / 1e6
 	messagenum, _ := countMessageNum(client, corpid, startTime, endTime)
 	return messagenum
+}
+
+// 检查指定路径下是否存在当天日期命名的目录
+func checkDirectoryExistence(path string) bool {
+	// 获取当前日期
+	currentDate := time.Now().Format("20060102")
+
+	// 拼接出完整的目录路径
+	dirPath := fmt.Sprintf("%s/%s", path, currentDate)
+
+	log.Print(dirPath)
+	// 检查目录是否存在
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		return false // 目录不存在
+	}
+	return true // 目录存在
 }

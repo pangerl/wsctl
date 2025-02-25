@@ -22,7 +22,7 @@ var (
 
 type CfgType struct {
 	Global
-	Port            string             `toml:"port"`
+	NasDir          string             `toml:"nasDir"`
 	VictoriaMetrics string             `toml:"victoriaMetrics"`
 	Cron            map[string]crontab `toml:"cron"`
 	Nacos           NacosCfg           `toml:"nacos"`

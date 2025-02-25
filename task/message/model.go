@@ -13,14 +13,17 @@ const taskName = "message"
 
 type Tenanter struct {
 	config.Global
-	Corp     []*config.Corp
-	ESClient *elastic.Client
-	PGClient *libs.PGClienter
+	NasDir    string
+	DirIsExis bool
+	Corp      []*config.Corp
+	ESClient  *elastic.Client
+	PGClient  *libs.PGClienter
 }
 
 func newTenant(cfg *config.CfgType) *Tenanter {
 	return &Tenanter{
 		Global: cfg.Global,
 		Corp:   cfg.Tenant.Corp,
+		NasDir: cfg.NasDir,
 	}
 }
