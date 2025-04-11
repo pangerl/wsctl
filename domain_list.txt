@@ -26,7 +26,8 @@ wsurl.cc	443
 private-1253767630.cos.ap-shanghai.myqcloud.com	443
 cos-1302358358.file.myqcloud.com	443
 cos.wshoto.com	443
-alarm.ws-oem.com	443
+#der.ws-oem.com	443
+#scale.ws-oem.com    443
 cip.cc	443
 ka-tcr.tencentcloudcr.com	443
 test-sqgl-1256731274.cos.ap-beijing.myqcloud.com	443

@@ -178,11 +178,14 @@ func readDomainListFile(filePath string) ([]*Domain, error) {
 // testConnection 测试域名连通性
 func testConnection(domain string, port int) bool {
 	address := fmt.Sprintf("%s:%d", domain, port)
+	maxRetries := 3
+	retryDelay := 1 * time.Second
 
 	// 如果有代理配置，使用代理连接
 	if config.Config.ProxyURL != "" {
 		dialer := &net.Dialer{
-			Timeout: 5 * time.Second,
+			Timeout:   5 * time.Second,
+			KeepAlive: 30 * time.Second,
 		}
 		proxyUrl, err := url.Parse(config.Config.ProxyURL)
 		if err != nil {
@@ -190,29 +193,55 @@ func testConnection(domain string, port int) bool {
 			return false
 		}
 		transport := &http.Transport{
-			Proxy:       http.ProxyURL(proxyUrl),
-			DialContext: dialer.DialContext,
+			Proxy:                 http.ProxyURL(proxyUrl),
+			DialContext:           dialer.DialContext,
+			IdleConnTimeout:       30 * time.Second,
+			TLSHandshakeTimeout:   5 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
 		}
 		client := &http.Client{
 			Transport: transport,
-			Timeout:   5 * time.Second,
+			Timeout:   10 * time.Second,
 		}
-		_, err = client.Get(fmt.Sprintf("http://%s", address))
-		return err == nil
+
+		for i := 0; i < maxRetries; i++ {
+			scheme := "http"
+			if port == 443 {
+				scheme = "https"
+			}
+			resp, err := client.Get(fmt.Sprintf("%s://%s", scheme, address))
+			if err == nil {
+				if resp != nil {
+					resp.Body.Close()
+				}
+				return true
+			}
+			log.Printf("Proxy connection attempt %d failed for %s: %v\n", i+1, address, err)
+			if i < maxRetries-1 {
+				time.Sleep(retryDelay)
+			}
+		}
+		return false
 	}
 
 	// 没有代理配置，直接连接
-	conn, err := net.DialTimeout("tcp", address, 5*time.Second)
-	if err != nil {
-		return false
-	}
-	defer func(conn net.Conn) {
-		err := conn.Close()
-		if err != nil {
-			log.Printf("Failed to close connection: %s\n", err)
+	for i := 0; i < maxRetries; i++ {
+		conn, err := net.DialTimeout("tcp", address, 5*time.Second)
+		if err == nil {
+			defer func(conn net.Conn) {
+				err := conn.Close()
+				if err != nil {
+					log.Printf("Failed to close connection: %s\n", err)
+				}
+			}(conn)
+			return true
 		}
-	}(conn)
-	return true
+		log.Printf("Direct connection attempt %d failed for %s: %v\n", i+1, address, err)
+		if i < maxRetries-1 {
+			time.Sleep(retryDelay)
+		}
+	}
+	return false
 }
 
 // domainMarkdown 生成Markdown格式的报告
