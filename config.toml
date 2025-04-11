@@ -30,6 +30,9 @@ domainListName = "domain_list.txt"
     [cron.message]
         crontab = true
         scheducron = "0 10 * * *"
+    [cron.domain]
+        crontab = false
+        scheducron = "10 * * * *"
 
 # 告警通知
 [notify]

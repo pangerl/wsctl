@@ -47,7 +47,7 @@ var taskCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(taskCmd)
-	taskCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es, redis)") // 更新帮助信息
+	taskCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es, redis，domain)") // 更新帮助信息
 	taskCmd.Flags().BoolVarP(&watch, "watch", "w", false, "nacos服务，定时刷新")
 	taskCmd.Flags().DurationVarP(&interval, "second", "i", 5*time.Second, "自定义监控服务间隔刷新时间")
 	taskCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")
