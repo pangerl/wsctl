@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -176,6 +178,30 @@ func readDomainListFile(filePath string) ([]*Domain, error) {
 // testConnection 测试域名连通性
 func testConnection(domain string, port int) bool {
 	address := fmt.Sprintf("%s:%d", domain, port)
+
+	// 如果有代理配置，使用代理连接
+	if config.Config.ProxyURL != "" {
+		dialer := &net.Dialer{
+			Timeout: 5 * time.Second,
+		}
+		proxyUrl, err := url.Parse(config.Config.ProxyURL)
+		if err != nil {
+			log.Printf("Invalid proxy URL: %s\n", err)
+			return false
+		}
+		transport := &http.Transport{
+			Proxy:       http.ProxyURL(proxyUrl),
+			DialContext: dialer.DialContext,
+		}
+		client := &http.Client{
+			Transport: transport,
+			Timeout:   5 * time.Second,
+		}
+		_, err = client.Get(fmt.Sprintf("http://%s", address))
+		return err == nil
+	}
+
+	// 没有代理配置，直接连接
 	conn, err := net.DialTimeout("tcp", address, 5*time.Second)
 	if err != nil {
 		return false
