@@ -7,6 +7,8 @@ victoriaMetrics = ""
 # 会话存档文件路径，示例：/data/nfs_data/attachment/ca-attachment
 # 数据保存到对象存储就不用填写
 nasDir = ""
+# 出网域名检测列表
+domainListName = "domain_list.txt"
 
 # 租户配置，如果是服务商模式，租户填写加密 ID
 [tenant]

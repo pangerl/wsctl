@@ -1,0 +1,32 @@
+# 域名连通性检测列表
+# 格式：域名 端口1 端口2 ...
+# 如果不指定端口，默认使用443端口
+c.weixin.com	443
+api.weixin.qq.com	443
+open.weixin.qq.com	443
+wwcdn.weixin.qq.com	443
+mp.weixin.qq.com	443
+open.work.weixin.qq.com	443
+qyapi.weixin.qq.com	443
+work.weixin.qq.com	443
+res.wx.qq.com	443
+apis.map.qq.com	443
+map.qq.com	443
+3gimg.qq.com	443
+mapstyle.qpic.cn	443
+sts.tencentcloudapi.com	443
+mmbiz.qpic.cn	443 80
+mmbiz.qlogo.cn	443 80
+rescdn.qqmail.com	443
+thirdwx.qlogo.cn	443
+wework.qpic.cn	443 80
+wx.qlogo.cn	443 80
+turingmp.m.qq.com	443
+wsurl.cc	443
+private-1253767630.cos.ap-shanghai.myqcloud.com	443
+cos-1302358358.file.myqcloud.com	443
+cos.wshoto.com	443
+alarm.ws-oem.com	443
+cip.cc	443
+ka-tcr.tencentcloudcr.com	443
+test-sqgl-1256731274.cos.ap-beijing.myqcloud.com	443

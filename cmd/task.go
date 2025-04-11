@@ -7,6 +7,7 @@ import (
 	"time"
 	"vhagar/config"
 	"vhagar/task"
+	_ "vhagar/task/domain"
 	_ "vhagar/task/doris"
 	_ "vhagar/task/es"
 	_ "vhagar/task/host"

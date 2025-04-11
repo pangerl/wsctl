@@ -22,6 +22,7 @@ var (
 
 type CfgType struct {
 	Global
+	DomainListName  string             `toml:"domainListName"`
 	NasDir          string             `toml:"nasDir"`
 	VictoriaMetrics string             `toml:"victoriaMetrics"`
 	Cron            map[string]crontab `toml:"cron"`
