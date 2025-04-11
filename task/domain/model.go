@@ -3,13 +3,6 @@
 // @Desc 域名连通性检测任务
 package domain
 
-import (
-	"vhagar/config"
-)
-
-// 每日巡检版本
-var version = config.VERSION
-
 const taskName = "domain"
 
 // Domain 结构体，用于存储域名连通性检测结果
@@ -26,11 +19,4 @@ type Domainer struct {
 	TotalCount  int       // 总域名数
 	AliveCount  int       // 连通域名数
 	FailedCount int       // 不通域名数
-}
-
-func newDomain(cfg *config.CfgType) *Domainer {
-	return &Domainer{
-		//Global:  cfg.Global,
-		Domains: make([]*Domain, 0),
-	}
 }
