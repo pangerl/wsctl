@@ -3,14 +3,15 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/tomasen/realip"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"vhagar/config"
+	"vhagar/libs"
+
+	"github.com/spf13/cobra"
+	"github.com/tomasen/realip"
 )
 
 var (
@@ -25,7 +26,7 @@ var rootCmd = &cobra.Command{
 	Short: "微盛运维部署工具",
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Println("wsctl go go go！！！")
+		libs.Logger.Infow("wsctl go go go！！！")
 		startWeb(port)
 
 	},
@@ -37,7 +38,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		log.Println(err)
+		libs.Logger.Errorw("执行 rootCmd 失败", "err", err)
 		os.Exit(1)
 	}
 }
@@ -48,30 +49,30 @@ func init() {
 }
 
 func preFunc() {
-	// 如果提供的是相对路径,将其转换为绝对路径
 	if !filepath.IsAbs(cfgFile) {
 		currentDir, err := os.Getwd()
 		if err != nil {
-			log.Fatalf("无法获取当前工作目录: %v", err)
+			panic(err)
 		}
 		cfgFile = filepath.Join(currentDir, cfgFile)
 	}
-
-	// 确保文件存在
 	if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
-		log.Fatalf("配置文件不存在: %s", cfgFile)
+		panic("配置文件不存在: " + cfgFile)
 	}
-
 	if _, err := config.InitConfig(cfgFile); err != nil {
-		log.Fatalln("F! failed to init config:", err)
+		panic("初始化配置失败: " + err.Error())
 	}
+	libs.InitLoggerWithConfig(config.Config.LogLevel, config.Config.LogToFile)
 }
 
 func startWeb(port string) {
 	Hostname, _ = os.Hostname()
 	http.HandleFunc("/", ping)
-	log.Printf("Starting server at http://%s:%s/\n", getClientIp(), port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	libs.Logger.Infow("启动 Web 服务", "url", fmt.Sprintf("http://%s:%s/", getClientIp(), port))
+	err := http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		libs.Logger.Fatalw("Web 服务启动失败", "err", err)
+	}
 }
 
 func ping(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +97,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
 	bytejson, _ := json.MarshalIndent(&responseJson, "", "  ")
 	_, err := fmt.Fprintln(w, string(bytejson))
 	if err != nil {
-		log.Printf("Failed to start server: %v", err)
+		libs.Logger.Errorw("响应输出失败", "err", err)
 		return
 	}
 }
@@ -104,7 +105,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
 func getClientIp() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Println("获取本机 IP 地址失败:", err)
+		libs.Logger.Errorw("获取本机 IP 地址失败", "err", err)
 	}
 
 	for _, addr := range addrs {

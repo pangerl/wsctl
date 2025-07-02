@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
+	"vhagar/libs"
 )
 
 type InspectBody struct {
@@ -33,7 +33,7 @@ func SendWshoto(inspect *InspectBody, proxyURL string) error {
 
 	req, err := http.NewRequest("POST", wshotoURL, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return err
 	}
 
@@ -54,16 +54,16 @@ func SendWshoto(inspect *InspectBody, proxyURL string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Printf("Failed info: %s \n", err)
+			libs.Logger.Errorw("Failed info", "err", err)
 		}
 	}(resp.Body)
-	log.Print("推送 wshoto response Status:", resp.Status)
+	libs.Logger.Infow("推送 wshoto response Status", "status", resp.Status)
 	//log.Print("response Headers:", resp.Header)
 	return nil
 }

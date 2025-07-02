@@ -6,8 +6,9 @@ package libs
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
+
+	"go.uber.org/zap"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -16,7 +17,7 @@ import (
 func (dbClient *PGClienter) Close() {
 	for dbName, conn := range dbClient.Conn {
 		if err := conn.Close(context.Background()); err != nil {
-			log.Printf("Failed to close connection for database %s: %v", dbName, err)
+			zap.S().Errorw("关闭数据库连接失败", "db", dbName, "err", err)
 		}
 	}
 }
@@ -52,10 +53,10 @@ func NewPGClient(conf DB, dbName string) (*pgx.Conn, error) {
 	connString := connStr(conf, dbName)
 	conn, err := pgx.Connect(context.Background(), connString)
 	if err != nil {
-		log.Printf("Failed to connect to database %s: %s\n", dbName, err)
+		zap.S().Errorw("连接数据库失败", "db", dbName, "err", err)
 		return nil, err
 	}
-	log.Printf("%s 数据库连接成功！", dbName)
+	zap.S().Infow("数据库连接成功！", "db", dbName)
 	return conn, nil
 }
 

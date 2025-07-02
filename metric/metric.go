@@ -4,10 +4,12 @@
 package metric
 
 import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log"
+	"fmt"
 	"net/http"
 	"vhagar/config"
+	"vhagar/libs"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func StartMetric() {
@@ -19,6 +21,9 @@ func StartMetric() {
 	// 会话数统计
 	go setMessageCount()
 	http.Handle("/metrics", promhttp.Handler())
-	log.Printf("Starting server at http://%s:%s/metrics\n", getClientIp(), cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
+	libs.Logger.Infow("启动 metrics 服务", "url", fmt.Sprintf("http://%s:%s/metrics", getClientIp(), cfg.Port))
+	err := http.ListenAndServe(":"+cfg.Port, nil)
+	if err != nil {
+		libs.Logger.Fatalw("metrics 服务启动失败", "err", err)
+	}
 }

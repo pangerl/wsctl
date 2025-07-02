@@ -4,12 +4,13 @@
 package cmd
 
 import (
-	"github.com/robfig/cron/v3"
-	"github.com/spf13/cobra"
-	"log"
 	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/metric"
 	"vhagar/task"
+
+	"github.com/robfig/cron/v3"
+	"github.com/spf13/cobra"
 )
 
 var crontabCmd = &cobra.Command{
@@ -24,7 +25,7 @@ var crontabCmd = &cobra.Command{
 			go metric.StartMetric()
 		}
 		// 启动定时任务
-		log.Print("启动任务调度")
+		libs.Logger.Infow("启动任务调度")
 		crontabJob()
 	},
 }
@@ -45,12 +46,12 @@ func crontabJob() {
 		// 判断是否是定时任务
 		taskName := name
 		if cronJob.Crontab {
-			log.Println("添加定时任务", taskName)
+			libs.Logger.Infow("添加定时任务", "task", taskName)
 			_, err := c.AddFunc(cronJob.Scheducron, func() {
 				task.Do(taskName)
 			})
 			if err != nil {
-				log.Fatalf("Failed to add cronJob task: %s \n", err)
+				libs.Logger.Fatalw("添加定时任务失败", "err", err)
 			}
 		}
 	}

@@ -1,3 +1,5 @@
+logLevel = "error"         # 日志级别: debug, info, warn, error
+logToFile = false          # 日志是否保存到本地文件 logs/vhagar.log
 projectname = "测试企业"
 # 可配置网络代理，支持 http/https 协议
 # proxyURL := "http://proxyuser:proxypassword@proxy_ip:proxy_port"

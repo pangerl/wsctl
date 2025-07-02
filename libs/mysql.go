@@ -6,8 +6,9 @@ package libs
 import (
 	"database/sql"
 	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
-	"log"
+	"go.uber.org/zap"
 )
 
 // 连接数据库的编码格式
@@ -23,16 +24,16 @@ func NewMysqlClient(conf DB, dbName string) (*sql.DB, error) {
 	//fmt.Println(dsn)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		log.Println("dsn格式不正确", err)
+		zap.S().Errorw("dsn格式不正确", "err", err)
 		return nil, err
 	}
 	// 测试连接是否成功
 	err = db.Ping()
 	if err != nil {
-		log.Println("校验失败", err)
+		zap.S().Errorw("数据库校验失败", "err", err)
 		return nil, err
 	}
-	log.Println("mysql数据库连接成功！")
+	zap.S().Infow("mysql数据库连接成功！")
 	return db, nil
 }
 

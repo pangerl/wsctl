@@ -2,6 +2,7 @@ package libs
 
 import (
 	"github.com/go-redis/redis/v8"
+	"go.uber.org/zap"
 )
 
 func NewRedisClient(cfg RedisConfig) (*redis.Client, error) {
@@ -16,5 +17,6 @@ func NewRedisClient(cfg RedisConfig) (*redis.Client, error) {
 		return nil, err
 	}
 
+	zap.S().Infow("redis 连接成功！")
 	return client, nil
 }

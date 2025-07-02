@@ -4,12 +4,12 @@
 package metric
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"log"
 	"time"
 	"vhagar/config"
 	"vhagar/libs"
 	"vhagar/task/message"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -42,7 +42,7 @@ func setMessageCount() {
 			if corp.Convenabled {
 				messagenum := message.CurrentMessageNum(esclient, corp.Corpid, dateNow)
 				messageCount.WithLabelValues(corp.Corpid).Set(float64(messagenum))
-				log.Printf("corp %s messagenum: %v", corp.Corpid, messagenum)
+				libs.Logger.Infow("corp messagenum", "corpid", corp.Corpid, "messagenum", messagenum)
 			}
 		}
 		time.Sleep(300 * time.Second)

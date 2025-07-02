@@ -38,6 +38,8 @@ type CfgType struct {
 }
 
 type Global struct {
+	LogLevel    string `toml:"logLevel"`
+	LogToFile   bool   `toml:"logToFile"`
 	ProjectName string `toml:"projectname"`
 	ProxyURL    string `toml:"proxyurl"`
 	Notify      Notify `toml:"notify"`

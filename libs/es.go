@@ -5,9 +5,10 @@ package libs
 
 import (
 	"context"
-	"github.com/olivere/elastic/v7"
-	"log"
 	"strconv"
+
+	"github.com/olivere/elastic/v7"
+	"go.uber.org/zap"
 )
 
 func NewESClient(conf DB) (*elastic.Client, error) {
@@ -21,16 +22,16 @@ func NewESClient(conf DB) (*elastic.Client, error) {
 		elastic.SetHealthcheck(false))
 
 	if err != nil {
-		log.Printf("Failed to create ES client: %s \n", err)
+		zap.S().Errorw("创建 ES client 失败", "err", err)
 		return nil, err
 	}
 
 	// 在创建客户端后立即执行一次Ping操作，检查连接是否正常
 	_, _, err = client.Ping(esurl).Do(context.Background())
 	if err != nil {
-		log.Printf("Failed to connect to ES: %s \n", err)
+		zap.S().Errorw("连接 ES 失败", "err", err)
 		return nil, err
 	}
-	log.Println("ES 连接成功！")
+	zap.S().Infow("ES 连接成功！")
 	return client, nil
 }

@@ -6,12 +6,12 @@ package metric
 import (
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/task/nacos"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -35,7 +35,7 @@ func setprobeHTTPStatusCode(healthApi string) {
 	n := nacos.NewNacos(config.Config)
 	err := n.Init()
 	if err != nil {
-		log.Printf("初始化 Nacos 服务失败: %v\n", err)
+		libs.Logger.Errorw("初始化 Nacos 服务失败", "err", err)
 		return
 	}
 	n.Gather()
@@ -43,7 +43,7 @@ func setprobeHTTPStatusCode(healthApi string) {
 
 	// 设置一个定时器来定期探测每个实例的健康状况
 	for {
-		log.Println("检查服务接口健康状态")
+		libs.Logger.Infow("检查服务接口健康状态")
 		n.Gather()
 		for _, instance := range healthInstances {
 			probeInstance(instance, healthApi)
@@ -57,20 +57,20 @@ func probeInstance(instance nacos.ServerInstance, healthApi string) {
 	url := fmt.Sprintf("http://%s:%s%s", instance.Ip, instance.Port, healthApi)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("Error requesting URL %s: %v\n", url, err)
+		libs.Logger.Errorw("请求 URL 失败", "url", url, "err", err)
 		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
 		return
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Printf("Failed info: %s \n", err)
+			libs.Logger.Errorw("请求失败", "err", err)
 		}
 	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error reading response body from %s: %v\n", url, err)
+		libs.Logger.Errorw("读取响应体失败", "url", url, "err", err)
 		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
 		return
 	}
@@ -85,7 +85,7 @@ func probeInstance(instance nacos.ServerInstance, healthApi string) {
 func getClientIp() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Println("获取本机 IP 地址失败:", err)
+		libs.Logger.Errorw("获取本机 IP 地址失败", "err", err)
 	}
 
 	for _, addr := range addrs {

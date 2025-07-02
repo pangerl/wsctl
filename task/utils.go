@@ -6,9 +6,10 @@ package task
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
+
+	"vhagar/libs"
 )
 
 func GetZeroTime(d time.Time) time.Time {
@@ -39,13 +40,13 @@ func DoRequest(url string) []byte {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Println("E! fail to close the res", err)
+			libs.Logger.Errorw("关闭响应失败", "err", err)
 		}
 	}(res.Body)
 	body, err := io.ReadAll(res.Body)
 
 	if err != nil {
-		log.Println("E! fail to read request data", err)
+		libs.Logger.Errorw("读取请求数据失败", "err", err)
 		return nil
 	} else {
 		return body
