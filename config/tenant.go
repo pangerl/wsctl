@@ -17,7 +17,7 @@ type Corp struct {
 	CustomerNum          int64  `json:"customerNum"`
 	CustomerGroupNum     int    `json:"customerGroupNum"`
 	CustomerGroupUserNum int    `json:"customerGroupUserNum"`
-	DauNum               int64  `json:"dauNum"`
-	WauNum               int64  `json:"wauNum"`
-	MauNum               int64  `json:"mauNum"`
+	DauNum               int    `json:"dauNum"`
+	WauNum               int    `json:"wauNum"`
+	MauNum               int    `json:"mauNum"`
 }

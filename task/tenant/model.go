@@ -4,7 +4,7 @@
 package tenant
 
 import (
-	"github.com/olivere/elastic/v7"
+	"database/sql"
 	"vhagar/config"
 	"vhagar/libs"
 )
@@ -16,9 +16,10 @@ const taskName = "tenant"
 
 type Tenanter struct {
 	config.Global
-	Corp     []*config.Corp
-	ESClient *elastic.Client
-	PGClient *libs.PGClienter
+	Corp []*config.Corp
+	//ESClient *elastic.Client
+	MysqlClient *sql.DB
+	PGClient    *libs.PGClienter
 }
 
 func newTenant(cfg *config.CfgType) *Tenanter {

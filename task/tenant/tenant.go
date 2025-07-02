@@ -5,6 +5,7 @@ package tenant
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"log"
 	"os"
@@ -46,7 +47,7 @@ func (tenant *Tenanter) TableRender() {
 	for _, corp := range tenant.Corp {
 		tabledata := []string{corp.CorpName, strconv.Itoa(corp.UserNum),
 			strconv.FormatInt(corp.CustomerNum, 10), strconv.Itoa(corp.CustomerGroupNum), strconv.Itoa(corp.CustomerGroupUserNum),
-			strconv.FormatInt(corp.DauNum, 10), strconv.FormatInt(corp.WauNum, 10), strconv.FormatInt(corp.MauNum, 10)}
+			strconv.Itoa(corp.DauNum), strconv.Itoa(corp.WauNum), strconv.Itoa(corp.MauNum)}
 		table.Append(tabledata)
 	}
 	table.Render()
@@ -81,9 +82,15 @@ func (tenant *Tenanter) ReportWshoto() {
 
 func (tenant *Tenanter) Gather() {
 	// 创建ESClient，PGClienter
-	esClient, err := libs.NewESClient(config.Config.ES)
+	//esClient, err := libs.NewESClient(config.Config.ES)
+	//if err != nil {
+	//	log.Printf("Failed info: %s \n", err)
+	//	return
+	//}
+	// 创建 mysqlClinet，PGCliente
+	mysqlClinet, err := libs.NewMysqlClient(config.Config.Doris.DB, "wshoto")
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		log.Println("Failed to create mysql client. err:", err)
 		return
 	}
 	pgClient, err := libs.NewPGClienter(config.Config.PG)
@@ -104,12 +111,15 @@ func (tenant *Tenanter) Gather() {
 		if pgClient != nil {
 			pgClient.Close()
 		}
-		if esClient != nil {
-			esClient.Stop()
+		if mysqlClinet != nil {
+			err := mysqlClinet.Close()
+			if err != nil {
+				return
+			}
 		}
 	}()
 	tenant.PGClient = pgClient
-	tenant.ESClient = esClient
+	tenant.MysqlClient = mysqlClinet
 	for _, corp := range tenant.Corp {
 		tenant.getTenantData(corp)
 	}
@@ -124,14 +134,14 @@ func (tenant *Tenanter) getTenantData(corp *config.Corp) {
 		tenant.SetCorpName(corp.Corpid)
 		// 获取用户数
 		tenant.SetUserNum(corp.Corpid)
+		// 获取客户数
+		tenant.SetCustomerNum(corp.Corpid)
 		// 获取客户群
 		tenant.SetCustomerGroupNum(corp.Corpid)
 		// 获取客户群人数
 		tenant.SetCustomerGroupUserNum(corp.Corpid)
 	}
-	if tenant.ESClient != nil {
-		// 获取客户数
-		tenant.SetCustomerNum(corp.Corpid)
+	if tenant.MysqlClient != nil {
 		// 获取活跃数
 		tenant.SetActiveNum(corp.Corpid, dateNow)
 	}
@@ -185,9 +195,9 @@ func generateCorpString(corp *config.Corp) string {
 	builder.WriteString("> 客户人数：<font color='info'>" + strconv.FormatInt(corp.CustomerNum, 10) + "</font>\n")
 	builder.WriteString("> 客户群数：<font color='info'>" + strconv.Itoa(corp.CustomerGroupNum) + "</font>\n")
 	builder.WriteString("> 客户群人数：<font color='info'>" + strconv.Itoa(corp.CustomerGroupUserNum) + "</font>\n")
-	builder.WriteString("> 日活跃数：<font color='info'>" + strconv.FormatInt(corp.DauNum, 10) + "</font>\n")
-	builder.WriteString("> 周活跃数：<font color='info'>" + strconv.FormatInt(corp.WauNum, 10) + "</font>\n")
-	builder.WriteString("> 月活跃数：<font color='info'>" + strconv.FormatInt(corp.MauNum, 10) + "</font>\n")
+	builder.WriteString("> 日活跃数：<font color='info'>" + strconv.Itoa(corp.DauNum) + "</font>\n")
+	builder.WriteString("> 周活跃数：<font color='info'>" + strconv.Itoa(corp.WauNum) + "</font>\n")
+	builder.WriteString("> 月活跃数：<font color='info'>" + strconv.Itoa(corp.MauNum) + "</font>\n")
 	builder.WriteString("==================\n")
 
 	return builder.String()
@@ -238,10 +248,11 @@ func (tenant *Tenanter) SetCorpName(corpid string) {
 
 // SetCustomerNum 设置客户数
 func (tenant *Tenanter) SetCustomerNum(corpid string) {
-	customernum, _ := searchCustomerNum(tenant.ESClient, corpid)
+	//customernum, _ := searchCustomerNum(tenant.ESClient, corpid)
+	customerNum, _ := queryCustomerNum(tenant.PGClient.Conn["customer"], corpid)
 	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
-			corp.CustomerNum = customernum
+			corp.CustomerNum = customerNum
 			return
 		}
 	}
@@ -258,16 +269,27 @@ func (tenant *Tenanter) SetUserNum(corpid string) {
 	}
 }
 
+func GetZeroTimeBeforeNDays(dateNow time.Time, n int) string {
+	now := dateNow
+	// 获取今天零点
+	todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	// 减去 n 天
+	targetZero := todayZero.AddDate(0, 0, -n)
+	return targetZero.Format("2006-01-02 15:04:05")
+}
+
 // SetActiveNum 设置活跃数
 func (tenant *Tenanter) SetActiveNum(corpid string, dateNow time.Time) {
-	dateDau := dateNow.AddDate(0, 0, -1)
-	dateWau := dateNow.AddDate(0, 0, -7)
-	dateMau := dateNow.AddDate(0, -1, 0)
+	// 获取当前零点时间
+	todayTime := task.GetZeroTime(dateNow).Format("2006-01-02 15:04:05")
+	dateDau := GetZeroTimeBeforeNDays(dateNow, 1)
+	dateWau := GetZeroTimeBeforeNDays(dateNow, 7)
+	dateMau := GetZeroTimeBeforeNDays(dateNow, 30)
 	for _, corp := range tenant.Corp {
 		if corp.Corpid == corpid {
-			corp.DauNum, _ = searchActiveNum(tenant.ESClient, corpid, dateDau, dateNow)
-			corp.WauNum, _ = searchActiveNum(tenant.ESClient, corpid, dateWau, dateNow)
-			corp.MauNum, _ = searchActiveNum(tenant.ESClient, corpid, dateMau, dateNow)
+			corp.DauNum = queryActiveNum(corpid, dateDau, todayTime, tenant.MysqlClient)
+			corp.WauNum = queryActiveNum(corpid, dateWau, todayTime, tenant.MysqlClient)
+			corp.MauNum = queryActiveNum(corpid, dateMau, todayTime, tenant.MysqlClient)
 			return
 		}
 	}
@@ -284,7 +306,7 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 		)
 	searchResult, err := client.Search().
 		Index("customer_related_1"). // 设置索引名
-		Query(query).                // 设置查询条件
+		Query(query). // 设置查询条件
 		TrackTotalHits(true).
 		Do(context.Background()) // 执行
 	if err != nil {
@@ -295,7 +317,29 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 	return searchResult.TotalHits(), nil
 }
 
-// 活跃数
+// 活跃数（新
+func queryActiveNum(corpid, startDate, endDate string, db *sql.DB) int {
+	// 定义查询语句
+	query := `
+		SELECT COUNT(DISTINCT who_id)
+		FROM tracking_event_log_h
+		WHERE corpId = ?
+		  AND where_entrance IN ('001', '002', '006')
+		  AND who_role = '02'
+		  AND gmt_create >= ?
+		  AND gmt_create < ?;`
+	rows := db.QueryRow(query, corpid, startDate, endDate)
+	// 处理查询结果
+	var activeNum int
+	err := rows.Scan(&activeNum)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1
+	}
+	return activeNum
+}
+
+// 活跃数（旧）
 func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate time.Time) (int64, error) {
 	startTime := task.GetZeroTime(startDate).UnixNano() / 1e6
 	endTime := task.GetZeroTime(endDate).UnixNano() / 1e6
@@ -309,7 +353,7 @@ func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate t
 		)
 	searchResult, err := client.Search().
 		Index("text_event_index*"). // 设置索引名
-		Query(query).               // 设置查询条件
+		Query(query). // 设置查询条件
 		Aggregation("dau", elastic.NewCardinalityAggregation().Field("who.id.keyword")).
 		Size(0).
 		Do(context.Background()) // 执行
@@ -354,6 +398,18 @@ func queryUserNum(conn *pgx.Conn, corpid string) (int, error) {
 	return userNum, nil
 }
 
+// 客户数
+func queryCustomerNum(conn *pgx.Conn, corpid string) (int64, error) {
+	var customerNum int64
+	query := "SELECT count(1) FROM co_saas_customer_related WHERE deleted=0 AND tenant_id=$1 LIMIT 1"
+	err := conn.QueryRow(context.Background(), query, corpid).Scan(&customerNum)
+	if err != nil {
+		log.Printf("Failed info: %s \n", err)
+		return -1, err
+	}
+	return customerNum, nil
+}
+
 // 客户群数
 func queryCustomerGroupNum(conn *pgx.Conn, corpid string) (int, error) {
 	var customerGroupNum int
@@ -369,7 +425,7 @@ func queryCustomerGroupNum(conn *pgx.Conn, corpid string) (int, error) {
 // 客户群人数
 func queryCustomerGroupUserNum(conn *pgx.Conn, corpid string) (int, error) {
 	var customerGroupUserNum int
-	query := "SELECT count(1) FROM co_saas_customer_group_user WHERE type = 2 AND loss = false AND deleted_at IS NULL AND tenant_id=$1"
+	query := "SELECT count(1) FROM co_saas_customer_group_user WHERE loss = false AND deleted_at IS NULL AND tenant_id=$1"
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&customerGroupUserNum)
 	if err != nil {
 		log.Printf("Failed info: %s \n", err)
