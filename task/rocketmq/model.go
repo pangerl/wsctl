@@ -5,22 +5,26 @@ package rocketmq
 
 import (
 	"vhagar/config"
+
+	"go.uber.org/zap"
 )
 
 const taskName = "rocketmq"
 
-func NewRocketMQ(cfg *config.CfgType) *RocketMQ {
+func NewRocketMQ(cfg *config.CfgType, logger *zap.SugaredLogger) *RocketMQ {
 	return &RocketMQ{
-		//Global:      cfg.Global,
+		Config:      cfg,
+		Logger:      logger,
 		RocketMQCfg: cfg.RocketMQ,
 		BrokerMap:   make(map[string]*BrokerDetail),
 	}
 }
 
 type RocketMQ struct {
-	//config.Global
-	config.RocketMQCfg
-	BrokerMap map[string]*BrokerDetail
+	Config      *config.CfgType
+	Logger      *zap.SugaredLogger
+	RocketMQCfg config.RocketMQCfg
+	BrokerMap   map[string]*BrokerDetail
 }
 
 type BrokerDetail struct {

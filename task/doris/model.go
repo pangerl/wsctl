@@ -6,12 +6,15 @@ package doris
 import (
 	"database/sql"
 	"vhagar/config"
+
+	"go.uber.org/zap"
 )
 
 const taskName = "doris"
 
 type Doris struct {
-	//config.Global
+	Config *config.CfgType
+	Logger *zap.SugaredLogger
 	config.DorisCfg
 	MysqlClient        *sql.DB
 	FailedJobs         []string
@@ -32,9 +35,10 @@ type dorisResponse struct {
 	Count int `json:"count"`
 }
 
-func newDoris(cfg *config.CfgType) *Doris {
+func NewDoris(cfg *config.CfgType, logger *zap.SugaredLogger) *Doris {
 	return &Doris{
-		//Global:   cfg.Global,
+		Config:   cfg,
+		Logger:   logger,
 		DorisCfg: cfg.Doris,
 	}
 }

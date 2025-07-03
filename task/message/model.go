@@ -4,15 +4,18 @@
 package message
 
 import (
-	"github.com/olivere/elastic/v7"
 	"vhagar/config"
 	"vhagar/libs"
+
+	"github.com/olivere/elastic/v7"
+	"go.uber.org/zap"
 )
 
 const taskName = "message"
 
 type Tenanter struct {
-	config.Global
+	Config    *config.CfgType
+	Logger    *zap.SugaredLogger
 	NasDir    string
 	DirIsExis bool
 	Corp      []*config.Corp
@@ -20,9 +23,10 @@ type Tenanter struct {
 	PGClient  *libs.PGClienter
 }
 
-func newTenant(cfg *config.CfgType) *Tenanter {
+func NewTenanter(cfg *config.CfgType, logger *zap.SugaredLogger) *Tenanter {
 	return &Tenanter{
-		Global: cfg.Global,
+		Config: cfg,
+		Logger: logger,
 		Corp:   cfg.Tenant.Corp,
 		NasDir: cfg.NasDir,
 	}

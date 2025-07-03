@@ -3,21 +3,27 @@
 // @Desc
 package host
 
-import "vhagar/config"
+import (
+	"vhagar/config"
+
+	"go.uber.org/zap"
+)
 
 const taskName = "host"
 
 type Server struct {
-	//config.Global
-	vmUrl string
-	Hosts map[string]*Host
+	Config *config.CfgType
+	Logger *zap.SugaredLogger
+	VmUrl  string
+	Hosts  map[string]*Host
 }
 
-func newServer(cfg *config.CfgType) *Server {
+func NewServer(cfg *config.CfgType, logger *zap.SugaredLogger) *Server {
 	return &Server{
-		//Global: cfg.Global,
-		vmUrl: cfg.VictoriaMetrics,
-		Hosts: make(map[string]*Host),
+		Config: cfg,
+		Logger: logger,
+		VmUrl:  cfg.VictoriaMetrics,
+		Hosts:  make(map[string]*Host),
 	}
 }
 

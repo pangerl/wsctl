@@ -3,6 +3,12 @@
 // @Desc 域名连通性检测任务
 package domain
 
+import (
+	"vhagar/config"
+
+	"go.uber.org/zap"
+)
+
 const taskName = "domain"
 
 // Domain 结构体，用于存储域名连通性检测结果
@@ -14,9 +20,17 @@ type Domain struct {
 
 // Domainer 域名检测任务结构体
 type Domainer struct {
-	//config.Global
+	Config      *config.CfgType
+	Logger      *zap.SugaredLogger
 	Domains     []*Domain // 域名列表
 	TotalCount  int       // 总域名数
 	AliveCount  int       // 连通域名数
 	FailedCount int       // 不通域名数
+}
+
+func NewDomainer(cfg *config.CfgType, logger *zap.SugaredLogger) *Domainer {
+	return &Domainer{
+		Config: cfg,
+		Logger: logger,
+	}
 }

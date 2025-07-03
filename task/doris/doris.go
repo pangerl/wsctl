@@ -31,7 +31,7 @@ import (
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return newDoris(config.Config)
+		return NewDoris(config.Config, libs.Logger)
 	})
 }
 
@@ -40,9 +40,7 @@ func (doris *Doris) Name() string {
 }
 
 func (doris *Doris) Check() {
-	//task.EchoPrompt("开始巡检 Doris 状态信息")
-	if config.Config.Report {
-		// 发送机器人
+	if doris.Config.Report {
 		doris.ReportRobot()
 		return
 	}
@@ -65,8 +63,7 @@ func (doris *Doris) TableRender() {
 }
 
 func (doris *Doris) Gather() {
-	// 创建 mysqlClinet
-	mysqlClinet, err := libs.NewMysqlClient(doris.DB, "wshoto")
+	mysqlClinet, err := libs.NewMysqlClient(doris.Config.Doris.DB, "wshoto")
 	if err != nil {
 		libs.Logger.Errorw("Failed to create mysql client", "err", err)
 		return
@@ -245,7 +242,7 @@ func selectCustomerGroupCount(queryTime string, db *sql.DB) int {
 }
 
 func getBENum(doris *Doris) {
-	healthUrl := fmt.Sprintf("http://%s:%d/api/health", doris.DB.Ip, doris.DorisCfg.HttpPort)
+	healthUrl := fmt.Sprintf("http://%s:%d/api/health", doris.Config.Doris.Ip, doris.DorisCfg.HttpPort)
 
 	// 发起 HTTP GET 请求
 	body := task.DoRequest(healthUrl)

@@ -6,13 +6,16 @@ package redis
 import (
 	"vhagar/config"
 	"vhagar/libs"
+
+	"go.uber.org/zap"
 )
 
 const taskName = "redis"
 
 type Redis struct {
-	//config.Global
-	Config         libs.RedisConfig
+	Config         *config.CfgType
+	Logger         *zap.SugaredLogger
+	RedisConfig    libs.RedisConfig
 	Version        string
 	Role           string
 	Slaves         int
@@ -22,9 +25,10 @@ type Redis struct {
 	KeyCount       int
 }
 
-func NewRedis(cfg *config.CfgType) *Redis {
+func NewRedis(cfg *config.CfgType, logger *zap.SugaredLogger) *Redis {
 	return &Redis{
-		//Global: cfg.Global,
-		Config: cfg.Redis,
+		Config:      cfg,
+		Logger:      logger,
+		RedisConfig: cfg.Redis,
 	}
 }

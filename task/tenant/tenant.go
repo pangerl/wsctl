@@ -25,13 +25,12 @@ import (
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return newTenant(config.Config)
+		return NewTenanter(config.Config, libs.Logger)
 	})
 }
 
 func (tenant *Tenanter) Check() {
-	//task.EchoPrompt("开始巡检企微租户信息")
-	if tenant.Report {
+	if tenant.Config.Report {
 		tenant.ReportRobot()
 		return
 	}
@@ -74,7 +73,7 @@ func (tenant *Tenanter) ReportWshoto() {
 		JobType: "tenant",
 		Data:    data,
 	}
-	err := notify.SendWshoto(&inspectBody, tenant.ProxyURL)
+	err := notify.SendWshoto(&inspectBody, tenant.Config.ProxyURL)
 	if err != nil {
 		return
 	}

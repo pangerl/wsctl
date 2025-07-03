@@ -27,13 +27,13 @@ var isalert = false
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return &Domainer{}
+		return NewDomainer(config.Config, libs.Logger)
 	})
 }
 
 // Check 实现Tasker接口，检查并展示结果
 func (d *Domainer) Check() {
-	if config.Config.Report {
+	if d.Config.Report {
 		d.ReportRobot()
 		return
 	}
@@ -73,16 +73,14 @@ func (d *Domainer) ReportRobot() {
 
 // Gather 实现Tasker接口，收集数据
 func (d *Domainer) Gather() {
-	fileName := config.Config.DomainListName
-	// 确保文件存在
+	fileName := d.Config.DomainListName
 	if _, err := os.Stat(fileName); os.IsNotExist(err) {
 		log.Fatalf("配置文件不存在: %s", fileName)
 	}
-	// 读取域名列表文件
 	filePath := filepath.Join(".", fileName)
 	domains, err := readDomainListFile(filePath)
 	if err != nil {
-		libs.Logger.Errorf("Failed to read domain list file: %s", err)
+		d.Logger.Errorf("Failed to read domain list file: %s", err)
 		return
 	}
 
@@ -122,7 +120,7 @@ func (d *Domainer) Gather() {
 	// 更新总域名数为唯一域名的数量
 	d.TotalCount = len(domainStatusMap)
 
-	libs.Logger.Info("域名连通性检查完成")
+	d.Logger.Info("域名连通性检查完成")
 }
 
 // readDomainListFile 读取域名列表文件

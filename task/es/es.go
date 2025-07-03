@@ -20,14 +20,14 @@ const taskName = "es"
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return &ES{}
+		return NewES(config.Config, libs.Logger)
 	})
 }
 
 func (es *ES) Gather() {
 	esClient, err := libs.NewESClient(config.Config.ES)
 	if err != nil {
-		libs.Logger.Errorw("Failed info", "err", err)
+		es.Logger.Errorw("Failed info", "err", err)
 		return
 	}
 	defer func() {
@@ -41,7 +41,7 @@ func (es *ES) Gather() {
 
 func (es *ES) Check() {
 	//task.EchoPrompt("开始巡检 ES 状态信息")
-	if config.Config.Report {
+	if es.Config.Report {
 		// 发送机器人
 		es.ReportRobot()
 		return
@@ -61,7 +61,7 @@ func (es *ES) getESInfo() {
 	// 获取集群统计信息
 	clusterStats, err := es.ESClient.ClusterStats().Do(context.Background())
 	if err != nil {
-		libs.Logger.Errorf("获取集群统计信息失败: %s", err)
+		es.Logger.Errorf("获取集群统计信息失败: %s", err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (es *ES) getESInfo() {
 	// 获取未分配分片数
 	clusterHealth, err := es.ESClient.ClusterHealth().Do(context.Background())
 	if err != nil {
-		libs.Logger.Errorf("获取集群健康状态失败: %s", err)
+		es.Logger.Errorf("获取集群健康状态失败: %s", err)
 	} else {
 		es.UnassignedShards = clusterHealth.UnassignedShards
 	}
@@ -84,7 +84,7 @@ func (es *ES) getESInfo() {
 	// 获取节点统计信息
 	stats, err := es.ESClient.NodesStats().Do(context.Background())
 	if err != nil {
-		libs.Logger.Errorf("Failed to get node stats: %s", err)
+		es.Logger.Errorf("Failed to get node stats: %s", err)
 		return
 	}
 

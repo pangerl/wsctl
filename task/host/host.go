@@ -51,7 +51,7 @@ func (s *Server) TableRender() {
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return newServer(config.Config)
+		return NewServer(config.Config, libs.Logger)
 	})
 }
 
@@ -169,41 +169,41 @@ func getHostMemTotal(s *Server) {
 func getHostNetBytesRecv(s *Server) {
 	key := "net_bytes_recv"
 	nic := "eth0"
-	url := fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.vmUrl, key, nic)
+	url := fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.VmUrl, key, nic)
 	setHostData(s, key, url)
 	nic = "ens.*"
-	url = fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.vmUrl, key, nic)
+	url = fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.VmUrl, key, nic)
 	setHostData(s, key, url)
 }
 
 func getHostNetBytesSent(s *Server) {
 	key := "net_bytes_sent"
 	nic := "eth0"
-	url := fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.vmUrl, key, nic)
+	url := fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.VmUrl, key, nic)
 	setHostData(s, key, url)
 	nic = "ens.*"
-	url = fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.vmUrl, key, nic)
+	url = fmt.Sprintf("%s/api/v1/query?query=rate(%s{interface=~'%s'}[1m])", s.VmUrl, key, nic)
 	setHostData(s, key, url)
 }
 
 func getHostRootDiskUsedPercent(s *Server) {
 	key := "root_disk_used_percent"
 	path := "/"
-	url := fmt.Sprintf("%s/api/v1/query?query=disk_used_percent{path='%s'}", s.vmUrl, path)
+	url := fmt.Sprintf("%s/api/v1/query?query=disk_used_percent{path='%s'}", s.VmUrl, path)
 	setHostData(s, key, url)
 }
 
 func getHostDataDiskUsedPercent(s *Server) {
 	key := "data_disk_used_percent"
 	path := "/data"
-	url := fmt.Sprintf("%s/api/v1/query?query=disk_used_percent{path='%s'}", s.vmUrl, path)
+	url := fmt.Sprintf("%s/api/v1/query?query=disk_used_percent{path='%s'}", s.VmUrl, path)
 	setHostData(s, key, url)
 }
 
 func setHostData(s *Server, key ...string) {
 	var url string
 	if len(key) == 1 {
-		url = s.vmUrl + "/api/v1/query?query=" + key[0]
+		url = s.VmUrl + "/api/v1/query?query=" + key[0]
 	} else {
 		url = key[1]
 	}

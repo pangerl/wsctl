@@ -6,20 +6,26 @@ package nacos
 import (
 	"net/http"
 	"vhagar/config"
+
+	"go.uber.org/zap"
 )
 
 const taskName = "nacos"
 
-func NewNacos(cfg *config.CfgType) *Nacos {
+func NewNacos(cfg *config.CfgType, logger *zap.SugaredLogger) *Nacos {
 	return &Nacos{
-		Global: cfg.Global,
-		Config: cfg.Nacos,
+		Config:      cfg,
+		Logger:      logger,
+		Global:      cfg.Global,
+		NacosConfig: cfg.Nacos,
 	}
 }
 
 type Nacos struct {
-	config.Global
-	Config      config.NacosCfg
+	Config      *config.CfgType
+	Logger      *zap.SugaredLogger
+	Global      config.Global
+	NacosConfig config.NacosCfg
 	Client      http.Client
 	Host        string
 	Token       string

@@ -32,19 +32,19 @@ func setprobeHTTPStatusCode(healthApi string) {
 	// 注册 Prometheus 指标
 	prometheus.MustRegister(probeHTTPStatusCode)
 	// 获取 nacos 服务信息
-	n := nacos.NewNacos(config.Config)
-	err := n.Init()
+	nacos := nacos.NewNacos(config.Config, libs.Logger)
+	err := nacos.Init()
 	if err != nil {
 		libs.Logger.Errorw("初始化 Nacos 服务失败", "err", err)
 		return
 	}
-	n.Gather()
-	healthInstances := n.Clusterdata.HealthInstance
+	nacos.Gather()
+	healthInstances := nacos.Clusterdata.HealthInstance
 
 	// 设置一个定时器来定期探测每个实例的健康状况
 	for {
 		libs.Logger.Infow("检查服务接口健康状态")
-		n.Gather()
+		nacos.Gather()
 		for _, instance := range healthInstances {
 			probeInstance(instance, healthApi)
 		}

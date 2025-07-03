@@ -22,10 +22,10 @@ var (
 
 func setBrokerCount() {
 	prometheus.MustRegister(brokerCount)
-	mq := rocketmq.NewRocketMQ(config.Config)
+	rocket := rocketmq.NewRocketMQ(config.Config, libs.Logger)
 	for {
-		mq.Gather()
-		conut := len(mq.BrokerMap)
+		rocket.Gather()
+		conut := len(rocket.BrokerMap)
 		brokerCount.Set(float64(conut))
 		libs.Logger.Infow("brokercount", "count", conut)
 		time.Sleep(30 * time.Second) // 每30秒探测一次

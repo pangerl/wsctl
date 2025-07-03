@@ -26,12 +26,12 @@ var ispush = false
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return newTenant(config.Config)
+		return NewTenanter(config.Config, libs.Logger)
 	})
 }
 
 func (tenant *Tenanter) Check() {
-	if tenant.Report {
+	if tenant.Config.Report {
 		if ispush {
 			tenant.ReportRobot()
 		}
@@ -82,7 +82,7 @@ func (tenant *Tenanter) ReportWshoto() {
 		JobType: "tenant",
 		Data:    data,
 	}
-	err := notify.SendWshoto(&inspectBody, tenant.ProxyURL)
+	err := notify.SendWshoto(&inspectBody, tenant.Config.ProxyURL)
 	if err != nil {
 		return
 	}
@@ -91,19 +91,19 @@ func (tenant *Tenanter) ReportWshoto() {
 func (tenant *Tenanter) Gather() {
 	ispush = false
 	// 创建ESClient，PGClienter
-	esClient, err := libs.NewESClient(config.Config.ES)
+	esClient, err := libs.NewESClient(tenant.Config.ES)
 	if err != nil {
 		libs.Logger.Errorw("Failed info", "err", err)
 		return
 	}
-	pgClient, err := libs.NewPGClienter(config.Config.PG)
+	pgClient, err := libs.NewPGClienter(tenant.Config.PG)
 	if err != nil {
 		libs.Logger.Errorw("Failed info", "err", err)
 		return
 	}
-	if config.Config.Customer.HasValue() {
+	if tenant.Config.Customer.HasValue() {
 		libs.Logger.Info("读取新的customer库")
-		conn, err := libs.NewPGClient(config.Config.Customer, "customer")
+		conn, err := libs.NewPGClient(tenant.Config.Customer, "customer")
 		if err != nil {
 			libs.Logger.Errorw("Failed info", "err", err)
 			return

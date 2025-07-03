@@ -27,13 +27,13 @@ const (
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewRocketMQ(config.Config)
+		return NewRocketMQ(config.Config, libs.Logger)
 	})
 }
 
 func (rocketmq *RocketMQ) Check() {
 	//task.EchoPrompt("开始巡检 RocketMQ 信息")
-	if config.Config.Report {
+	if rocketmq.Config.Report {
 		rocketmq.ReportRobot()
 		return
 	}
@@ -92,7 +92,7 @@ func (rocketmq *RocketMQ) TableRender() {
 
 func (rocketmq *RocketMQ) Gather() {
 	// 获取RocketMQ集群信息
-	clusterdata, _ := GetMQDetail(rocketmq.RocketmqDashboard, rocketmq.Username, rocketmq.Password)
+	clusterdata, _ := GetMQDetail(rocketmq.Config.RocketMQ.RocketmqDashboard, rocketmq.Config.RocketMQ.Username, rocketmq.Config.RocketMQ.Password)
 	for brokername, brokerdata := range clusterdata.BrokerServer {
 		for role, broker := range brokerdata {
 			addr := clusterdata.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role]

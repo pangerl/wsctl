@@ -26,7 +26,7 @@ var mutex sync.Mutex
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewNacos(config.Config)
+		return NewNacos(config.Config, libs.Logger)
 	})
 }
 
@@ -50,7 +50,7 @@ func (nacos *Nacos) Init() error {
 
 func (nacos *Nacos) Check() {
 	//task.EchoPrompt("开始巡检微服务状态信息")
-	if nacos.Config.Writefile != "" {
+	if nacos.Config.Nacos.Writefile != "" {
 		nacos.WriteFile()
 		return
 	}
@@ -59,28 +59,30 @@ func (nacos *Nacos) Check() {
 		nacos.ReportRobot()
 		return
 	}
-	if nacos.Watch {
-		libs.Logger.Infof("监控模式 刷新时间:%s/次", nacos.Interval)
+	if nacos.Config.Global.Watch {
+		nacos.Logger.Info("Watch模式已开启")
+		interval := nacos.Config.Global.Interval
+		nacos.Logger.Infof("监控模式 刷新时间:%s/次", interval)
 		for {
 			libs.Logger.Info("")
 			nacos.Gather()
 			nacos.TableRender()
-			time.Sleep(nacos.Interval)
+			time.Sleep(interval)
 		}
 	}
 	nacos.TableRender()
 }
 
 func (nacos *Nacos) ReportRobot() {
-	libs.Logger.Info("暂不支持发送企微机器人")
+	nacos.Logger.Info("暂不支持发送企微机器人")
 }
 
 func (nacos *Nacos) WithAuth() error {
-	libs.Logger.Info("更新 nacos 的 token")
-	_url := fmt.Sprintf("%s/nacos/v1/auth/login", nacos.Config.Server)
+	nacos.Logger.Info("更新 nacos 的 token")
+	_url := fmt.Sprintf("%s/nacos/v1/auth/login", nacos.Config.Nacos.Server)
 	formData := map[string]string{
-		"username": nacos.Config.Username,
-		"password": nacos.Config.Password,
+		"username": nacos.Config.Nacos.Username,
+		"password": nacos.Config.Nacos.Password,
 	}
 	res := nacos.post(_url, formData)
 	if len(gjson.GetBytes(res, "accessToken").String()) != 0 {
@@ -143,8 +145,8 @@ func (nacos *Nacos) TableRender() {
 func (nacos *Nacos) Gather() {
 	var ser Service
 	var cluster ClusterStatus
-	_url := nacos.Config.Server
-	namespace := nacos.Config.Namespace
+	_url := nacos.Config.Nacos.Server
+	namespace := nacos.Config.Nacos.Namespace
 	group := "DEFAULT_GROUP"
 	res := nacos.GetService(_url, namespace, group)
 	err := json.Unmarshal(res, &ser)
@@ -227,14 +229,14 @@ func (nacos *Nacos) GetJson(resultType string) (result interface{}, err error) {
 func (nacos *Nacos) WriteFile() {
 	var basedir string
 	var filename string
-	basedir = path.Dir(nacos.Config.Writefile)
-	filename = path.Base(nacos.Config.Writefile)
+	basedir = path.Dir(nacos.Config.Nacos.Writefile)
+	filename = path.Base(nacos.Config.Nacos.Writefile)
 	if err := os.MkdirAll(basedir, os.ModePerm); err != nil {
 		os.Exit(1)
 	}
 	file, err := os.OpenFile(basedir+"/.nacos_tmp.json", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		libs.Logger.Errorw("创建文件失败", "err", err)
+		nacos.Logger.Errorw("创建文件失败", "err", err)
 		os.Exit(2)
 	}
 	defer func(file *os.File) {
@@ -247,10 +249,10 @@ func (nacos *Nacos) WriteFile() {
 	data := make([]byte, 0)
 	var check bool
 	if data, check = jsondata.([]byte); !check {
-		libs.Logger.Error("转换失败")
+		nacos.Logger.Error("转换失败")
 	}
 	if _, err := file.Write(data); err != nil {
-		libs.Logger.Errorw("写入失败", "err", err)
+		nacos.Logger.Errorw("写入失败", "err", err)
 		os.Exit(1)
 	}
 	err = file.Close()
@@ -258,8 +260,8 @@ func (nacos *Nacos) WriteFile() {
 		return
 	}
 	if err := os.Rename(basedir+"/.nacos_tmp.json", basedir+"/"+filename); err != nil {
-		libs.Logger.Errorw("写入失败", "file", basedir+"/"+filename)
+		nacos.Logger.Errorw("写入失败", "file", basedir+"/"+filename)
 	} else {
-		libs.Logger.Infow("写入成功", "file", basedir+"/"+filename)
+		nacos.Logger.Infow("写入成功", "file", basedir+"/"+filename)
 	}
 }

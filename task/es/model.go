@@ -4,11 +4,15 @@
 package es
 
 import (
+	"vhagar/config"
+
 	"github.com/olivere/elastic/v7"
+	"go.uber.org/zap"
 )
 
 type ES struct {
-	//config.Global
+	Config   *config.CfgType
+	Logger   *zap.SugaredLogger
 	ESClient *elastic.Client
 	NodeList []*NodeInfo
 	Status   string
@@ -18,11 +22,12 @@ type ES struct {
 	TotalDataSize    int64
 }
 
-//func newES(cfg *config.CfgType) *ES {
-//	return &ES{
-//		//Global: cfg.Global,
-//	}
-//}
+func NewES(cfg *config.CfgType, logger *zap.SugaredLogger) *ES {
+	return &ES{
+		Config: cfg,
+		Logger: logger,
+	}
+}
 
 type NodeInfo struct {
 	Name        string
