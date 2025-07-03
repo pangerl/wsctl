@@ -64,7 +64,7 @@ func (tenant *Tenanter) ReportRobot() {
 }
 
 func (tenant *Tenanter) ReportWshoto() {
-	log.Println("推送微盛运营平台")
+	libs.Logger.Infow("推送微盛运营平台")
 	// 将 []*Corp 转换为 []any
 	var data = make([]any, len(tenant.Corp))
 	for i, c := range tenant.Corp {
@@ -90,7 +90,7 @@ func (tenant *Tenanter) Gather() {
 	// 创建 mysqlClinet，PGCliente
 	mysqlClinet, err := libs.NewMysqlClient(config.Config.Doris.DB, "wshoto")
 	if err != nil {
-		log.Println("Failed to create mysql client. err:", err)
+		libs.Logger.Errorw("Failed to create mysql client", "err", err)
 		return
 	}
 	pgClient, err := libs.NewPGClienter(config.Config.PG)
@@ -99,7 +99,7 @@ func (tenant *Tenanter) Gather() {
 		return
 	}
 	if config.Config.Customer.HasValue() {
-		log.Println("读取新的customer库")
+		libs.Logger.Info("读取新的customer库")
 		conn, err := libs.NewPGClient(config.Config.Customer, "customer")
 		if err != nil {
 			log.Printf("Failed info: %s \n", err)
@@ -123,7 +123,7 @@ func (tenant *Tenanter) Gather() {
 	for _, corp := range tenant.Corp {
 		tenant.getTenantData(corp)
 	}
-	log.Print("检查成功")
+	libs.Logger.Info("检查成功")
 }
 
 func (tenant *Tenanter) getTenantData(corp *config.Corp) {
@@ -306,7 +306,7 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 		)
 	searchResult, err := client.Search().
 		Index("customer_related_1"). // 设置索引名
-		Query(query). // 设置查询条件
+		Query(query).                // 设置查询条件
 		TrackTotalHits(true).
 		Do(context.Background()) // 执行
 	if err != nil {
@@ -317,7 +317,7 @@ func searchCustomerNum(client *elastic.Client, corpid string) (int64, error) {
 	return searchResult.TotalHits(), nil
 }
 
-// 活跃数（新
+// 活跃数（新）
 func queryActiveNum(corpid, startDate, endDate string, db *sql.DB) int {
 	// 定义查询语句
 	query := `
@@ -328,6 +328,7 @@ func queryActiveNum(corpid, startDate, endDate string, db *sql.DB) int {
 		  AND who_role = '02'
 		  AND gmt_create >= ?
 		  AND gmt_create < ?;`
+	libs.Logger.Infof("queryActiveNum SQL: %s | args: %s, %s, %s", strings.ReplaceAll(query, "\n", " "), corpid, startDate, endDate)
 	rows := db.QueryRow(query, corpid, startDate, endDate)
 	// 处理查询结果
 	var activeNum int
@@ -353,7 +354,7 @@ func searchActiveNum(client *elastic.Client, corpid string, startDate, endDate t
 		)
 	searchResult, err := client.Search().
 		Index("text_event_index*"). // 设置索引名
-		Query(query). // 设置查询条件
+		Query(query).               // 设置查询条件
 		Aggregation("dau", elastic.NewCardinalityAggregation().Field("who.id.keyword")).
 		Size(0).
 		Do(context.Background()) // 执行

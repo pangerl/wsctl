@@ -14,7 +14,7 @@ import (
 	//"vhagar/task/nacos"
 )
 
-const VERSION = "v3.12"
+const VERSION = "v4"
 
 var (
 	Config *CfgType
@@ -84,7 +84,7 @@ func InitConfig(cfgFile string) (*CfgType, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			//log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
-			log.Println("Recovered from panic:", err)
+			libs.Logger.Errorw("Recovered from panic", "err", err)
 			return
 		}
 	}()

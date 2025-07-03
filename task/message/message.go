@@ -6,7 +6,6 @@ package message
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -73,7 +72,7 @@ func (tenant *Tenanter) ReportRobot() {
 }
 
 func (tenant *Tenanter) ReportWshoto() {
-	log.Println("推送微盛运营平台")
+	libs.Logger.Infow("推送微盛运营平台")
 	// 将 []*Corp 转换为 []any
 	var data = make([]any, len(tenant.Corp))
 	for i, c := range tenant.Corp {
@@ -94,19 +93,19 @@ func (tenant *Tenanter) Gather() {
 	// 创建ESClient，PGClienter
 	esClient, err := libs.NewESClient(config.Config.ES)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return
 	}
 	pgClient, err := libs.NewPGClienter(config.Config.PG)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return
 	}
 	if config.Config.Customer.HasValue() {
-		log.Println("读取新的customer库")
+		libs.Logger.Info("读取新的customer库")
 		conn, err := libs.NewPGClient(config.Config.Customer, "customer")
 		if err != nil {
-			log.Printf("Failed info: %s \n", err)
+			libs.Logger.Errorw("Failed info", "err", err)
 			return
 		}
 		pgClient.Conn["customer"] = conn
@@ -130,7 +129,7 @@ func (tenant *Tenanter) Gather() {
 	if tenant.NasDir != "" {
 		tenant.DirIsExis = checkDirectoryExistence(tenant.NasDir)
 	}
-	log.Print("检查成功")
+	libs.Logger.Info("检查成功")
 }
 
 func (tenant *Tenanter) getTenantData(corp *config.Corp) {
@@ -257,7 +256,7 @@ func countMessageNum(client *elastic.Client, corpid string, startTime, endTime i
 		Query(query).
 		Do(context.Background())
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return -1, err
 	}
 	//fmt.Printf("昨天消息数: %d\n", countResult)
@@ -270,7 +269,7 @@ func queryCorpName(conn *pgx.Conn, corpid string) (string, error) {
 	query := "SELECT corp_name FROM qw_base_tenant_corp_info WHERE tenant_id=$1 LIMIT 1"
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&corpName)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return "-1", err
 	}
 	return corpName, nil
@@ -282,7 +281,7 @@ func queryOrgCorpId(conn *pgx.Conn, corpid string) (string, error) {
 	query := "SELECT org_corp_id FROM qw_base_tenant_corp_info WHERE tenant_id=$1 LIMIT 1"
 	err := conn.QueryRow(context.Background(), query, corpid).Scan(&orgCorpId)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return "-1", err
 	}
 	return orgCorpId, nil
@@ -304,7 +303,7 @@ func checkDirectoryExistence(path string) bool {
 	// 拼接出完整的目录路径
 	dirPath := fmt.Sprintf("%s/%s", path, currentDate)
 
-	log.Print(dirPath)
+	libs.Logger.Info(dirPath)
 	// 检查目录是否存在
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		return false // 目录不存在

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"strconv"
@@ -15,6 +14,7 @@ import (
 	"sync"
 	"time"
 	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/task"
 
 	"github.com/olekukonko/tablewriter"
@@ -60,9 +60,9 @@ func (nacos *Nacos) Check() {
 		return
 	}
 	if nacos.Watch {
-		log.Printf("监控模式 刷新时间:%s/次\n", nacos.Interval)
+		libs.Logger.Infof("监控模式 刷新时间:%s/次", nacos.Interval)
 		for {
-			log.Println("")
+			libs.Logger.Info("")
 			nacos.Gather()
 			nacos.TableRender()
 			time.Sleep(nacos.Interval)
@@ -72,11 +72,11 @@ func (nacos *Nacos) Check() {
 }
 
 func (nacos *Nacos) ReportRobot() {
-	log.Println("暂不支持发送企微机器人")
+	libs.Logger.Info("暂不支持发送企微机器人")
 }
 
 func (nacos *Nacos) WithAuth() error {
-	log.Println("更新 nacos 的 token")
+	libs.Logger.Info("更新 nacos 的 token")
 	_url := fmt.Sprintf("%s/nacos/v1/auth/login", nacos.Config.Server)
 	formData := map[string]string{
 		"username": nacos.Config.Username,
@@ -234,7 +234,7 @@ func (nacos *Nacos) WriteFile() {
 	}
 	file, err := os.OpenFile(basedir+"/.nacos_tmp.json", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Printf("创建文件失败 %s", err)
+		libs.Logger.Errorw("创建文件失败", "err", err)
 		os.Exit(2)
 	}
 	defer func(file *os.File) {
@@ -247,10 +247,10 @@ func (nacos *Nacos) WriteFile() {
 	data := make([]byte, 0)
 	var check bool
 	if data, check = jsondata.([]byte); !check {
-		log.Println("转换失败")
+		libs.Logger.Error("转换失败")
 	}
 	if _, err := file.Write(data); err != nil {
-		log.Println("写入失败", err)
+		libs.Logger.Errorw("写入失败", "err", err)
 		os.Exit(1)
 	}
 	err = file.Close()
@@ -258,8 +258,8 @@ func (nacos *Nacos) WriteFile() {
 		return
 	}
 	if err := os.Rename(basedir+"/.nacos_tmp.json", basedir+"/"+filename); err != nil {
-		log.Println("写入失败:", basedir+"/"+filename)
+		libs.Logger.Errorw("写入失败", "file", basedir+"/"+filename)
 	} else {
-		log.Println("写入成功:", basedir+"/"+filename)
+		libs.Logger.Infow("写入成功", "file", basedir+"/"+filename)
 	}
 }

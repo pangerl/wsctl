@@ -38,6 +38,7 @@ func (redis *Redis) Gather() {
 	redisClient, err := libs.NewRedisClient(redis.Config)
 	if err != nil {
 		log.Println("Failed to create redis client. err:", err)
+		libs.Logger.Errorw("Failed to create redis client", "err", err)
 		return
 	}
 
@@ -56,6 +57,7 @@ func (redis *Redis) Gather() {
 	info, err := redisClient.Info(ctx).Result()
 	if err != nil {
 		log.Printf("无法获取 Redis 信息: %v", err)
+		libs.Logger.Errorf("无法获取 Redis 信息: %v", err)
 		return
 	}
 

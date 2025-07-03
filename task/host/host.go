@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/task"
 
 	"github.com/olekukonko/tablewriter"
@@ -56,6 +57,7 @@ func init() {
 
 func (s *Server) ReportRobot() {
 	log.Println("暂不支持发送企微机器人")
+	libs.Logger.Info("暂不支持发送企微机器人")
 }
 
 func (s *Server) Check() {
@@ -133,6 +135,7 @@ func queryVmData(url string) []*MetricData {
 	res := metricsResponse
 	if res.Status != "success" {
 		log.Printf("查询报错，Status: %s \n", res.Status)
+		libs.Logger.Errorf("查询报错，Status: %s", res.Status)
 		return nil
 	}
 	return res.Data.Result

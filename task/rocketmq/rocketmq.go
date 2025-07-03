@@ -6,24 +6,24 @@ package rocketmq
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/notify"
 	"vhagar/task"
 
 	"github.com/olekukonko/tablewriter"
 )
 
-//func GetRocketMQ() *RocketMQ {
-//	cfg := config.Config
-//	rocketmq := newRocketMQ(cfg)
-//	rocketmq.Gather()
-//	return rocketmq
-//}
+const (
+	roleMaster = "0"
+)
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
@@ -92,7 +92,7 @@ func (rocketmq *RocketMQ) TableRender() {
 
 func (rocketmq *RocketMQ) Gather() {
 	// 获取RocketMQ集群信息
-	clusterdata, _ := GetMQDetail(rocketmq.RocketmqDashboard)
+	clusterdata, _ := GetMQDetail(rocketmq.RocketmqDashboard, rocketmq.Username, rocketmq.Password)
 	for brokername, brokerdata := range clusterdata.BrokerServer {
 		for role, broker := range brokerdata {
 			addr := clusterdata.ClusterInfo.BrokerAddrTable[brokername].BrokerAddrs[role]
@@ -126,44 +126,110 @@ func formatRunTime(runTime string) string {
 }
 
 func formatUseDisk(useDisk string) string {
-	// 使用逗号分割字符串
 	items := strings.Split(useDisk, ",")
-	total := strings.TrimSpace(strings.Split(items[0], ":")[1])
-	free := strings.TrimSpace(strings.Split(items[1], ":")[1])
+	if len(items) < 2 {
+		return useDisk
+	}
+	totalParts := strings.Split(items[0], ":")
+	freeParts := strings.Split(items[1], ":")
+	if len(totalParts) < 2 || len(freeParts) < 2 {
+		return useDisk
+	}
+	total := strings.TrimSpace(totalParts[1])
+	free := strings.TrimSpace(freeParts[1])
 	return free + "/" + total
 }
 
-func GetMQDetail(mqDashboard string) (result ClusterData, err error) {
-	// 第一步：发送HTTP请求到RocketMQ Dashboard接口
-	url := mqDashboard + "/cluster/list.query"
-	body := task.DoRequest(url)
-	// 第二步：解析JSON响应
+func GetMQDetail(mqDashboard, username, password string) (result ClusterData, err error) {
+	// 新增：登录获取 cookie
+	loginUrl := mqDashboard + "/login/login.do"
+	clusterUrl := mqDashboard + "/cluster/list.query"
+
+	client := &http.Client{}
+
+	// 1. 登录获取 cookie
+	loginData := url.Values{}
+	loginData.Set("username", username)
+	loginData.Set("password", password)
+
+	loginReq, err := http.NewRequest("POST", loginUrl, strings.NewReader(loginData.Encode()))
+	if err != nil {
+		libs.Logger.Errorf("E! fail to create login request: %v", err)
+		return result, err
+	}
+	loginReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	loginResp, err := client.Do(loginReq)
+	if err != nil {
+		libs.Logger.Errorf("E! fail to login: %v", err)
+		return result, err
+	}
+	defer loginResp.Body.Close()
+
+	if loginResp.StatusCode != 200 {
+		libs.Logger.Errorf("E! login failed, status: %d", loginResp.StatusCode)
+		return result, fmt.Errorf("login failed, status: %d", loginResp.StatusCode)
+	}
+
+	// 提取 cookie
+	cookies := loginResp.Cookies()
+	if len(cookies) == 0 {
+		libs.Logger.Errorf("E! login response has no cookies")
+		return result, fmt.Errorf("login response has no cookies")
+	}
+
+	// 2. 带 cookie 请求 cluster/list.query
+	clusterReq, err := http.NewRequest("GET", clusterUrl, nil)
+	if err != nil {
+		libs.Logger.Errorf("E! fail to create cluster request: %v", err)
+		return result, err
+	}
+	for _, c := range cookies {
+		clusterReq.AddCookie(c)
+	}
+
+	clusterResp, err := client.Do(clusterReq)
+	if err != nil {
+		libs.Logger.Errorf("E! fail to request cluster info: %v", err)
+		return result, err
+	}
+	defer clusterResp.Body.Close()
+
+	if clusterResp.StatusCode != 200 {
+		libs.Logger.Errorf("E! cluster info failed, status: %d", clusterResp.StatusCode)
+		return result, fmt.Errorf("cluster info failed, status: %d", clusterResp.StatusCode)
+	}
+
+	body, err := io.ReadAll(clusterResp.Body)
+	if err != nil {
+		libs.Logger.Errorf("E! fail to read cluster response: %v", err)
+		return result, err
+	}
+
+	// 解析JSON响应
 	var responseData ResponseData
 	if err := json.Unmarshal(body, &responseData); err != nil {
-		log.Printf("E! fail to unmarshal JSON response: %v", err)
+		libs.Logger.Errorf("E! fail to unmarshal JSON response: %v", err)
+		return result, err
 	}
 	result = responseData.Data
-
-	return result, err
+	return result, nil
 }
 
 func convertAndCalculate(str1, str2 string) int {
 	num1, err := strconv.Atoi(str1)
 	if err != nil {
-		log.Println("E! fail to str to int", err)
-		return -1
+		return 0
 	}
 	num2, err := strconv.Atoi(str2)
 	if err != nil {
-		log.Println("E! fail to str to int", err)
-		return -1
+		return 0
 	}
-
 	return num1 - num2
 }
 
 func getRole(role string) string {
-	if role == "0" {
+	if role == roleMaster {
 		return "Master"
 	}
 	return "Slave"

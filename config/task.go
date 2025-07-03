@@ -16,6 +16,8 @@ type DorisCfg struct {
 
 type RocketMQCfg struct {
 	RocketmqDashboard string `toml:"rocketmqdashboard"`
+	Username          string `json:"username"`
+	Password          string `json:"password"`
 }
 
 type NacosCfg struct {

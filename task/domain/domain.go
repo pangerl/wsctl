@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 	"vhagar/config"
+	"vhagar/libs"
 	"vhagar/notify"
 	"vhagar/task"
 
@@ -81,7 +82,7 @@ func (d *Domainer) Gather() {
 	filePath := filepath.Join(".", fileName)
 	domains, err := readDomainListFile(filePath)
 	if err != nil {
-		log.Printf("Failed to read domain list file: %s\n", err)
+		libs.Logger.Errorf("Failed to read domain list file: %s", err)
 		return
 	}
 
@@ -121,7 +122,7 @@ func (d *Domainer) Gather() {
 	// 更新总域名数为唯一域名的数量
 	d.TotalCount = len(domainStatusMap)
 
-	log.Print("域名连通性检查完成")
+	libs.Logger.Info("域名连通性检查完成")
 }
 
 // readDomainListFile 读取域名列表文件
@@ -151,7 +152,7 @@ func readDomainListFile(filePath string) ([]*Domain, error) {
 			for _, portStr := range parts[1:] {
 				port, err := strconv.Atoi(portStr)
 				if err != nil {
-					log.Printf("Invalid port for domain %s: %s\n", domainName, portStr)
+					libs.Logger.Errorf("Invalid port for domain %s: %s", domainName, portStr)
 					continue
 				}
 				ports = append(ports, port)
@@ -189,7 +190,7 @@ func testConnection(domain string, port int) bool {
 		}
 		proxyUrl, err := url.Parse(config.Config.ProxyURL)
 		if err != nil {
-			log.Printf("Invalid proxy URL: %s\n", err)
+			libs.Logger.Errorf("Invalid proxy URL: %s", err)
 			return false
 		}
 		transport := &http.Transport{
@@ -216,7 +217,7 @@ func testConnection(domain string, port int) bool {
 				}
 				return true
 			}
-			log.Printf("Proxy connection attempt %d failed for %s: %v\n", i+1, address, err)
+			libs.Logger.Errorf("Proxy connection attempt %d failed for %s: %v", i+1, address, err)
 			if i < maxRetries-1 {
 				time.Sleep(retryDelay)
 			}
@@ -231,12 +232,12 @@ func testConnection(domain string, port int) bool {
 			defer func(conn net.Conn) {
 				err := conn.Close()
 				if err != nil {
-					log.Printf("Failed to close connection: %s\n", err)
+					libs.Logger.Errorf("Failed to close connection: %s", err)
 				}
 			}(conn)
 			return true
 		}
-		log.Printf("Direct connection attempt %d failed for %s: %v\n", i+1, address, err)
+		libs.Logger.Errorf("Direct connection attempt %d failed for %s: %v", i+1, address, err)
 		if i < maxRetries-1 {
 			time.Sleep(retryDelay)
 		}

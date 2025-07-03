@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
@@ -35,15 +36,25 @@ func InitLoggerWithConfig(level string, toFile bool) {
 		if toFile {
 			logFile := "logs/vhagar.log"
 			_ = os.MkdirAll("logs", 0755)
-			fileWriter, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-			if err != nil {
-				panic(err)
+			fileWriter := &lumberjack.Logger{
+				Filename:   logFile,
+				MaxSize:    100,  // 单个日志文件最大100MB
+				MaxBackups: 10,   // 最多保留10个备份文件
+				MaxAge:     7,    // 只保留7天
+				Compress:   true, // 启用压缩
 			}
 			fileEncoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
-			core = zapcore.NewTee(
-				zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zapLevel),
-				zapcore.NewCore(fileEncoder, zapcore.AddSync(fileWriter), zapLevel),
+			consoleCore := zapcore.NewCore(
+				encoder,
+				zapcore.AddSync(os.Stdout),
+				zapcore.WarnLevel, // 控制台只输出 warn 及以上
 			)
+			fileCore := zapcore.NewCore(
+				fileEncoder,
+				zapcore.AddSync(fileWriter),
+				zapLevel, // 文件输出 info 及以上
+			)
+			core = zapcore.NewTee(consoleCore, fileCore)
 		} else {
 			core = zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zapLevel)
 		}

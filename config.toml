@@ -87,6 +87,8 @@ domainListName = "domain_list.txt"
 
 [rocketmq]
     rocketmqDashboard = "http://x.x.x.x:8081"
+    username = "admin"
+    password = "xxx"
 
 [metric]
     enable = false

@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -69,7 +68,7 @@ func (doris *Doris) Gather() {
 	// 创建 mysqlClinet
 	mysqlClinet, err := libs.NewMysqlClient(doris.DB, "wshoto")
 	if err != nil {
-		log.Println("Failed to create mysql client. err:", err)
+		libs.Logger.Errorw("Failed to create mysql client", "err", err)
 		return
 	}
 	defer func() {
@@ -152,13 +151,13 @@ func selectFailedJob(queryTime string, db *sql.DB) []string {
 	   AND last_execute_time < ?`
 	rows, err := db.Query(query, queryTime)
 	if err != nil {
-		log.Println("数据查询失败. err:", err)
+		libs.Logger.Errorw("数据查询失败", "err", err)
 		return nil
 	}
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-			log.Printf("Failed info: %s \n", err)
+			libs.Logger.Errorw("Failed info", "err", err)
 		}
 	}(rows)
 
@@ -169,7 +168,7 @@ func selectFailedJob(queryTime string, db *sql.DB) []string {
 	for rows.Next() {
 		var name string
 		if err := rows.Scan(&name); err != nil {
-			log.Printf("Failed info: %s \n", err)
+			libs.Logger.Errorw("Failed info", "err", err)
 			return nil
 		}
 		failedJobs = append(failedJobs, name)
@@ -197,7 +196,7 @@ func selectStaffCount(queryTime string, db *sql.DB) int {
 	var staffCount int
 	err := rows.Scan(&staffCount)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return -1
 	}
 	return staffCount
@@ -218,7 +217,7 @@ func selectUseAnalyseCount(queryTime string, db *sql.DB) int {
 	var useAnalyseCount int
 	err := rows.Scan(&useAnalyseCount)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return -1
 	}
 	return useAnalyseCount
@@ -239,7 +238,7 @@ func selectCustomerGroupCount(queryTime string, db *sql.DB) int {
 	var customerGroupCount int
 	err := rows.Scan(&customerGroupCount)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return -1
 	}
 	return customerGroupCount
@@ -251,14 +250,14 @@ func getBENum(doris *Doris) {
 	// 发起 HTTP GET 请求
 	body := task.DoRequest(healthUrl)
 	if body == nil { // 请求失败
-		log.Printf("Failed to get response from %s", healthUrl)
+		libs.Logger.Errorf("Failed to get response from %s", healthUrl)
 		return
 	}
 
 	// 解析 JSON 响应
 	var response dorisResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		log.Printf("Error unmarshalling json: %v", err)
+		libs.Logger.Errorf("Error unmarshalling json: %v", err)
 		return
 	}
 

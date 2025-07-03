@@ -3,7 +3,6 @@ package es
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -28,7 +27,7 @@ func init() {
 func (es *ES) Gather() {
 	esClient, err := libs.NewESClient(config.Config.ES)
 	if err != nil {
-		log.Printf("Failed info: %s \n", err)
+		libs.Logger.Errorw("Failed info", "err", err)
 		return
 	}
 	defer func() {
@@ -62,7 +61,7 @@ func (es *ES) getESInfo() {
 	// 获取集群统计信息
 	clusterStats, err := es.ESClient.ClusterStats().Do(context.Background())
 	if err != nil {
-		log.Printf("获取集群统计信息失败: %s\n", err)
+		libs.Logger.Errorf("获取集群统计信息失败: %s", err)
 		return
 	}
 
@@ -74,7 +73,7 @@ func (es *ES) getESInfo() {
 	// 获取未分配分片数
 	clusterHealth, err := es.ESClient.ClusterHealth().Do(context.Background())
 	if err != nil {
-		log.Printf("获取集群健康状态失败: %s\n", err)
+		libs.Logger.Errorf("获取集群健康状态失败: %s", err)
 	} else {
 		es.UnassignedShards = clusterHealth.UnassignedShards
 	}
@@ -85,7 +84,7 @@ func (es *ES) getESInfo() {
 	// 获取节点统计信息
 	stats, err := es.ESClient.NodesStats().Do(context.Background())
 	if err != nil {
-		log.Printf("Failed to get node stats: %s\n", err)
+		libs.Logger.Errorf("Failed to get node stats: %s", err)
 		return
 	}
 
