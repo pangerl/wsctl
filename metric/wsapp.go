@@ -4,11 +4,11 @@
 package metric
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"strings"
+	"sync"
 	"time"
 	"vhagar/config"
 	"vhagar/libs"
@@ -28,37 +28,50 @@ var (
 	)
 )
 
-func setprobeHTTPStatusCode(healthApi string) {
-	// 注册 Prometheus 指标
+func init() {
+	// 只注册一次指标，避免重复注册 panic
 	prometheus.MustRegister(probeHTTPStatusCode)
-	// 获取 nacos 服务信息
-	nacos := nacos.NewNacos(config.Config, libs.Logger)
-	err := nacos.Init()
+}
+
+func strobeHTTPStatusCode(healthApi string) {
+	// 不再在此注册指标，避免重复注册
+	// prometheus.MustRegister(probeHTTPStatusCode)
+	// 获取 newNacos 服务信息
+	newNacos := nacos.NewNacos(config.Config, libs.Logger)
+	err := newNacos.Init()
 	if err != nil {
 		libs.Logger.Errorw("初始化 Nacos 服务失败", "err", err)
 		return
 	}
-	nacos.Gather()
-	healthInstances := nacos.Clusterdata.HealthInstance
 
 	// 设置一个定时器来定期探测每个实例的健康状况
 	for {
-		libs.Logger.Infow("检查服务接口健康状态")
-		nacos.Gather()
+		libs.Logger.Warnw("检查服务接口健康状态")
+		newNacos.Gather()
+		healthInstances := newNacos.Clusterdata.HealthInstance
+
+		var wg sync.WaitGroup
 		for _, instance := range healthInstances {
-			probeInstance(instance, healthApi)
+			wg.Add(1)
+			go func(inst nacos.ServerInstance) {
+				defer wg.Done()
+				probeInstance(inst, healthApi)
+			}(instance)
 		}
-		time.Sleep(30 * time.Second) // 每30秒探测一次
+		wg.Wait()
+		time.Sleep(30 * time.Second)
 	}
 }
 
 // probeInstance 发送 HTTP 请求并检查返回值
 func probeInstance(instance nacos.ServerInstance, healthApi string) {
 	url := fmt.Sprintf("http://%s:%s%s", instance.Ip, instance.Port, healthApi)
-	resp, err := http.Get(url)
+	//libs.Logger.Infow("开始请求", "url", url, "namespace", instance.NamespaceName, "service", instance.ServiceName)
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(url)
 	if err != nil {
-		libs.Logger.Errorw("请求 URL 失败", "url", url, "err", err)
-		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
+		libs.Logger.Errorw("请求 URL 失败", "url", url, "err", err, "service", instance.ServiceName)
+		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
 		return
 	}
 	defer func(Body io.ReadCloser) {
@@ -75,27 +88,15 @@ func probeInstance(instance nacos.ServerInstance, healthApi string) {
 		return
 	}
 
-	if strings.TrimSpace(string(body)) == "success" {
-		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
-	} else {
-		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
+	// 解析 JSON 并判断 status 字段
+	var result struct {
+		Status string `json:"status"`
 	}
-}
-
-func getClientIp() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		libs.Logger.Errorw("获取本机 IP 地址失败", "err", err)
-	}
-
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				//fmt.Println("本机 IP 地址:", ipnet.IP.String())
-				return ipnet.IP.String()
-			}
+	if err := json.Unmarshal(body, &result); err == nil {
+		if result.Status == "UP" {
+			probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(1)
+			return
 		}
 	}
-
-	return ""
+	probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
 }

@@ -72,7 +72,7 @@ func (tenant *Tenanter) ReportRobot() {
 }
 
 func (tenant *Tenanter) ReportWshoto() {
-	libs.Logger.Infow("推送微盛运营平台")
+	libs.Logger.Warnw("推送微盛运营平台")
 	// 将 []*Corp 转换为 []any
 	var data = make([]any, len(tenant.Corp))
 	for i, c := range tenant.Corp {

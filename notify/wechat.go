@@ -58,7 +58,7 @@ func sendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 			libs.Logger.Errorw("Failed info", "err", err)
 		}
 	}(resp.Body)
-	libs.Logger.Infow("推送企微机器人 response Status", "status", resp.Status)
+	libs.Logger.Warnw("推送企微机器人 response Status", "status", resp.Status)
 	//log.Print("response Headers:", resp.Header)
 	return nil
 }

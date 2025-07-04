@@ -25,7 +25,7 @@ var crontabCmd = &cobra.Command{
 			go metric.StartMetric()
 		}
 		// 启动定时任务
-		libs.Logger.Infow("启动任务调度")
+		libs.Logger.Warnw("启动任务调度")
 		crontabJob()
 	},
 }
@@ -46,7 +46,7 @@ func crontabJob() {
 		// 判断是否是定时任务
 		taskName := name
 		if cronJob.Crontab {
-			libs.Logger.Infow("添加定时任务", "task", taskName)
+			libs.Logger.Warnw("添加定时任务", "task", taskName)
 			_, err := c.AddFunc(cronJob.Scheducron, func() {
 				task.Do(taskName)
 			})

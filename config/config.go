@@ -25,7 +25,7 @@ type CfgType struct {
 	DomainListName  string             `toml:"domainListName"`
 	NasDir          string             `toml:"nasDir"`
 	VictoriaMetrics string             `toml:"victoriaMetrics"`
-	Cron            map[string]crontab `toml:"cron"`
+	Cron            map[string]Crontab `toml:"cron"`
 	Nacos           NacosCfg           `toml:"nacos"`
 	Tenant          Tenant             `toml:"tenant"`
 	PG              libs.DB            `toml:"pg"`
@@ -38,42 +38,36 @@ type CfgType struct {
 }
 
 type Global struct {
-	LogLevel    string `toml:"logLevel"`
-	LogToFile   bool   `toml:"logToFile"`
-	ProjectName string `toml:"projectname"`
-	ProxyURL    string `toml:"proxyurl"`
-	Notify      Notify `toml:"notify"`
-	Watch       bool
-	Report      bool
-	Interval    time.Duration
-	Duration    time.Duration
+	LogLevel    string        `toml:"logLevel"`
+	LogToFile   bool          `toml:"logToFile"`
+	ProjectName string        `toml:"projectname"`
+	ProxyURL    string        `toml:"proxyurl"`
+	Notify      Notify        `toml:"notify"`
+	Watch       bool          `toml:"watch"`
+	Report      bool          `toml:"report"`
+	Interval    time.Duration `toml:"interval"`
+	Duration    time.Duration `toml:"duration"`
 }
 
-type crontab struct {
+type Crontab struct {
 	Crontab    bool   `toml:"crontab"`
 	Scheducron string `toml:"scheducron"`
 }
 
 type Notify struct {
-	Robotkey []string
-	Userlist []string
+	Robotkey []string            `toml:"robotkey"`
+	Userlist []string            `toml:"userlist"`
 	Notifier map[string]Notifier `toml:"notifier"`
 }
 
 type Notifier struct {
 	Robotkey []string `json:"robotkey"`
-	//Userlist []string `json:"userlist"`
-	//IsPush   bool     `json:"ispush"`
 }
 
 type MetricCfg struct {
 	Enable    bool
 	Port      string
 	HealthApi string
-	//Wsapp        bool `json:"wsapp"`
-	//Rocketmq     bool `json:"rocketmq"`
-	//Conversation bool `json:"conversation"`
-	//Interval     time.Duration
 }
 
 func InitConfig(cfgFile string) (*CfgType, error) {
@@ -83,8 +77,7 @@ func InitConfig(cfgFile string) (*CfgType, error) {
 	log.Printf("读取配置文件 %s \n", cfgFile)
 	defer func() {
 		if err := recover(); err != nil {
-			//log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
-			libs.Logger.Errorw("Recovered from panic", "err", err)
+			log.Fatalf("Failed Info: 配置文件格式错误 %s", err)
 			return
 		}
 	}()
@@ -100,23 +93,6 @@ func InitConfig(cfgFile string) (*CfgType, error) {
 		}
 		//log.Println(Config.Notify)
 	}
+	// log.Println("配置文件加载成功", "config", Config)
 	return Config, nil
 }
-
-//type Instances interface {
-//	TableRender()
-//}
-//
-//type Creator interface {
-//	factoryMethod() Instances
-//}
-
-//func NewInspect(cfg *CfgType) *inspect.Inspect {
-//	log.Println("初始化 Inspect 对象")
-//
-//	Inspect := &inspect.Inspect{
-//		ProjectName: cfg.ProjectName,
-//		ProxyURL:    cfg.ProxyURL,
-//		Notifier:    cfg.Notifier,
-//	}
-//}

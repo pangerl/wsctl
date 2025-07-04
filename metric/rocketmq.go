@@ -20,15 +20,21 @@ var (
 		})
 )
 
-func setBrokerCount() {
+func init() {
+	// 只注册一次指标，避免重复注册 panic
 	prometheus.MustRegister(brokerCount)
+}
+
+func setBrokerCount() {
+	// 不再在此注册指标，避免重复注册
+	// prometheus.MustRegister(brokerCount)
 	rocket := rocketmq.NewRocketMQ(config.Config, libs.Logger)
 	for {
 		rocket.Gather()
 		conut := len(rocket.BrokerMap)
 		brokerCount.Set(float64(conut))
 		libs.Logger.Infow("brokercount", "count", conut)
-		time.Sleep(30 * time.Second) // 每30秒探测一次
+		time.Sleep(60 * time.Second) // 每30秒探测一次
 	}
 
 }

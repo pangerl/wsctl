@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 	Short: "微盛运维部署工具",
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
-		libs.Logger.Infow("wsctl go go go！！！")
+		libs.Logger.Warnw("wsctl go go go！！！")
 		startWeb(port)
 
 	},
@@ -38,7 +38,6 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		libs.Logger.Errorw("执行 rootCmd 失败", "err", err)
 		os.Exit(1)
 	}
 }
@@ -68,7 +67,7 @@ func preFunc() {
 func startWeb(port string) {
 	Hostname, _ = os.Hostname()
 	http.HandleFunc("/", ping)
-	libs.Logger.Infow("启动 Web 服务", "url", fmt.Sprintf("http://%s:%s/", getClientIp(), port))
+	libs.Logger.Warnw("启动 Web 服务", "url", fmt.Sprintf("http://%s:%s/", getClientIp(), port))
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		libs.Logger.Fatalw("Web 服务启动失败", "err", err)

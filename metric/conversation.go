@@ -22,8 +22,14 @@ var (
 	)
 )
 
-func setMessageCount() {
+func init() {
+	// 只注册一次指标，避免重复注册 panic
 	prometheus.MustRegister(messageCount)
+}
+
+func setMessageCount() {
+	// 不再在此注册指标，避免重复注册
+	// prometheus.MustRegister(messageCount)
 
 	// 初始化 esclient
 	esclient, _ := libs.NewESClient(config.Config.ES)
