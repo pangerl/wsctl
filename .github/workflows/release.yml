@@ -5,6 +5,7 @@ name: Release and Deploy to COS
 
 on:
   push:
+    branches: [ "master" ]
     tags:
       - 'v*.*.*'
 
