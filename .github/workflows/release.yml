@@ -1,0 +1,144 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Release and Deploy to COS
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  # 你的 Go 主程序包路径，如果是根目录就用 .
+  GO_MAIN_PATH: '.' 
+  # 最终生成的二进制文件名
+  BINARY_NAME: 'wsctl' 
+
+jobs:
+  ##################################################
+  # Job 1: 编译一次，生成所有后续步骤需要的文件
+  ##################################################
+  build:
+    runs-on: ubuntu-latest
+    outputs: # 定义此 job 的输出，供其他 job 使用
+      version: ${{ steps.vars.outputs.version }}
+      binary_artifact_name: ${{ steps.vars.outputs.binary_artifact_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      
+      # 步骤：设置变量，并作为输出
+      - name: Set up variables
+        id: vars
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          
+          BINARY_ARTIFACT_NAME="${{ env.PROJECT_NAME }}-${VERSION}-linux-amd64"
+          echo "binary_artifact_name=${BINARY_ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+          
+      # 步骤：编译 Go 应用 (只编译一次)
+      - name: Build Go application
+        run: |
+          # 编译出的文件名为 env.BINARY_NAME，即 'app-server'
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -a -ldflags "-s -w" -o ${{ env.BINARY_NAME }} .
+      # 步骤：上传编译好的二进制文件和整个代码库作为 artifacts
+      - name: Upload artifacts for subsequent jobs
+        uses: actions/upload-artifact@v4
+        with:
+          # 上传整个代码库（包含了编译好的二进制文件和 Dockerfile.release）
+          name: wsctl
+          path: .
+          retention-days: 1 # 临时存储1天即可
+  ###################################################################
+  # Job 2: 发布二进制文件 (依赖 build job)
+  ###################################################################
+  release-binary:
+    runs-on: ubuntu-latest
+    needs: build # 声明此 job 依赖于 build job
+    steps:
+      # 步骤：下载 build job 生成的 artifacts
+      - name: Download project artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wsctl
+          
+      # 步骤：重命名二进制文件以符合发布要求
+      - name: Rename binary file for release
+        run: mv ${{ env.BINARY_NAME }} ${{ needs.build.outputs.binary_artifact_name }}
+      # 步骤：创建 GitHub Release 并上传
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ needs.build.outputs.binary_artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          
+      # 步骤：上传二进制文件到腾讯云 COS
+      - name: Upload binary to Tencent Cloud COS
+        uses: TencentCloud/cos-upload-action@v2
+        with:
+          secret_id: ${{ secrets.TENCENT_SECRET_ID }}
+          secret_key: ${{ secrets.TENCENT_SECRET_KEY }}
+          bucket: ${{ secrets.COS_BUCKET }}
+          region: ${{ secrets.COS_REGION }}
+          local_path: ${{ needs.build.outputs.binary_artifact_name }}
+          remote_path: /cos/tools/archive/binary_tag/bin/${{ needs.build.outputs.version }}/
+  #################################################################
+  # Job 3: 发布 Docker 镜像 (依赖 build job)
+  #################################################################
+  release-image:
+    runs-on: ubuntu-latest
+    needs: build # 声明此 job 依赖于 build job
+    steps:
+      # 步骤：下载 build job 生成的 artifacts
+      - name: Download project artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: project-with-binary
+      # 步骤：设置 Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      # 步骤：登录腾讯云容器镜像服务 (TCR)
+      - name: Login to Tencent Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.TCR_REGISTRY_URL }}
+          username: ${{ secrets.TCR_USERNAME }}
+          password: ${{ secrets.TCR_TOKEN }}
+          
+      # 步骤：构建并推送 Docker 镜像
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # 使用新的、不含编译步骤的 Dockerfile
+          file: ./Dockerfile.release 
+          push: true
+          tags: |
+            ${{ secrets.TCR_REGISTRY_URL }}/${{ secrets.TCR_NAMESPACE }}/${{ env.PROJECT_NAME }}:${{ needs.build.outputs.version }}
+            ${{ secrets.TCR_REGISTRY_URL }}/${{ secrets.TCR_NAMESPACE }}/${{ env.PROJECT_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # 步骤：保存 Docker 镜像为离线包 (.tar)
+      - name: Save Docker image to a tar file
+        run: |
+          IMAGE_TAR_NAME="${{ env.PROJECT_NAME }}-${{ needs.build.outputs.version }}.tar"
+          docker save -o ${IMAGE_TAR_NAME} ${{ secrets.TCR_REGISTRY_URL }}/${{ secrets.TCR_NAMESPACE }}/${{ env.PROJECT_NAME }}:${{ needs.build.outputs.version }}
+          echo "IMAGE_TAR_NAME=${IMAGE_TAR_NAME}" >> $GITHUB_ENV
+      # 步骤：上传镜像离线包到腾讯云 COS
+      - name: Upload image tarball to Tencent Cloud COS
+        uses: TencentCloud/cos-upload-action@v2
+        with:
+          secret_id: ${{ secrets.TENCENT_SECRET_ID }}
+          secret_key: ${{ secrets.TENCENT_SECRET_KEY }}
+          bucket: ${{ secrets.COS_BUCKET }}
+          region: ${{ secrets.COS_REGION }}
+          local_path: ${{ env.IMAGE_TAR_NAME }}
+          remote_path: /cos/tools/archive/middle_img/monitor/${{ needs.build.outputs.version }}/
