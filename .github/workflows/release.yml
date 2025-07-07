@@ -7,11 +7,9 @@ on:
   push:
     # branches: [ "master" ]
     tags:
-      - 'v*.*.*'
+      - 'v*.*'
 
 env:
-  # 你的 Go 主程序包路径，如果是根目录就用 .
-  GO_MAIN_PATH: '.' 
   # 最终生成的二进制文件名
   BINARY_NAME: 'wsctl' 
   PROJECT_NAME: "vhagar"
