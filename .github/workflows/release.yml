@@ -46,7 +46,7 @@ jobs:
 
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           
-          BINARY_ARTIFACT_NAME="${{ env.PROJECT_NAME }}-${VERSION}-linux-amd64"
+          BINARY_ARTIFACT_NAME="${{ env.BINARY_NAME }}-${VERSION}-linux-amd64"
           echo "binary_artifact_name=${BINARY_ARTIFACT_NAME}" >> $GITHUB_OUTPUT
           
       # 步骤：编译 Go 应用 (只编译一次)
@@ -128,6 +128,7 @@ jobs:
           context: .
           # 使用新的、不含编译步骤的 Dockerfile
           file: ./Dockerfile.release 
+          load: true
           push: true
           tags: |
             ${{ secrets.TCR_REGISTRY_URL }}/${{ secrets.TCR_NAMESPACE }}/${{ env.PROJECT_NAME }}:${{ needs.build.outputs.version }}
