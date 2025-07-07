@@ -36,7 +36,15 @@ jobs:
       - name: Set up variables
         id: vars
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # 如果是标签, 提取标签名
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            # 如果是分支, 短 commit SHA
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            VERSION=${SHORT_SHA}
+          fi
+
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           
           BINARY_ARTIFACT_NAME="${{ env.PROJECT_NAME }}-${VERSION}-linux-amd64"
