@@ -48,8 +48,19 @@ var taskCmd = &cobra.Command{
 				task.Do(name)
 			}
 		}
+
+		// 新增：所有任务执行完后，若 AI 总结开关开启，则读取巡检内容并调用 AI 总结
+		if config.Config.AI.Enable {
+			summary, err := task.AISummarize("task_output.log")
+			if err != nil {
+				cmd.PrintErrln("AI 总结失败:", err)
+			} else {
+				cmd.Println("\n================ AI 总结 ================\n" + summary + "\n========================================\n")
+			}
+		}
+
 		// 所有任务执行完后清空日志文件
-		// _ = task.ClearOutputFile()
+		_ = task.ClearOutputFile()
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setEnv()

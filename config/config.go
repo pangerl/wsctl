@@ -35,6 +35,16 @@ type CfgType struct {
 	RocketMQ        RocketMQCfg        `toml:"rocketmq"`
 	Metric          MetricCfg          `toml:"metric"`
 	Redis           libs.RedisConfig   `toml:"redis"`
+
+	AI AICfg `toml:"ai"`
+}
+
+// 新增 AI 配置结构体
+type AICfg struct {
+	Enable bool   `toml:"enable"`
+	ApiKey string `toml:"api_key"`
+	ApiUrl string `toml:"api_url"`
+	Model  string `toml:"model"`
 }
 
 type Global struct {

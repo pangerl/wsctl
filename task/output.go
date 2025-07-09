@@ -1,9 +1,15 @@
 package task
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"sync"
+	"vhagar/config"
 )
 
 var (
@@ -51,4 +57,61 @@ func ClearOutputFile() error {
 	}
 	file.Close()
 	return nil
+}
+
+// AISummarize 读取巡检内容并调用 openrouter AI 总结
+func AISummarize(filename string) (string, error) {
+	aiCfg := config.Config.AI
+	if !aiCfg.Enable || aiCfg.ApiKey == "" || aiCfg.ApiUrl == "" || aiCfg.Model == "" {
+		return "", errors.New("AI 配置不完整或未启用")
+	}
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+	prompt := "请对以下巡检内容进行简要总结，突出异常和重点：\n" + string(content)
+
+	// 构造 openrouter 请求
+	body := map[string]interface{}{
+		"model": aiCfg.Model,
+		"messages": []map[string]string{
+			{"role": "user", "content": prompt},
+		},
+	}
+	jsonBody, _ := json.Marshal(body)
+	client := &http.Client{}
+	request, err := http.NewRequest("POST", aiCfg.ApiUrl, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+aiCfg.ApiKey)
+
+	resp, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return "", errors.New("AI 接口请求失败，状态码:" + resp.Status)
+	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	// 解析 openrouter 返回
+	var result struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", err
+	}
+	if len(result.Choices) == 0 {
+		return "", errors.New("AI 返回内容为空")
+	}
+	return result.Choices[0].Message.Content, nil
 }
