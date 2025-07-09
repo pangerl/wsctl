@@ -3,7 +3,6 @@ package es
 import (
 	"context"
 	"fmt"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -105,7 +104,7 @@ func (es *ES) getESInfo() {
 }
 
 func (es *ES) TableRender() {
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader([]string{"节点名称", "IP地址", "5分钟负载", "JVM堆内存使用(%)", "磁盘使用(%)", "数据大小"})
 
 	for _, node := range es.NodeList {

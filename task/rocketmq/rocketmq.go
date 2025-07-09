@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -76,7 +75,7 @@ func (rocketmq *RocketMQ) ReportRobot() {
 func (rocketmq *RocketMQ) TableRender() {
 	// 输出RocketMQ巡检报告
 	tabletitle := []string{"Broker Name", "Role", "Version", "IP", "今天生产总数", "今天消费总数", "运行时间", "磁盘.可用空间/总空间"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 0})
 	table.SetRowLine(true)

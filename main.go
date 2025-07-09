@@ -5,8 +5,10 @@ package main
 
 import (
 	"vhagar/cmd"
+	"vhagar/task"
 )
 
 func main() {
+	defer task.CloseOutputFile()
 	cmd.Execute()
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"sort"
 	"strconv"
 	"vhagar/config"
@@ -22,7 +21,7 @@ import (
 func (s *Server) TableRender() {
 	hosts := s.Hosts
 	tabletitle := []string{"IP", "CPU", "mem", "cpu使用率", "mem使用率", "入网流量", "出网流量", "时间偏移", "系统盘使用率", "数据盘使用率"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
 	color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
 	tableColor := []tablewriter.Colors{color, color, color, color, color, color, color, color}

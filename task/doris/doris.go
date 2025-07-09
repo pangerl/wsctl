@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -49,7 +48,7 @@ func (doris *Doris) Check() {
 
 func (doris *Doris) TableRender() {
 	tabletitle := []string{"BE 节点总数", "BE 可用节点数", "员工统计表", "使用分析表", "客户群统计表"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
 	tabledata := []string{strconv.Itoa(doris.TotalBackendNum), strconv.Itoa(doris.OnlineBackendNum),
 		strconv.Itoa(doris.StaffCount), strconv.Itoa(doris.UseAnalyseCount), strconv.Itoa(doris.CustomerGroupCount)}
@@ -213,6 +212,8 @@ func selectUseAnalyseCount(queryTime string, db *sql.DB) int {
 	// 处理查询结果
 	var useAnalyseCount int
 	err := rows.Scan(&useAnalyseCount)
+	// 打印查询语句，拼装完整 sql
+	libs.Logger.Infow("query:", "query", query, "queryTime", queryTime)
 	if err != nil {
 		libs.Logger.Errorw("Failed info", "err", err)
 		return -1

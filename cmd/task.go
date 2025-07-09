@@ -48,6 +48,8 @@ var taskCmd = &cobra.Command{
 				task.Do(name)
 			}
 		}
+		// 所有任务执行完后清空日志文件
+		// _ = task.ClearOutputFile()
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setEnv()

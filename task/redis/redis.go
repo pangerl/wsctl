@@ -12,8 +12,6 @@ import (
 	"vhagar/notify"
 	"vhagar/task"
 
-	"os"
-
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -73,7 +71,7 @@ func (redis *Redis) Gather() {
 }
 
 func (redis *Redis) TableRender() {
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader([]string{"属性", "值"})
 	table.SetBorder(false)
 	table.AppendBulk([][]string{

@@ -43,7 +43,7 @@ func (d *Domainer) Check() {
 // TableRender 表格方式展示结果
 func (d *Domainer) TableRender() {
 	tabletitle := []string{"域名", "端口", "连通状态"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
 
 	for _, domain := range d.Domains {

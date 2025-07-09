@@ -15,11 +15,13 @@ import (
 //var charset string = "utf8"
 
 func NewMysqlClient(conf DB, dbName string) (*sql.DB, error) {
-	// 构建数据库连接字符串
+	// 构建数据库连接字符串，增加连接超时参数（5秒）
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		conf.Username, conf.Password, conf.Ip, conf.Port, dbName)
 	if dbName == "wshoto" {
-		dsn = dsn + "?interpolateParams=true"
+		dsn = dsn + "?interpolateParams=true&timeout=5s"
+	} else {
+		dsn = dsn + "?timeout=5s"
 	}
 	//fmt.Println(dsn)
 	db, err := sql.Open("mysql", dsn)

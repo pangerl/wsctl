@@ -57,7 +57,7 @@ func echoPrompt(prompt string) {
 	date := time.Now().Format("2006-01-02 15:04:05")
 	taskPrompt := fmt.Sprintf(`
 ================================================================
-%s	%s
+%s %s
 ================================================================`, date, prompt)
-	fmt.Println("\033[34m", "\033[1m", taskPrompt, "\033[0m")
+	fmt.Fprintf(GetOutputWriter(), "\033[34m\033[1m%s\033[0m\n", taskPrompt)
 }

@@ -129,7 +129,7 @@ func (nacos *Nacos) TableRender() {
 	tablerow = []string{}
 	nacosServer := nacos.Clusterdata
 	tabletitle := []string{"服务名称", "实例", "健康状态", "主机名", "权重", "组", "命名空间"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
 	table.SetRowLine(true)
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1})

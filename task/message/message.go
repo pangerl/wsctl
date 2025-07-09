@@ -42,7 +42,7 @@ func (tenant *Tenanter) Check() {
 
 func (tenant *Tenanter) TableRender() {
 	tabletitle := []string{"企业名称", "当前会话数", "昨天会话数"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
 	//color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
 	//tableColor := []tablewriter.Colors{color, color, color, color, color, color, color, color}

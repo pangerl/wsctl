@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -39,7 +38,7 @@ func (tenant *Tenanter) Check() {
 
 func (tenant *Tenanter) TableRender() {
 	tabletitle := []string{"企业名称", "员工数", "客户数", "客户群数", "客户群人数", "日活", "周活", "月活"}
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
 	//color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
 	//tableColor := []tablewriter.Colors{color, color, color, color, color, color, color, color}
