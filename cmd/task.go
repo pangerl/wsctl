@@ -35,13 +35,10 @@ var taskCmd = &cobra.Command{
 	Short: "检查服务",
 	Long:  `支持各种服务的健康检测`,
 	Run: func(cmd *cobra.Command, args []string) {
-		validTasks := map[string]bool{
-			"host": true, "tenant": true, "nacos": true, "doris": true, "rocketmq": true, "es": true, "redis": true, "domain": true, "message": true,
-		}
 		if _task != "" {
-			if !validTasks[_task] {
+			if _, ok := task.Creators[_task]; !ok {
 				cmd.PrintErrln("无效的 task 名称:", _task)
-				cmd.Help() // 输出帮助信息
+				cmd.Help()
 				os.Exit(1)
 			}
 			task.Do(_task)
@@ -53,19 +50,11 @@ var taskCmd = &cobra.Command{
 
 		// 新增：所有任务执行完后，若 AI 总结开关开启，则读取巡检内容并调用 AI 总结
 		if config.Config.AI.Enable {
-			startTime := time.Now()
 			summary, err := task.AISummarize("task_output.log")
-			duration := time.Since(startTime)
 			if err != nil {
 				cmd.PrintErrln("AI 总结失败:", err)
 			} else {
-				// 获取当前使用的服务商和模型信息
-				provider := config.Config.AI.Provider
-				modelName := "unknown"
-				if providerCfg, exists := config.Config.AI.Providers[provider]; exists {
-					modelName = providerCfg.Model
-				}
-				cmd.Println(fmt.Sprintf("\n================ AI 总结 [%s/%s] (耗时: %v) ================\n%s\n========================================\n", provider, modelName, duration, summary))
+				cmd.Println(fmt.Sprintf("\n================ AI 总结 ================\n%s\n========================================\n", summary))
 			}
 		}
 

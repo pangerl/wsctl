@@ -123,14 +123,9 @@ provider = "openrouter"
         api_url = "https://api.openai.com/v1/chat/completions"
         model = "gpt-3.5-turbo"
     
-    # 阿里云通义千问配置
-    [ai.providers.dashscope]
+    # Gemini 配置
+    [ai.providers.gemini]
         api_key = ""
-        api_url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
-        model = "qwen-turbo"
+        api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+        model = "gemini-2.5-flash"
     
-    # 百度文心一言配置
-    [ai.providers.baidu]
-        api_key = ""
-        api_url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions"
-        model = "ernie-bot-turbo"
