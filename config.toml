@@ -106,9 +106,31 @@ domainListName = "domain_list.txt"
 [ai]
 # 是否启用 AI 总结
 enable = false
-# openrouter API key
-api_key = ""
-# openrouter API 地址
-api_url = "https://openrouter.ai/api/v1/chat/completions"
-# openrouter 模型名称
-model = "deepseek/deepseek-chat-v3-0324:free"
+# 选择使用的 LLM 服务商
+provider = "openrouter"
+
+# LLM 服务商配置
+[ai.providers]
+    # OpenRouter 配置
+    [ai.providers.openrouter]
+        api_key = ""
+        api_url = "https://openrouter.ai/api/v1/chat/completions"
+        model = "deepseek/deepseek-chat-v3-0324:free"
+    
+    # OpenAI 配置
+    [ai.providers.openai]
+        api_key = ""
+        api_url = "https://api.openai.com/v1/chat/completions"
+        model = "gpt-3.5-turbo"
+    
+    # 阿里云通义千问配置
+    [ai.providers.dashscope]
+        api_key = ""
+        api_url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+        model = "qwen-turbo"
+    
+    # 百度文心一言配置
+    [ai.providers.baidu]
+        api_key = ""
+        api_url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions"
+        model = "ernie-bot-turbo"

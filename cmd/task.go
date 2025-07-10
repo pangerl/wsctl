@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"time"
 	"vhagar/config"
@@ -12,6 +13,7 @@ import (
 	_ "vhagar/task/doris"
 	_ "vhagar/task/es"
 	_ "vhagar/task/host"
+	_ "vhagar/task/message"
 	_ "vhagar/task/nacos"
 	_ "vhagar/task/redis"
 	_ "vhagar/task/rocketmq"
@@ -34,7 +36,7 @@ var taskCmd = &cobra.Command{
 	Long:  `支持各种服务的健康检测`,
 	Run: func(cmd *cobra.Command, args []string) {
 		validTasks := map[string]bool{
-			"host": true, "tenant": true, "nacos": true, "doris": true, "rocketmq": true, "es": true, "redis": true, "domain": true,
+			"host": true, "tenant": true, "nacos": true, "doris": true, "rocketmq": true, "es": true, "redis": true, "domain": true, "message": true,
 		}
 		if _task != "" {
 			if !validTasks[_task] {
@@ -51,11 +53,19 @@ var taskCmd = &cobra.Command{
 
 		// 新增：所有任务执行完后，若 AI 总结开关开启，则读取巡检内容并调用 AI 总结
 		if config.Config.AI.Enable {
+			startTime := time.Now()
 			summary, err := task.AISummarize("task_output.log")
+			duration := time.Since(startTime)
 			if err != nil {
 				cmd.PrintErrln("AI 总结失败:", err)
 			} else {
-				cmd.Println("\n================ AI 总结 ================\n" + summary + "\n========================================\n")
+				// 获取当前使用的服务商和模型信息
+				provider := config.Config.AI.Provider
+				modelName := "unknown"
+				if providerCfg, exists := config.Config.AI.Providers[provider]; exists {
+					modelName = providerCfg.Model
+				}
+				cmd.Println(fmt.Sprintf("\n================ AI 总结 [%s/%s] (耗时: %v) ================\n%s\n========================================\n", provider, modelName, duration, summary))
 			}
 		}
 
@@ -69,7 +79,7 @@ var taskCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(taskCmd)
-	taskCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es, redis，domain)") // 更新帮助信息
+	taskCmd.Flags().StringVarP(&_task, "task", "t", "", "指定要检查的服务 (host, tenant, nacos, doris, rocketmq, es, redis，domain, message)") // 更新帮助信息
 	taskCmd.Flags().BoolVarP(&watch, "watch", "w", false, "nacos服务，定时刷新")
 	taskCmd.Flags().DurationVarP(&interval, "second", "i", 5*time.Second, "自定义监控服务间隔刷新时间")
 	taskCmd.Flags().BoolVarP(&report, "report", "r", false, "上报企微机器人")

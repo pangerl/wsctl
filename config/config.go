@@ -39,9 +39,16 @@ type CfgType struct {
 	AI AICfg `toml:"ai"`
 }
 
-// 新增 AI 配置结构体
+// 新增 AI 配置结构体，支持多套 LLM 配置
+// ai = { enable = true, provider = "openrouter", providers = { openrouter = { api_key = "sk-xxx", api_url = "https://openrouter.ai/api/v1/chat/completions", model = "gpt-3.5-turbo" }, openai = { api_key = "sk-xxx", api_url = "https://api.openai.com/v1/chat/completions", model = "gpt-3.5-turbo" } } }
 type AICfg struct {
-	Enable bool   `toml:"enable"`
+	Enable    bool                   `toml:"enable"`
+	Provider  string                 `toml:"provider"`
+	Providers map[string]ProviderCfg `toml:"providers"`
+}
+
+// LLM 服务商配置
+type ProviderCfg struct {
 	ApiKey string `toml:"api_key"`
 	ApiUrl string `toml:"api_url"`
 	Model  string `toml:"model"`
