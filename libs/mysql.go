@@ -38,23 +38,3 @@ func NewMysqlClient(conf DB, dbName string) (*sql.DB, error) {
 	zap.S().Infow("mysql数据库连接成功！")
 	return db, nil
 }
-
-//func TestJob(tenant *Tenant) {
-//	db := tenant.MysqlClient
-//	rows, err := db.Query("SELECT id, username, password FROM xxl_job_user;")
-//	if err != nil {
-//		log.Println("数据查询失败. err:", err)
-//	}
-//	defer func(rows *sql.Rows) {
-//		err := rows.Close()
-//		if err != nil {
-//			log.Printf("Failed info: %s \n", err)
-//		}
-//	}(rows)
-//	var id int
-//	var username, password string
-//	for rows.Next() {
-//		rows.Scan(&id, &username, &password)
-//		fmt.Println(id, username, password)
-//	}
-//}

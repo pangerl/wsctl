@@ -22,9 +22,7 @@ type Markdown struct {
 }
 
 func sendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
-
 	jsonStr, _ := json.Marshal(markdown)
-	//fmt.Println("jsonStr长度：", len(jsonStr))
 	robotURL := wechatRobotURL + robotKey
 
 	req, err := http.NewRequest("POST", robotURL, bytes.NewBuffer(jsonStr))

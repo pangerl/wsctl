@@ -35,7 +35,6 @@ func (redis *Redis) Check() {
 func (redis *Redis) Gather() {
 	redisClient, err := libs.NewRedisClient(redis.Config.Redis)
 	if err != nil {
-		log.Println("Failed to create redis client. err:", err)
 		redis.Logger.Errorw("Failed to create redis client", "err", err)
 		return
 	}

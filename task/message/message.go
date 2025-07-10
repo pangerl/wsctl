@@ -93,11 +93,13 @@ func (tenant *Tenanter) Gather() {
 	// 创建ESClient，PGClienter
 	esClient, err := libs.NewESClient(tenant.Config.ES)
 	if err != nil {
+		ispush = true
 		libs.Logger.Errorw("Failed info", "err", err)
 		return
 	}
 	pgClient, err := libs.NewPGClienter(tenant.Config.PG)
 	if err != nil {
+		ispush = true
 		libs.Logger.Errorw("Failed info", "err", err)
 		return
 	}
