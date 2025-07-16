@@ -2,13 +2,12 @@ package chat
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"vhagar/chat/mcp"
 )
 
-type ToolHandler func(input string) (string, error)
+type ToolHandler func(ctx context.Context, params map[string]interface{}) (string, error)
 type ToolMeta struct {
 	Name        string
 	Description string
@@ -35,6 +34,7 @@ var toolRegistry = map[string]ToolMeta{}
 // RegisterTool 注册工具
 func RegisterTool(meta ToolMeta) {
 	toolRegistry[meta.Name] = meta
+	log.Printf("[Tools] 注册工具成功: %s", meta.Name)
 }
 
 // getBuiltinTools 返回 OpenAI 兼容结构
@@ -50,42 +50,59 @@ func getBuiltinTools() []ToolDef {
 			},
 		})
 	}
-	log.Printf("[AI] get builtin tools: %v", tools)
+	log.Printf("[Tools] 获取内置工具列表: %d 个工具", len(tools))
 	return tools
 }
 
 // callTool 自动化工具调用
-func callTool(toolName, toolInput string) (string, error) {
+func callTool(ctx context.Context, toolName string, params map[string]interface{}) (string, error) {
 	meta, ok := toolRegistry[toolName]
 	if !ok {
 		return "", fmt.Errorf("未知工具: %s", toolName)
 	}
-	return meta.Handler(toolInput)
+
+	log.Printf("[Tools] 开始调用工具: %s", toolName)
+	result, err := meta.Handler(ctx, params)
+	if err != nil {
+		log.Printf("[Tools] 工具调用失败: %s, 错误: %v", toolName, err)
+		return "", fmt.Errorf("工具 %s 调用失败: %w", toolName, err)
+	}
+	log.Printf("[Tools] 工具调用成功: %s", toolName)
+	return result, nil
 }
 
 // MCP 工具初始化
 func InitToolsFromMCP(ctx context.Context, mcpClient *mcp.Client) error {
+	log.Printf("[Tools] 开始从 MCP 初始化工具")
 	tools, err := mcpClient.ListTools(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("获取 MCP 工具列表失败: %w", err)
 	}
+
 	for _, t := range tools {
+		tool := t
 		RegisterTool(ToolMeta{
-			Name:        t.Name,
-			Description: t.Description,
-			Parameters:  t.Parameters,
-			Handler:     func(input string) (string, error) { return MCPHandler(ctx, mcpClient, t.Name, input) },
+			Name:        tool.Name,
+			Description: tool.Description,
+			Parameters:  tool.InputSchema,
+			Handler: func(ctx context.Context, params map[string]interface{}) (string, error) {
+				// handler 接收调用时的 ctx
+				return MCPHandler(ctx, mcpClient, tool.Name, params)
+			},
 		})
 	}
+
+	log.Printf("[Tools] MCP 工具初始化完成，共加载 %d 个工具", len(tools))
 	return nil
 }
 
 // MCPHandler 统一转发到 MCP
-func MCPHandler(ctx context.Context, mcpClient *mcp.Client, toolName, input string) (string, error) {
-	// input 是 JSON 字符串，解析为 map
-	var params map[string]interface{}
-	if err := json.Unmarshal([]byte(input), &params); err != nil {
-		return "", fmt.Errorf("参数解析失败: %v", err)
+func MCPHandler(ctx context.Context, mcpClient *mcp.Client, toolName string, params map[string]interface{}) (string, error) {
+	log.Printf("[Tools] MCP 调用开始: %s, 参数: %v", toolName, params)
+	result, err := mcpClient.CallTool(ctx, toolName, params)
+	if err != nil {
+		return "", fmt.Errorf("MCP 工具 %s 调用失败: %w", toolName, err)
 	}
-	return mcpClient.CallTool(ctx, toolName, params)
+	log.Printf("[Tools] MCP 调用成功: %s", toolName)
+	return result, nil
 }

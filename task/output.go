@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -67,5 +68,5 @@ func AISummarize(filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return chat.Summarize(string(content))
+	return chat.Summarize(context.Background(), string(content))
 }

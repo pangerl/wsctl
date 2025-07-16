@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"vhagar/config"
@@ -15,7 +16,7 @@ import (
 // BuildRequest 构造 LLM 请求
 // ParseResponse 解析 LLM 响应
 type Provider interface {
-	BuildRequest(input string) (*http.Request, error)
+	BuildRequest(input interface{}, tools []ToolDef) (*http.Request, error)
 	ParseResponse(respBody []byte) (string, error)
 }
 
@@ -27,6 +28,7 @@ func buildJSONRequest(ctx context.Context, method, url string, body interface{},
 	}
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(reqBody))
 	if err != nil {
+		log.Printf("[AI] buildJSONRequest error: %v", err)
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -53,10 +55,12 @@ type GeminiProvider struct {
 	Model  string
 }
 
-func (g *GeminiProvider) BuildRequest(input string) (*http.Request, error) {
+func (g *GeminiProvider) BuildRequest(input interface{}, tools []ToolDef) (*http.Request, error) {
+	// 兼容原有逻辑，input 只支持 string
+	text, _ := input.(string)
 	body := map[string]interface{}{
 		"contents": []map[string]interface{}{
-			{"parts": []map[string]string{{"text": input}}},
+			{"parts": []map[string]string{{"text": text}}},
 		},
 	}
 	headers := map[string]string{"x-goog-api-key": g.ApiKey}
@@ -90,16 +94,27 @@ type OpenAIProvider struct {
 	Model  string
 }
 
-func (o *OpenAIProvider) BuildRequest(input string) (*http.Request, error) {
+// 支持传入 tools 参数
+func (o *OpenAIProvider) BuildRequest(input interface{}, tools []ToolDef) (*http.Request, error) {
 	if o.Model == "" {
 		return nil, errors.New("LLM 服务商 model 配置不完整")
 	}
-	body := map[string]interface{}{
-		"model": o.Model,
-		"messages": []map[string]string{
-			{"role": "user", "content": input},
-		},
+	// 组装 tools 字段
+	var toolsArr []map[string]interface{}
+	for _, t := range tools {
+		b, _ := json.Marshal(t)
+		var m map[string]interface{}
+		json.Unmarshal(b, &m)
+		toolsArr = append(toolsArr, m)
 	}
+	// input 直接作为 messages
+	body := map[string]interface{}{
+		"model":    o.Model,
+		"messages": input,
+		"tools":    toolsArr,
+		"stream":   false,
+	}
+	log.Printf("[AI] body: %v", body)
 	headers := map[string]string{}
 	if o.ApiKey != "" {
 		headers["Authorization"] = "Bearer " + o.ApiKey
@@ -108,21 +123,8 @@ func (o *OpenAIProvider) BuildRequest(input string) (*http.Request, error) {
 }
 
 func (o *OpenAIProvider) ParseResponse(respBody []byte) (string, error) {
-	var result struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-	err := parseJSONResponse(respBody, &result, "AI 接口返回格式错误")
-	if err != nil {
-		return "", err
-	}
-	if len(result.Choices) == 0 {
-		return "", errors.New("AI 返回内容为空")
-	}
-	return result.Choices[0].Message.Content, nil
+	// 直接返回原始字符串，由 ChatWithAI 负责结构化解析
+	return string(respBody), nil
 }
 
 // extractGeminiModel 从 Gemini ApiUrl 提取模型名

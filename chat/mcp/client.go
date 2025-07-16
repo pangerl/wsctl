@@ -4,229 +4,201 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"os/exec"
 	"sync"
 )
 
-type WeatherArgs struct {
-	Location string `json:"location"`
-}
-
-type WeatherResp struct {
-	Location string `json:"location"`
-	Weather  string `json:"weather"`
-	Temp     string `json:"temp"`
-	Wind     string `json:"wind"`
-	Humidity string `json:"humidity"`
-	Time     string `json:"time"`
-}
-
-// MCPClient 用于与 mcp-server 通信
-// 这里简单实现为每次调用都启动子进程，后续可优化为长连接复用
-var mcpMutex sync.Mutex
-
-// ToolMeta 结构体（本地定义，需与 tools.go 保持一致）
+// ToolMeta 结构体，添加了 json 标签以便直接解析。
 type ToolMeta struct {
-	Name        string
-	Description string
-	Parameters  map[string]interface{}
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Parameters  map[string]interface{} `json:"parameters"`
+	Annotations map[string]interface{} `json:"annotations"`
+	InputSchema map[string]interface{} `json:"inputSchema"`
 }
 
+// 统一的 JSON-RPC 请求结构
+type mcpRequest struct {
+	JSONRPC string      `json:"jsonrpc"`
+	Method  string      `json:"method"`
+	Params  interface{} `json:"params"`
+	Id      string      `json:"id"`
+}
+
+// Client 用于与 mcp-server 通信。
+// 建议：cmdPath 应为预编译的二进制文件路径，而非 go 源文件。
 type Client struct {
-	cmdPath string // MCP server 可执行文件路径
+	cmdPath string
 }
 
 func NewClient(cmdPath string) *Client {
 	return &Client{cmdPath: cmdPath}
 }
 
-func CallWeather(city, country, lang, unit string) (string, error) {
-	fmt.Printf("[CallWeather] city=%s, country=%s, lang=%s, unit=%s\n", city, country, lang, unit)
-	mcpMutex.Lock()
-	defer mcpMutex.Unlock()
-
-	cmd := exec.Command("go", "run", "./chat/mcp/weather/main.go")
-	fmt.Printf("[CallWeather] 启动子进程: %v\n", cmd.Args)
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		fmt.Printf("[CallWeather] 获取 stdin 失败: %v\n", err)
-		return "", fmt.Errorf("获取 stdin 失败: %v", err)
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		fmt.Printf("[CallWeather] 获取 stdout 失败: %v\n", err)
-		return "", fmt.Errorf("获取 stdout 失败: %v", err)
-	}
-	if err := cmd.Start(); err != nil {
-		fmt.Printf("[CallWeather] 启动 mcp-server 失败: %v\n", err)
-		return "", fmt.Errorf("启动 mcp-server 失败: %v", err)
-	}
-	// 构造 JSON-RPC 2.0 请求
-	type mcpRequest struct {
-		JSONRPC string      `json:"jsonrpc"`
-		Method  string      `json:"method"`
-		Params  interface{} `json:"params"`
-		Id      string      `json:"id"`
-	}
-	req := mcpRequest{
-		JSONRPC: "2.0",
-		Method:  "get_forecast",
-		Params:  WeatherArgs{Location: city},
-		Id:      "1",
-	}
-	fmt.Printf("[CallWeather] 写入请求: %+v\n", req)
-	enc := json.NewEncoder(stdin)
-	if err := enc.Encode(req); err != nil {
-		fmt.Printf("[CallWeather] 写入请求失败: %v\n", err)
-		return "", fmt.Errorf("写入请求失败: %v", err)
-	}
-	stdin.Close()
-	// 读取响应
-	dec := json.NewDecoder(stdout)
-	type mcpResponse struct {
-		Content struct {
-			Text string `json:"text"`
-		} `json:"content"`
-		Error interface{} `json:"error"`
-	}
-	var resp mcpResponse
-	fmt.Printf("[CallWeather] 开始读取响应...\n")
-	if err := dec.Decode(&resp); err != nil {
-		fmt.Printf("[CallWeather] 解析响应失败: %v\n", err)
-		return "", fmt.Errorf("解析响应失败: %v", err)
-	}
-	cmd.Wait()
-	fmt.Printf("[CallWeather] 响应内容: %+v\n", resp)
-	if resp.Error != nil && resp.Error != "" {
-		fmt.Printf("[CallWeather] mcp-server 错误: %v\n", resp.Error)
-		return "", fmt.Errorf("mcp-server 错误: %v", resp.Error)
-	}
-	return resp.Content.Text, nil
-}
-
-// ListTools 启动 MCP server，发送 tools/list 请求，返回工具列表
+// ListTools 启动 MCP server，发送 tools/list 请求，返回工具列表。
 func (c *Client) ListTools(ctx context.Context) ([]ToolMeta, error) {
-	mcpMutex.Lock()
-	defer mcpMutex.Unlock()
-
-	cmd := exec.CommandContext(ctx, "go", "run", c.cmdPath)
+	// 使用预编译的二进制文件，而不是 "go run"
+	cmd := exec.CommandContext(ctx, c.cmdPath)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, fmt.Errorf("获取 stdin 失败: %v", err)
 	}
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("获取 stdout 失败: %v", err)
 	}
+
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("启动 mcp-server 失败: %v", err)
 	}
-	// 构造 tools/list 请求
-	type mcpRequest struct {
-		JSONRPC string      `json:"jsonrpc"`
-		Method  string      `json:"method"`
-		Params  interface{} `json:"params"`
-		Id      string      `json:"id"`
-	}
+
 	req := mcpRequest{
 		JSONRPC: "2.0",
 		Method:  "tools/list",
 		Params:  map[string]interface{}{},
 		Id:      "1",
 	}
-	enc := json.NewEncoder(stdin)
-	if err := enc.Encode(req); err != nil {
+	if err := json.NewEncoder(stdin).Encode(req); err != nil {
+		// 在写入失败后，最好尝试终止子进程
+		cmd.Process.Kill()
+		cmd.Wait()
 		return nil, fmt.Errorf("写入请求失败: %v", err)
 	}
+	// 写入完成后立即关闭 stdin，这对很多子进程是必要的信号
 	stdin.Close()
-	// 读取响应
-	type toolInfo struct {
-		Name        string                 `json:"name"`
-		Description string                 `json:"description"`
-		Parameters  map[string]interface{} `json:"parameters"`
-	}
-	type mcpResponse struct {
+
+	type mcpListResponse struct {
 		Result struct {
-			Tools []toolInfo `json:"tools"`
+			Tools []ToolMeta `json:"tools"`
 		} `json:"result"`
 		Error interface{} `json:"error"`
 	}
-	dec := json.NewDecoder(stdout)
-	var resp mcpResponse
-	if err := dec.Decode(&resp); err != nil {
+
+	var resp mcpListResponse
+	if err := json.NewDecoder(stdout).Decode(&resp); err != nil {
+		cmd.Wait()
 		return nil, fmt.Errorf("解析响应失败: %v", err)
 	}
-	cmd.Wait()
-	if resp.Error != nil && resp.Error != "" {
+
+	if err := cmd.Wait(); err != nil {
+		log.Printf("mcp-server 进程退出时发生错误: %v", err)
+	}
+
+	if resp.Error != nil {
 		return nil, fmt.Errorf("mcp-server 错误: %v", resp.Error)
 	}
-	var tools []ToolMeta
-	for _, t := range resp.Result.Tools {
-		tools = append(tools, ToolMeta{
-			Name:        t.Name,
-			Description: t.Description,
-			Parameters:  t.Parameters,
-		})
-	}
-	return tools, nil
+
+	return resp.Result.Tools, nil
 }
 
-// CallTool 启动 MCP server，发送 tools/call 请求，带 toolName 和参数，返回结果
+// CallTool 启动 MCP server，发送 tools/call 请求，返回结果。
 func (c *Client) CallTool(ctx context.Context, toolName string, params map[string]interface{}) (string, error) {
-	mcpMutex.Lock()
-	defer mcpMutex.Unlock()
+	cmd := exec.CommandContext(ctx, c.cmdPath)
+	cmd.Env = os.Environ()
 
-	cmd := exec.CommandContext(ctx, "go", "run", c.cmdPath)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return "", fmt.Errorf("获取 stdin 失败: %v", err)
 	}
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return "", fmt.Errorf("获取 stdout 失败: %v", err)
 	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return "", fmt.Errorf("获取 stderr 失败: %v", err)
+	}
+
 	if err := cmd.Start(); err != nil {
 		return "", fmt.Errorf("启动 mcp-server 失败: %v", err)
 	}
-	// 构造 tools/call 请求
-	type mcpRequest struct {
-		JSONRPC string      `json:"jsonrpc"`
-		Method  string      `json:"method"`
-		Params  interface{} `json:"params"`
-		Id      string      `json:"id"`
-	}
-	callParams := map[string]interface{}{
-		"tool":   toolName,
-		"params": params,
-	}
+
 	req := mcpRequest{
 		JSONRPC: "2.0",
 		Method:  "tools/call",
-		Params:  callParams,
-		Id:      "1",
+		Params: map[string]interface{}{
+			"name":      toolName,
+			"arguments": params,
+		},
+		Id: "1",
 	}
-	enc := json.NewEncoder(stdin)
-	if err := enc.Encode(req); err != nil {
+
+	if err := json.NewEncoder(stdin).Encode(req); err != nil {
+		cmd.Process.Kill()
+		cmd.Wait()
 		return "", fmt.Errorf("写入请求失败: %v", err)
 	}
 	stdin.Close()
-	// 读取响应
-	type mcpResponse struct {
+
+	// 并发读取 stdout 和 stderr，避免因一个管道满了而阻塞另一个
+	var stdoutBytes, stderrBytes []byte
+	var wg sync.WaitGroup
+	var stdoutErr, stderrErr error
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		stdoutBytes, stdoutErr = io.ReadAll(stdout)
+	}()
+	go func() {
+		defer wg.Done()
+		stderrBytes, stderrErr = io.ReadAll(stderr)
+	}()
+	wg.Wait()
+
+	if len(stderrBytes) > 0 {
+		log.Printf("[CallTool] 子进程标准错误: %s", string(stderrBytes))
+	}
+
+	if stdoutErr != nil {
+		cmd.Wait()
+		return "", fmt.Errorf("读取子进程 stdout 失败: %w", stdoutErr)
+	}
+	if stderrErr != nil {
+		cmd.Wait()
+		return "", fmt.Errorf("读取子进程 stderr 失败: %w", stderrErr)
+	}
+
+	// 等待进程结束并检查退出状态
+	if err := cmd.Wait(); err != nil {
+		log.Printf("mcp-server 进程退出时发生错误: %v, stderr: %s", err, string(stderrBytes))
+	}
+
+	if len(stdoutBytes) == 0 {
+		return "", fmt.Errorf("mcp-server 响应为空, stderr: %s", string(stderrBytes))
+	}
+
+	log.Printf("[CallTool] 子进程标准输出: %s", string(stdoutBytes))
+
+	type mcpCallResponse struct {
 		Result struct {
-			Content struct {
+			Content []struct {
+				Type string `json:"type"`
 				Text string `json:"text"`
 			} `json:"content"`
 		} `json:"result"`
 		Error interface{} `json:"error"`
 	}
-	dec := json.NewDecoder(stdout)
-	var resp mcpResponse
-	if err := dec.Decode(&resp); err != nil {
-		return "", fmt.Errorf("解析响应失败: %v", err)
+
+	var resp mcpCallResponse
+	if err := json.Unmarshal(stdoutBytes, &resp); err != nil {
+		return "", fmt.Errorf("解析响应失败: %w, 响应原文: %s", err, string(stdoutBytes))
 	}
-	cmd.Wait()
-	if resp.Error != nil && resp.Error != "" {
+
+	if resp.Error != nil {
 		return "", fmt.Errorf("mcp-server 错误: %v", resp.Error)
 	}
-	return resp.Result.Content.Text, nil
+
+	if len(resp.Result.Content) == 0 {
+		return "", fmt.Errorf("mcp-server 响应内容为空")
+	}
+
+	// 假定我们只需要第一个内容块的文本
+	return resp.Result.Content[0].Text, nil
 }

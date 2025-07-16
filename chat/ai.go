@@ -1,51 +1,41 @@
 package chat
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 	"vhagar/config"
 )
 
-// Message 表示一条对话历史
-// Role: user/assistant/tool
-// ToolName/ToolResult 仅在 tool 消息时使用
-// Content: 普通文本或 LLM 回复
-// ToolCall: LLM function call 请求
-
-type Message struct {
-	Role       string `json:"role"`
-	Content    string `json:"content"`
-	ToolName   string `json:"tool_name,omitempty"`
-	ToolInput  string `json:"tool_input,omitempty"`
-	ToolResult string `json:"tool_result,omitempty"`
-}
-
 // callLLM 单轮调用大模型，返回回复内容
-func callLLM(messages []Message, tools []ToolDef, cfg *config.AICfg) (string, error) {
-	prompt := buildPrompt(messages, tools)
+func callLLM(ctx context.Context, messages []interface{}, tools []ToolDef, cfg *config.AICfg) (string, error) {
 	provider, err := NewProvider(cfg)
 	if err != nil {
 		log.Printf("[AI] provider init error: %v", err)
 		return "", err
 	}
-	req, err := provider.BuildRequest(prompt)
+	req, err := provider.BuildRequest(messages, tools)
+	req = req.WithContext(ctx) // <-- 关键修改
+
 	if err != nil {
 		log.Printf("[AI] build request error: %v", err)
 		return "", err
 	}
 	start := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
 	duration := time.Since(start)
 	if err != nil {
 		log.Printf("[AI] http request error: %v, duration: %v", err, duration)
 		return "", err
 	}
 	defer resp.Body.Close()
+	// log.Printf("[AI] resp: %v", resp)
 	if resp.StatusCode != 200 {
 		log.Printf("[AI] bad status: %s, duration: %v", resp.Status, duration)
 		return "", fmt.Errorf("AI 接口请求失败，状态码: %s", resp.Status)
@@ -64,69 +54,103 @@ func callLLM(messages []Message, tools []ToolDef, cfg *config.AICfg) (string, er
 }
 
 // ChatWithAI 多轮 function calling 工具调用主流程
-func ChatWithAI(messages []Message, cfg *config.AICfg) (string, error) {
+func ChatWithAI(ctx context.Context, messages []interface{}, cfg *config.AICfg) (string, error) {
 	maxTurns := 5
 	for turn := 0; turn < maxTurns; turn++ {
-		result, err := callLLM(messages, getBuiltinTools(), cfg)
+		result, err := callLLM(ctx, messages, getBuiltinTools(), cfg)
+		log.Printf("[AI] result: %s", result)
 		if err != nil {
 			return "", err
 		}
-		// 解析 LLM 回复，判断是否需要调用工具
-		toolName, toolInput := parseToolCall(result)
-		log.Printf("[AI] toolName: %s, toolInput: %s", toolName, toolInput)
-		if toolName != "" {
-			toolResult, err := callTool(toolName, toolInput)
-			if err != nil {
-				return "", err
+		// 1. 解析 result，提取 message 和 finish_reason
+		var resp struct {
+			Choices []struct {
+				FinishReason string `json:"finish_reason"`
+				Message      struct {
+					Role      string `json:"role"`
+					Content   string `json:"content"`
+					ToolCalls []struct {
+						ID       string `json:"id"`
+						Type     string `json:"type"`
+						Function struct {
+							Name      string `json:"name"`
+							Arguments string `json:"arguments"`
+						} `json:"function"`
+					} `json:"tool_calls"`
+				} `json:"message"`
+			} `json:"choices"`
+		}
+		err = json.Unmarshal([]byte(result), &resp)
+		if err != nil || len(resp.Choices) == 0 {
+			return "", errors.New("LLM 返回格式错误")
+		}
+		choice := resp.Choices[0]
+		msg := choice.Message
+		finishReason := choice.FinishReason
+		// 2. 根据 finish_reason 处理
+		switch finishReason {
+		case "stop":
+			// 对话完成，返回内容
+			return msg.Content, nil
+		case "tool_calls":
+			assistantMessage := map[string]interface{}{
+				"role":       msg.Role,
+				"tool_calls": msg.ToolCalls,
 			}
-			messages = append(messages, Message{Role: "tool", ToolName: toolName, ToolInput: toolInput, ToolResult: toolResult})
+			if msg.Content != "" {
+				assistantMessage["content"] = msg.Content
+			}
+			// 记录 message
+			messages = append(messages, assistantMessage)
+			if len(msg.ToolCalls) == 0 {
+				return "", errors.New("LLM 返回 tool_calls 但内容为空")
+			}
+			for _, tc := range msg.ToolCalls {
+				// 解析 arguments
+				var args map[string]interface{}
+				if err := json.Unmarshal([]byte(tc.Function.Arguments), &args); err != nil {
+					toolResult := "参数解析失败: " + err.Error()
+					messages = append(messages, map[string]interface{}{
+						"role":         "tool",
+						"tool_call_id": tc.ID,
+						"name":         tc.Function.Name,
+						"content":      toolResult,
+					})
+					continue
+				}
+				log.Printf("[AI] %s args: %v", tc.Function.Name, args)
+				toolResult, err := callTool(ctx, tc.Function.Name, args)
+				if err != nil {
+					log.Printf("[AI] 工具 %s 调用失败: %v", tc.Function.Name, err)
+					toolResult = fmt.Sprintf("工具 %s 调用失败", tc.Function.Name)
+				}
+				messages = append(messages, map[string]interface{}{
+					"role":         "tool",
+					"tool_call_id": tc.ID,
+					"name":         tc.Function.Name,
+					"content":      toolResult,
+				})
+			}
+			// 继续下一轮
 			continue
-		}
-		return result, nil
-	}
-	return "", fmt.Errorf("多轮工具调用超出最大轮数")
-}
-
-// buildPrompt 构造带 tools 列表和历史的 prompt，适配 ToolDef 结构
-func buildPrompt(messages []Message, tools []ToolDef) string {
-	var sb strings.Builder
-	sb.WriteString("你可以调用如下工具：\n")
-	for _, t := range tools {
-		paramStr := ""
-		if t.Function.Parameters != nil {
-			b, _ := json.Marshal(t.Function.Parameters)
-			paramStr = string(b)
-		}
-		sb.WriteString(fmt.Sprintf("- %s: %s\n参数: %s\n", t.Function.Name, t.Function.Description, paramStr))
-	}
-	sb.WriteString("\n对话历史：\n")
-	for _, m := range messages {
-		sb.WriteString(fmt.Sprintf("[%s] %s\n", m.Role, m.Content))
-		if m.Role == "tool" {
-			sb.WriteString(fmt.Sprintf("[tool_result] %s\n", m.ToolResult))
+		default:
+			log.Printf("[AI] finish_reason 异常: %s, result: %s", finishReason, result)
+			return "", fmt.Errorf("LLM finish_reason 异常: %s", finishReason)
 		}
 	}
-	sb.WriteString("\n请根据用户需求，决定是否需要调用工具。如需调用，请回复：\nCALL <tool_name> <json参数>\n否则直接回复最终答案。\n")
-	return sb.String()
-}
-
-// parseToolCall 解析 LLM 回复，判断是否需要调用工具
-func parseToolCall(reply string) (string, string) {
-	// 约定格式：CALL <tool_name> <json参数>
-	if strings.HasPrefix(reply, "CALL ") {
-		parts := strings.SplitN(reply, " ", 3)
-		if len(parts) == 3 {
-			return parts[1], parts[2]
-		}
-	}
-	return "", ""
+	return "", errors.New("多轮工具调用超出最大轮数")
 }
 
 // Summarize 对输入内容进行AI总结，突出异常和重点
-func Summarize(content string) (string, error) {
+func Summarize(ctx context.Context, content string) (string, error) {
 	prompt := "请对以下巡检内容进行简要总结，突出异常和重点：\n" + content
-	messages := []Message{{Role: "user", Content: prompt}}
-	return ChatWithAI(messages, &config.Config.AI)
+	messages := []interface{}{
+		map[string]interface{}{
+			"role":    "user",
+			"content": prompt,
+		},
+	}
+	return ChatWithAI(ctx, messages, &config.Config.AI)
 }
 
 // Provider 工厂
