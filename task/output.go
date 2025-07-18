@@ -2,13 +2,11 @@ package task
 
 import (
 	"context"
-	"errors"
 	"io"
 	"io/ioutil"
 	"os"
 	"sync"
 	"vhagar/chat"
-	"vhagar/config"
 )
 
 var (
@@ -60,10 +58,6 @@ func ClearOutputFile() error {
 
 // AISummarize 读取巡检内容并调用 AI 总结
 func AISummarize(filename string) (string, error) {
-	aiCfg := config.Config.AI
-	if !aiCfg.Enable || aiCfg.Provider == "" {
-		return "", errors.New("AI 配置不完整或未启用")
-	}
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return "", err

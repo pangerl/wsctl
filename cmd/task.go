@@ -49,7 +49,7 @@ var taskCmd = &cobra.Command{
 		}
 
 		// 新增：所有任务执行完后，若 AI 总结开关开启，则读取巡检内容并调用 AI 总结
-		if config.Config.AI.Enable {
+		if config.Config.AI.Enable && config.Config.AI.Provider != "" {
 			summary, err := task.AISummarize("task_output.log")
 			if err != nil {
 				cmd.PrintErrln("AI 总结失败:", err)

@@ -9,23 +9,16 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"vhagar/config"
 )
 
 // callLLM 单轮调用大模型，返回回复内容
-func callLLM(ctx context.Context, messages []interface{}, tools []ToolDef, cfg *config.AICfg) (string, error) {
-	provider, err := NewProvider(cfg)
-	if err != nil {
-		log.Printf("[AI] provider init error: %v", err)
-		return "", err
-	}
-	req, err := provider.BuildRequest(messages, tools)
-	req = req.WithContext(ctx) // <-- 关键修改
-
+func callLLM(ctx context.Context, messages []any, tools []ToolDef) (string, error) {
+	req, err := buildRequest(ctx, messages, tools)
 	if err != nil {
 		log.Printf("[AI] build request error: %v", err)
 		return "", err
 	}
+
 	start := time.Now()
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
@@ -35,17 +28,19 @@ func callLLM(ctx context.Context, messages []interface{}, tools []ToolDef, cfg *
 		return "", err
 	}
 	defer resp.Body.Close()
-	// log.Printf("[AI] resp: %v", resp)
+
 	if resp.StatusCode != 200 {
 		log.Printf("[AI] bad status: %s, duration: %v", resp.Status, duration)
 		return "", fmt.Errorf("AI 接口请求失败，状态码: %s", resp.Status)
 	}
+
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("[AI] read response error: %v", err)
 		return "", err
 	}
-	result, err := provider.ParseResponse(respBody)
+
+	result, err := parseResponse(respBody)
 	if err != nil {
 		log.Printf("[AI] parse response error: %v", err)
 		return "", err
@@ -54,10 +49,11 @@ func callLLM(ctx context.Context, messages []interface{}, tools []ToolDef, cfg *
 }
 
 // ChatWithAI 多轮 function calling 工具调用主流程
-func ChatWithAI(ctx context.Context, messages []interface{}, cfg *config.AICfg) (string, error) {
+func ChatWithAI(ctx context.Context, messages []any) (string, error) {
+	// 检查大模型的配置
 	maxTurns := 5
 	for turn := 0; turn < maxTurns; turn++ {
-		result, err := callLLM(ctx, messages, getBuiltinTools(), cfg)
+		result, err := callLLM(ctx, messages, getBuiltinTools())
 		log.Printf("[AI] result: %s", result)
 		if err != nil {
 			return "", err
@@ -93,7 +89,7 @@ func ChatWithAI(ctx context.Context, messages []interface{}, cfg *config.AICfg) 
 			// 对话完成，返回内容
 			return msg.Content, nil
 		case "tool_calls":
-			assistantMessage := map[string]interface{}{
+			assistantMessage := map[string]any{
 				"role":       msg.Role,
 				"tool_calls": msg.ToolCalls,
 			}
@@ -107,10 +103,10 @@ func ChatWithAI(ctx context.Context, messages []interface{}, cfg *config.AICfg) 
 			}
 			for _, tc := range msg.ToolCalls {
 				// 解析 arguments
-				var args map[string]interface{}
+				var args map[string]any
 				if err := json.Unmarshal([]byte(tc.Function.Arguments), &args); err != nil {
 					toolResult := "参数解析失败: " + err.Error()
-					messages = append(messages, map[string]interface{}{
+					messages = append(messages, map[string]any{
 						"role":         "tool",
 						"tool_call_id": tc.ID,
 						"name":         tc.Function.Name,
@@ -124,7 +120,7 @@ func ChatWithAI(ctx context.Context, messages []interface{}, cfg *config.AICfg) 
 					log.Printf("[AI] 工具 %s 调用失败: %v", tc.Function.Name, err)
 					toolResult = fmt.Sprintf("工具 %s 调用失败", tc.Function.Name)
 				}
-				messages = append(messages, map[string]interface{}{
+				messages = append(messages, map[string]any{
 					"role":         "tool",
 					"tool_call_id": tc.ID,
 					"name":         tc.Function.Name,
@@ -144,17 +140,11 @@ func ChatWithAI(ctx context.Context, messages []interface{}, cfg *config.AICfg) 
 // Summarize 对输入内容进行AI总结，突出异常和重点
 func Summarize(ctx context.Context, content string) (string, error) {
 	prompt := "请对以下巡检内容进行简要总结，突出异常和重点：\n" + content
-	messages := []interface{}{
-		map[string]interface{}{
+	messages := []any{
+		map[string]any{
 			"role":    "user",
 			"content": prompt,
 		},
 	}
-	return ChatWithAI(ctx, messages, &config.Config.AI)
-}
-
-// Provider 工厂
-// provider.go 中有 Provider 接口及各实现
-func NewProvider(cfg *config.AICfg) (Provider, error) {
-	return newProviderImpl(cfg)
+	return ChatWithAI(ctx, messages)
 }
