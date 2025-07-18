@@ -12,6 +12,10 @@ import (
 var (
 	Logger *zap.SugaredLogger
 	once   sync.Once
+
+	// 占位使用，避免未使用变量警告
+	_ = Logger
+	_ = once
 )
 
 // InitLoggerWithConfig 支持自定义日志级别和是否写文件
