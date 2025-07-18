@@ -116,16 +116,19 @@ provider = "openrouter"
         api_key = ""
         api_url = "https://openrouter.ai/api/v1/chat/completions"
         model = "deepseek/deepseek-chat-v3-0324:free"
-    
+
     # OpenAI 配置
     [ai.providers.openai]
         api_key = ""
         api_url = "https://api.openai.com/v1/chat/completions"
         model = "gpt-3.5-turbo"
-    
+
     # Gemini 配置
     [ai.providers.gemini]
         api_key = ""
-        api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+        api_url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
         model = "gemini-2.5-flash"
-    
+
+[weather]
+    api_host = "https://devapi.qweather.com"
+    api_key = ""

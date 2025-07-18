@@ -36,7 +36,8 @@ type CfgType struct {
 	Metric          MetricCfg          `toml:"metric"`
 	Redis           libs.RedisConfig   `toml:"redis"`
 
-	AI AICfg `toml:"ai"`
+	AI      AICfg      `toml:"ai"`
+	Weather WeatherCfg `toml:"weather"`
 }
 
 // 新增 AI 配置结构体，支持多套 LLM 配置
@@ -45,6 +46,11 @@ type AICfg struct {
 	Enable    bool                   `toml:"enable"`
 	Provider  string                 `toml:"provider"`
 	Providers map[string]ProviderCfg `toml:"providers"`
+}
+
+type WeatherCfg struct {
+	ApiHost string `toml:"api_host"`
+	ApiKey  string `toml:"api_key"`
 }
 
 // LLM 服务商配置

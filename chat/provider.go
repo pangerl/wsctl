@@ -11,7 +11,7 @@ import (
 )
 
 // buildRequest 构造 OpenAI 兼容的 HTTP 请求
-func buildRequest(ctx context.Context, messages any, tools []ToolDef) (*http.Request, error) {
+func buildRequest(ctx context.Context, messages any) (*http.Request, error) {
 	cfg := &config.Config.AI
 	if cfg == nil || !cfg.Enable || cfg.Provider == "" {
 		return nil, errors.New("AI 配置不完整或未启用")
@@ -28,10 +28,17 @@ func buildRequest(ctx context.Context, messages any, tools []ToolDef) (*http.Req
 
 	// 组装 tools 字段
 	var toolsArr []map[string]any
-	for _, t := range tools {
-		b, _ := json.Marshal(t)
+	for _, t := range Tools {
+		b, err := json.Marshal(t)
+		if err != nil {
+			log.Printf("[AI] tool marshal error: %v", err)
+			continue // 跳过序列化失败的工具
+		}
 		var m map[string]any
-		json.Unmarshal(b, &m)
+		if err := json.Unmarshal(b, &m); err != nil {
+			log.Printf("[AI] tool unmarshal error: %v", err)
+			continue // 跳过反序列化失败的工具
+		}
 		toolsArr = append(toolsArr, m)
 	}
 
@@ -59,7 +66,7 @@ func buildRequest(ctx context.Context, messages any, tools []ToolDef) (*http.Req
 		req.Header.Set("Authorization", "Bearer "+providerCfg.ApiKey)
 	}
 
-	log.Printf("[AI] request body: %v", body)
+	// log.Printf("[AI] request body: %v", body)
 	return req, nil
 }
 

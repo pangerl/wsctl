@@ -9,20 +9,28 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"vhagar/config"
 )
 
+var Tools = []Tool{}
+
 // callLLM 单轮调用大模型，返回回复内容
-func callLLM(ctx context.Context, messages []any, tools []ToolDef) (string, error) {
-	req, err := buildRequest(ctx, messages, tools)
+func callLLM(ctx context.Context, messages []any) (string, error) {
+	req, err := buildRequest(ctx, messages)
 	if err != nil {
 		log.Printf("[AI] build request error: %v", err)
 		return "", err
 	}
 
+	aiCfg := config.Config.AI
+	fullModelName := aiCfg.Provider + "/" + aiCfg.Providers[aiCfg.Provider].Model
+
 	start := time.Now()
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	duration := time.Since(start)
+	log.Printf("[AI] model: %s, duration: %v", fullModelName, duration)
 	if err != nil {
 		log.Printf("[AI] http request error: %v, duration: %v", err, duration)
 		return "", err
@@ -53,8 +61,8 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 	// 检查大模型的配置
 	maxTurns := 5
 	for turn := 0; turn < maxTurns; turn++ {
-		result, err := callLLM(ctx, messages, getBuiltinTools())
-		log.Printf("[AI] result: %s", result)
+		result, err := callLLM(ctx, messages)
+		// log.Printf("[AI] result: %s", result)
 		if err != nil {
 			return "", err
 		}
