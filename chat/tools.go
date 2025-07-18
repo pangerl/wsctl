@@ -118,15 +118,6 @@ func GetToolsForAI() []map[string]any {
 	return toolsArr
 }
 
-// GetRegisteredTools 获取已注册的工具列表（用于调试和管理）
-func GetRegisteredTools() []string {
-	tools := make([]string, 0, len(toolRegistry))
-	for name := range toolRegistry {
-		tools = append(tools, name)
-	}
-	return tools
-}
-
 // CallTool 调用指定工具
 func CallTool(ctx context.Context, toolName string, params map[string]any) (string, error) {
 	meta, ok := toolRegistry[toolName]
