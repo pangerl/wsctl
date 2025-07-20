@@ -11,19 +11,19 @@ import (
 
 const taskName = "rocketmq"
 
-func NewRocketMQ(cfg *config.CfgType, logger *zap.SugaredLogger) *RocketMQ {
+func NewRocketMQ(cfg *config.AppConfig, logger *zap.SugaredLogger) *RocketMQ {
 	return &RocketMQ{
 		Config:      cfg,
 		Logger:      logger,
-		RocketMQCfg: cfg.RocketMQ,
+		RocketMQCfg: cfg.Services.RocketMQ,
 		BrokerMap:   make(map[string]*BrokerDetail),
 	}
 }
 
 type RocketMQ struct {
-	Config      *config.CfgType
+	Config      *config.AppConfig
 	Logger      *zap.SugaredLogger
-	RocketMQCfg config.RocketMQCfg
+	RocketMQCfg config.RocketMQConfig
 	BrokerMap   map[string]*BrokerDetail
 }
 

@@ -12,13 +12,13 @@ import (
 const taskName = "host"
 
 type Server struct {
-	Config *config.CfgType
+	Config *config.AppConfig
 	Logger *zap.SugaredLogger
 	VmUrl  string
 	Hosts  map[string]*Host
 }
 
-func NewServer(cfg *config.CfgType, logger *zap.SugaredLogger) *Server {
+func NewServer(cfg *config.AppConfig, logger *zap.SugaredLogger) *Server {
 	return &Server{
 		Config: cfg,
 		Logger: logger,
