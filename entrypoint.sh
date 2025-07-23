@@ -1,2 +1,6 @@
 #!/usr/bin/env sh
-/app/wsctl "$@"
+
+# 设置权限
+chmod +x /app/wsctl
+
+exec /app/wsctl "$@"

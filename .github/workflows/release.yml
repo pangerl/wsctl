@@ -85,28 +85,39 @@ jobs:
           files: ${{ needs.build.outputs.binary_artifact_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+
+      # 步骤：安装 coscmd
+      - name: Install coscmd
+        run: pip install coscmd
+      
+      # 步骤：配置 coscmd
+      - name: Configure coscmd
+        run: |
+          coscmd config -a ${{ secrets.TENCENT_SECRET_ID }} -s ${{ secrets.TENCENT_SECRET_KEY }} -b ${{ secrets.COS_BUCKET }} -r ${{ secrets.COS_REGION }}
           
       # 步骤：上传二进制文件到腾讯云 COS
       - name: Upload binary to Tencent Cloud COS
-        uses: TencentCloud/cos-action@v1
-        with:
-          secret_id: ${{ secrets.TENCENT_SECRET_ID }}
-          secret_key: ${{ secrets.TENCENT_SECRET_KEY }}
-          cos_bucket: ${{ secrets.COS_BUCKET }}
-          cos_region: ${{ secrets.COS_REGION }}
-          local_path: ${{ needs.build.outputs.binary_artifact_name }}
-          remote_path: tools/archive/binary_tag/bin/${{ needs.build.outputs.binary_artifact_name }}
+        run: coscmd upload ${{ needs.build.outputs.binary_artifact_name }} tools/archive/binary_tag/bin/${{ needs.build.outputs.binary_artifact_name }}
+        # uses: TencentCloud/cos-action@v1
+        # with:
+        #   secret_id: ${{ secrets.TENCENT_SECRET_ID }}
+        #   secret_key: ${{ secrets.TENCENT_SECRET_KEY }}
+        #   cos_bucket: ${{ secrets.COS_BUCKET }}
+        #   cos_region: ${{ secrets.COS_REGION }}
+        #   local_path: ${{ needs.build.outputs.binary_artifact_name }}
+        #   remote_path: tools/archive/binary_tag/bin/${{ needs.build.outputs.binary_artifact_name }}
 
       # 步骤：上传配置文件到腾讯云 COS
       - name: Upload config to Tencent Cloud COS
-        uses: TencentCloud/cos-action@v1
-        with:
-          secret_id: ${{ secrets.TENCENT_SECRET_ID }}
-          secret_key: ${{ secrets.TENCENT_SECRET_KEY }}
-          cos_bucket: ${{ secrets.COS_BUCKET }}
-          cos_region: ${{ secrets.COS_REGION }}
-          local_path: config.toml
-          remote_path: tools/archive/binary_tag/bin/config.toml
+        run: coscmd upload config.toml tools/archive/binary_tag/bin/config.toml
+        # uses: TencentCloud/cos-action@v1
+        # with:
+        #   secret_id: ${{ secrets.TENCENT_SECRET_ID }}
+        #   secret_key: ${{ secrets.TENCENT_SECRET_KEY }}
+        #   cos_bucket: ${{ secrets.COS_BUCKET }}
+        #   cos_region: ${{ secrets.COS_REGION }}
+        #   local_path: config.toml
+        #   remote_path: tools/archive/binary_tag/bin/config.toml
   #################################################################
   # Job 3: 发布 Docker 镜像 (依赖 build job)
   #################################################################
