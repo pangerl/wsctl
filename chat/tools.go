@@ -84,13 +84,24 @@ func GetToolsForAI() []map[string]any {
 		// 为每个工具构建Tool结构
 		tool := NewTool(meta.Name, func(t *ToolFunction) {
 			t.Description = meta.Description
-			// 根据工具类型设置参数，这里以天气工具为例
+			// 根据工具类型设置参数
 			if meta.Name == "weather" {
 				t.Parameters.Properties["location"] = map[string]any{
 					"type":        "string",
 					"description": "城市名称或 LocationID 或经纬度",
 				}
 				t.Parameters.Required = []string{"location"}
+			} else if meta.Name == "sysinfo" {
+				t.Parameters.Properties["type"] = map[string]any{
+					"type":        "string",
+					"description": "系统信息类型",
+					"enum":        []string{"cpu", "memory", "disk", "all"},
+				}
+				t.Parameters.Properties["details"] = map[string]any{
+					"type":        "boolean",
+					"description": "是否返回详细信息，默认为false",
+				}
+				t.Parameters.Required = []string{"type"}
 			}
 		})
 
@@ -160,6 +171,15 @@ func init() {
 	}); err != nil {
 		// 在init阶段，Logger可能还未初始化，所以使用panic而不是LogError
 		panic("工具系统初始化失败: " + err.Error())
+	}
+
+	// 注册系统信息工具
+	if err := RegisterTool(ToolMeta{
+		Name:        "sysinfo",
+		Description: "获取系统信息，支持CPU、内存、磁盘使用情况查询",
+		Handler:     tools.CallSystemInfoTool,
+	}); err != nil {
+		panic("系统信息工具注册失败: " + err.Error())
 	}
 
 	// 在init阶段不记录日志，避免Logger未初始化的问题
