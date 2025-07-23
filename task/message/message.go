@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 	"vhagar/config"
-	"vhagar/libs"
 	"vhagar/notify"
 	"vhagar/task"
 
@@ -26,12 +25,12 @@ var ispush = false
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewTenanter(config.Config, libs.Logger)
+		return NewTenanter(config.Config, task.GetLogger())
 	})
 }
 
 func (tenant *Tenanter) Check() {
-	if tenant.Config.Report {
+	if tenant.Config.Global.Report {
 		if ispush {
 			tenant.ReportRobot()
 		}
@@ -41,20 +40,12 @@ func (tenant *Tenanter) Check() {
 }
 
 func (tenant *Tenanter) TableRender() {
-	tabletitle := []string{"企业名称", "当前会话数", "昨天会话数"}
+	tabletitle := []string{"企业ID", "是否开通会话存档"}
 	table := tablewriter.NewWriter(task.GetOutputWriter())
 	table.SetHeader(tabletitle)
-	//color := tablewriter.Colors{tablewriter.Bold, tablewriter.FgHiRedColor}
-	//tableColor := []tablewriter.Colors{color, color, color, color, color, color, color, color}
 	for _, corp := range tenant.Corp {
-		if corp.Convenabled {
-			tabledata := []string{corp.CorpName, strconv.FormatInt(corp.MessageNum, 10), strconv.FormatInt(corp.YesterdayMessageNum, 10)}
-			table.Append(tabledata)
-		}
-	}
-	if tenant.NasDir != "" {
-		caption := fmt.Sprintf("当天目录创建状态: %s .", strconv.FormatBool(tenant.DirIsExis))
-		table.SetCaption(true, caption)
+		tabledata := []string{corp.Corpid, strconv.FormatBool(corp.Convenabled)}
+		table.Append(tabledata)
 	}
 	table.Render()
 }
@@ -63,17 +54,14 @@ func (tenant *Tenanter) ReportRobot() {
 	// 发送巡检报告
 	isalert = false
 	headString := headCorpString()
-	if tenant.NasDir != "" {
-		caption := fmt.Sprintf("**数据目录状态: ** <font color='warning'>%s</font>", strconv.FormatBool(tenant.DirIsExis))
-		headString += caption + "\n"
-	}
+	// 无 NasDir 相关逻辑
 	markdown := tenantMarkdown(headString, tenant.Corp)
 	notify.Send(markdown, taskName)
 }
 
 func (tenant *Tenanter) ReportWshoto() {
-	libs.Logger.Warnw("推送微盛运营平台")
-	// 将 []*Corp 转换为 []any
+	logger := task.GetLogger()
+	logger.Warnw("推送微盛运营平台")
 	var data = make([]any, len(tenant.Corp))
 	for i, c := range tenant.Corp {
 		data[i] = c
@@ -82,7 +70,7 @@ func (tenant *Tenanter) ReportWshoto() {
 		JobType: "tenant",
 		Data:    data,
 	}
-	err := notify.SendWshoto(&inspectBody, tenant.Config.ProxyURL)
+	err := notify.SendWshoto(&inspectBody, tenant.Config.Global.ProxyURL)
 	if err != nil {
 		return
 	}

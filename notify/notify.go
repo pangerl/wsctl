@@ -6,7 +6,7 @@ package notify
 import (
 	"time"
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/logger"
 )
 
 type Notifier struct {
@@ -16,21 +16,21 @@ type Notifier struct {
 const wechatRobotURL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key="
 
 func Send(markdown *WeChatMarkdown, taskName string) {
-	libs.Logger.Infow("任务等待时间", "duration", config.Config.Duration)
-	time.Sleep(config.Config.Duration)
+	logger.Logger.Infow("任务等待时间", "duration", config.Config.Global.Duration)
+	time.Sleep(config.Config.Global.Duration)
 	robotkey := getRobotkey(taskName)
 	//fmt.Println("robotkey", robotkey)
 	for _, robotkey := range robotkey {
-		err := sendWecom(markdown, robotkey, config.Config.ProxyURL)
+		err := sendWecom(markdown, robotkey, config.Config.Global.ProxyURL)
 		if err != nil {
-			libs.Logger.Errorw("发送失败", "err", err)
+			logger.Logger.Errorw("发送失败", "err", err)
 		}
 	}
 }
 
 func getRobotkey(taskName string) []string {
-	if notifier, ok := config.Config.Notify.Notifier[taskName]; ok {
+	if notifier, ok := config.Config.Global.Notify.Notifier[taskName]; ok {
 		return notifier.Robotkey
 	}
-	return config.Config.Notify.Robotkey
+	return config.Config.Global.Notify.Robotkey
 }

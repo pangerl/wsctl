@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/logger"
 	"vhagar/task/nacos"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,16 +37,16 @@ func strobeHTTPStatusCode(healthApi string) {
 	// 不再在此注册指标，避免重复注册
 	// prometheus.MustRegister(probeHTTPStatusCode)
 	// 获取 newNacos 服务信息
-	newNacos := nacos.NewNacos(config.Config, libs.Logger)
+	newNacos := nacos.NewNacos(config.Config, logger.Logger)
 	err := newNacos.Init()
 	if err != nil {
-		libs.Logger.Errorw("初始化 Nacos 服务失败", "err", err)
+		logger.Logger.Errorw("初始化 Nacos 服务失败", "err", err)
 		return
 	}
 
 	// 设置一个定时器来定期探测每个实例的健康状况
 	for {
-		libs.Logger.Warnw("检查服务接口健康状态")
+		logger.Logger.Warnw("检查服务接口健康状态")
 		newNacos.Gather()
 		healthInstances := newNacos.Clusterdata.HealthInstance
 
@@ -66,24 +66,24 @@ func strobeHTTPStatusCode(healthApi string) {
 // probeInstance 发送 HTTP 请求并检查返回值
 func probeInstance(instance nacos.ServerInstance, healthApi string) {
 	url := fmt.Sprintf("http://%s:%s%s", instance.Ip, instance.Port, healthApi)
-	//libs.Logger.Infow("开始请求", "url", url, "namespace", instance.NamespaceName, "service", instance.ServiceName)
+	//logger.Logger.Infow("开始请求", "url", url, "namespace", instance.NamespaceName, "service", instance.ServiceName)
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		libs.Logger.Errorw("请求 URL 失败", "url", url, "err", err, "service", instance.ServiceName)
+		logger.Logger.Errorw("请求 URL 失败", "url", url, "err", err, "service", instance.ServiceName)
 		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
 		return
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			libs.Logger.Errorw("请求失败", "err", err)
+			logger.Logger.Errorw("请求失败", "err", err)
 		}
 	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		libs.Logger.Errorw("读取响应体失败", "url", url, "err", err)
+		logger.Logger.Errorw("读取响应体失败", "url", url, "err", err)
 		probeHTTPStatusCode.WithLabelValues(instance.NamespaceName, instance.ServiceName, instance.Ip, instance.Port, url).Set(0)
 		return
 	}

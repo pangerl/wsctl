@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/logger"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -22,17 +22,17 @@ func StartMetric() {
 	// 会话数统计
 	go setMessageCount()
 	http.Handle("/metrics", promhttp.Handler())
-	libs.Logger.Warnw("启动 metrics 服务", "url", fmt.Sprintf("http://%s:%s/metrics", getClientIp(), cfg.Port))
+	logger.Logger.Warnw("启动 metrics 服务", "url", fmt.Sprintf("http://%s:%s/metrics", getClientIp(), cfg.Port))
 	err := http.ListenAndServe(":"+cfg.Port, nil)
 	if err != nil {
-		libs.Logger.Fatalw("metrics 服务启动失败", "err", err)
+		logger.Logger.Fatalw("metrics 服务启动失败", "err", err)
 	}
 }
 
 func getClientIp() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		libs.Logger.Errorw("获取本机 IP 地址失败", "err", err)
+		logger.Logger.Errorw("获取本机 IP 地址失败", "err", err)
 	}
 
 	for _, addr := range addrs {

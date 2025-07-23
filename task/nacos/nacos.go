@@ -54,7 +54,7 @@ func (nacos *Nacos) Check() {
 		nacos.WriteFile()
 		return
 	}
-	if config.Config.Report {
+	if config.Config.Global.Report {
 		// 发送机器人
 		nacos.ReportRobot()
 		return

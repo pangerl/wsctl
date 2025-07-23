@@ -102,7 +102,7 @@ func (cv *ConfigValidator) ValidateConfig(config *AppConfig) error {
 	cv.validateCronConfigs(config.Cron)
 
 	// 验证通知配置
-	cv.validateNotifyConfig(&config.Notify)
+	cv.validateNotifyConfig(&config.Global.Notify)
 
 	// 检查是否有错误
 	if len(cv.errors) > 0 {

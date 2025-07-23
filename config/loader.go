@@ -106,8 +106,8 @@ func NewConfigLoader(configPath string, options ...LoaderOptions) (*ConfigLoader
 	return loader, nil
 }
 
-// LoadConfig 加载配置文件（静态方法）
-func LoadConfig(configPath string) (*AppConfig, error) {
+// loadConfig 加载配置文件（内部方法）
+func loadConfig(configPath string) (*AppConfig, error) {
 	loader, err := NewConfigLoader(configPath, LoaderOptions{
 		EnableWatch:    false,
 		ValidateConfig: true,
@@ -170,7 +170,7 @@ func (cl *ConfigLoader) loadConfigFromFile(configPath string, validate bool) (*A
 
 	log.Infow("配置文件加载成功",
 		"path", configPath,
-		"project", config.ProjectName,
+		"project", config.Global.ProjectName,
 		"version", VERSION,
 	)
 
@@ -180,17 +180,17 @@ func (cl *ConfigLoader) loadConfigFromFile(configPath string, validate bool) (*A
 // setDefaults 设置配置的默认值
 func (cl *ConfigLoader) setDefaults(config *AppConfig) {
 	// 设置全局配置默认值
-	if config.LogLevel == "" {
-		config.LogLevel = "info"
+	if config.Global.LogLevel == "" {
+		config.Global.LogLevel = "info"
 	}
-	if config.ProjectName == "" {
-		config.ProjectName = "vhagar"
+	if config.Global.ProjectName == "" {
+		config.Global.ProjectName = "vhagar"
 	}
-	if config.Interval == 0 {
-		config.Interval = 5 * time.Minute
+	if config.Global.Interval == 0 {
+		config.Global.Interval = 5 * time.Minute
 	}
-	if config.Duration == 0 {
-		config.Duration = time.Hour
+	if config.Global.Duration == 0 {
+		config.Global.Duration = time.Hour
 	}
 
 	// 设置监控配置默认值
@@ -397,8 +397,8 @@ func (cl *ConfigLoader) GetConfigInfo() map[string]interface{} {
 	}
 
 	config := cl.GetConfig()
-	info["project_name"] = config.ProjectName
-	info["log_level"] = config.LogLevel
+	info["project_name"] = config.Global.ProjectName
+	info["log_level"] = config.Global.LogLevel
 	info["version"] = VERSION
 
 	return info

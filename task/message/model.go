@@ -5,7 +5,6 @@ package message
 
 import (
 	"vhagar/config"
-	"vhagar/libs"
 
 	"github.com/olivere/elastic/v7"
 	"go.uber.org/zap"
@@ -14,16 +13,16 @@ import (
 const taskName = "message"
 
 type Tenanter struct {
-	Config    *config.CfgType
+	Config    *config.AppConfig
 	Logger    *zap.SugaredLogger
 	NasDir    string
 	DirIsExis bool
-	Corp      []*config.Corp
+	Corp      []*config.CorpConfig
 	ESClient  *elastic.Client
-	PGClient  *libs.PGClienter
+	PGClient  *database.PostgreSQLClient
 }
 
-func NewTenanter(cfg *config.CfgType, logger *zap.SugaredLogger) *Tenanter {
+func NewTenanter(cfg *config.AppConfig, logger *zap.SugaredLogger) *Tenanter {
 	return &Tenanter{
 		Config: cfg,
 		Logger: logger,

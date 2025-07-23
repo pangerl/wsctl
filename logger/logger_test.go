@@ -237,6 +237,59 @@ func TestCreateConsoleCore(t *testing.T) {
 	}
 }
 
+// TestCreateFileCore 测试文件核心创建
+func TestCreateFileCore(t *testing.T) {
+	// 清理测试环境
+	defer func() {
+		_ = os.RemoveAll("test_logs")
+	}()
+
+	tests := []struct {
+		name   string
+		config Config
+	}{
+		{
+			name: "基本文件日志配置",
+			config: Config{
+				FilePath:   "test_logs/test.log",
+				MaxSize:    10,
+				MaxBackups: 3,
+				MaxAge:     7,
+				Compress:   true,
+				Format:     "json",
+			},
+		},
+		{
+			name: "控制台格式文件日志",
+			config: Config{
+				FilePath:   "test_logs/console.log",
+				MaxSize:    10,
+				MaxBackups: 3,
+				MaxAge:     7,
+				Compress:   false,
+				Format:     "console",
+			},
+		},
+		{
+			name: "无效文件路径",
+			config: Config{
+				FilePath: "/invalid/path/that/should/not/exist/test.log",
+				Format:   "json",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			level := zapcore.InfoLevel
+			core := createFileCore(tt.config, level)
+			if core == nil {
+				t.Error("createFileCore() returned nil")
+			}
+		})
+	}
+}
+
 // TestNoOpLogger 测试空操作日志器
 func TestNoOpLogger(t *testing.T) {
 	logger := &noOpLogger{}
@@ -311,5 +364,76 @@ func TestLoggerInterface(t *testing.T) {
 	err = logger.Sync()
 	if err != nil {
 		t.Logf("Logger.Sync() returned error (this may be expected): %v", err)
+	}
+}
+
+// TestInitLoggerMultipleCalls 测试多次调用 InitLogger
+func TestInitLoggerMultipleCalls(t *testing.T) {
+	// 清理测试环境
+	defer func() {
+		Logger = nil
+		once = sync.Once{}
+	}()
+
+	// 重置全局变量
+	Logger = nil
+	once = sync.Once{}
+
+	// 第一次调用
+	cfg1 := Config{
+		Level:  "info",
+		ToFile: false,
+		Format: "console",
+	}
+	err1 := InitLogger(cfg1)
+	if err1 != nil {
+		t.Errorf("First InitLogger() call failed: %v", err1)
+	}
+
+	// 保存第一次初始化的日志器
+	firstLogger := Logger
+
+	// 第二次调用，应该被忽略
+	cfg2 := Config{
+		Level:    "debug",
+		ToFile:   true,
+		FilePath: "test_logs/ignored.log",
+		Format:   "json",
+	}
+	err2 := InitLogger(cfg2)
+	if err2 != nil {
+		t.Errorf("Second InitLogger() call failed: %v", err2)
+	}
+
+	// 验证日志器没有改变
+	if Logger != firstLogger {
+		t.Error("Logger instance changed after second InitLogger() call")
+	}
+}
+
+// TestInitLoggerWithDefaultValues 测试使用默认值初始化
+func TestInitLoggerWithDefaultValues(t *testing.T) {
+	// 清理测试环境
+	defer func() {
+		Logger = nil
+		once = sync.Once{}
+	}()
+
+	// 重置全局变量
+	Logger = nil
+	once = sync.Once{}
+
+	// 使用最小配置
+	cfg := Config{
+		Level: "info",
+	}
+	err := InitLogger(cfg)
+	if err != nil {
+		t.Errorf("InitLogger() with minimal config failed: %v", err)
+	}
+
+	// 验证日志器已初始化
+	if Logger == nil {
+		t.Error("Logger not initialized with minimal config")
 	}
 }

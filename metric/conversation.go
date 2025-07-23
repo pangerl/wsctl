@@ -6,7 +6,8 @@ package metric
 import (
 	"time"
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/database"
+	"vhagar/logger"
 	"vhagar/task/message"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,7 +33,7 @@ func setMessageCount() {
 	// prometheus.MustRegister(messageCount)
 
 	// 初始化 esclient
-	esclient, _ := libs.NewESClient(config.Config.ES)
+	esclient, _ := database.NewElasticsearchClient(config.Config.Database.ES)
 	defer func() {
 		if esclient != nil {
 			esclient.Stop()
@@ -48,7 +49,7 @@ func setMessageCount() {
 			if corp.Convenabled {
 				messagenum := message.CurrentMessageNum(esclient, corp.Corpid, dateNow)
 				messageCount.WithLabelValues(corp.Corpid).Set(float64(messagenum))
-				libs.Logger.Infow("corp messagenum", "corpid", corp.Corpid, "messagenum", messagenum)
+				logger.Logger.Infow("corp messagenum", "corpid", corp.Corpid, "messagenum", messagenum)
 			}
 		}
 		time.Sleep(300 * time.Second)

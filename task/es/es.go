@@ -19,12 +19,12 @@ const taskName = "es"
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewES(config.Config, libs.Logger)
+		return NewES(config.Config, task.GetLogger())
 	})
 }
 
 func (es *ES) Gather() {
-	esClient, err := libs.NewESClient(config.Config.ES)
+	esClient, err := libs.NewESClient(config.Config.Database.ES)
 	if err != nil {
 		es.Logger.Errorw("Failed info", "err", err)
 		return
@@ -40,7 +40,7 @@ func (es *ES) Gather() {
 
 func (es *ES) Check() {
 	//task.EchoPrompt("开始巡检 ES 状态信息")
-	if es.Config.Report {
+	if es.Config.Global.Report {
 		// 发送机器人
 		es.ReportRobot()
 		return
@@ -132,7 +132,7 @@ func (es *ES) TableRender() {
 func (es *ES) ReportRobot() {
 	var builder strings.Builder
 	builder.WriteString("# ES 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.Global.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**集群状态：<font color='info'>" + es.Status + "</font>**\n")
 

@@ -18,7 +18,7 @@ var chatCmd = &cobra.Command{
 	Short: "AI 聊天命令",
 	Long:  `与 AI 进行基础对话的命令。`,
 	Run: func(cmd *cobra.Command, args []string) {
-		aiCfg := &config.Config.AI
+		aiCfg := &config.Config.Services.AI
 		if !aiCfg.Enable || aiCfg.Provider == "" {
 			fmt.Println("AI 聊天功能未启用，请检查 config.toml 配置。")
 			return

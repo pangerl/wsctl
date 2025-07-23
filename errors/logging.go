@@ -1,7 +1,9 @@
 // Package errors 错误日志记录功能
+// 提供错误日志记录和格式化功能
 package errors
 
 import (
+	"fmt"
 	"vhagar/logger"
 )
 
@@ -10,21 +12,34 @@ import (
 //   - err: 要记录的错误
 //   - context: 错误上下文信息
 func LogError(err error, context string) {
-	// 获取日志器实例
-	log := logger.GetLogger()
+	if err == nil {
+		return
+	}
 
-	if appErr, ok := IsAppError(err); ok {
-		// 记录应用错误
-		log.Errorw("应用错误",
-			"context", context,
-			"code", appErr.Code,
-			"message", appErr.Message,
-			"detail", appErr.Detail,
-			"cause", appErr.Cause,
-		)
+	if logger.Logger == nil {
+		return
+	}
+
+	if appErr, ok := err.(*AppError); ok {
+		if appErr.Cause != nil {
+			logger.Logger.Errorw("应用错误",
+				"context", context,
+				"code", appErr.Code,
+				"message", appErr.Message,
+				"detail", appErr.Detail,
+				"cause", appErr.Cause.Error(),
+			)
+		} else {
+			logger.Logger.Errorw("应用错误",
+				"context", context,
+				"code", appErr.Code,
+				"message", appErr.Message,
+				"detail", appErr.Detail,
+				"cause", nil,
+			)
+		}
 	} else {
-		// 记录系统错误
-		log.Errorw("系统错误",
+		logger.Logger.Errorw("系统错误",
 			"context", context,
 			"error", err.Error(),
 		)
@@ -35,33 +50,40 @@ func LogError(err error, context string) {
 // 参数:
 //   - err: 要记录的错误
 //   - context: 错误上下文信息
-//   - fields: 额外的日志字段
+//   - fields: 额外的字段信息
 func LogErrorWithFields(err error, context string, fields map[string]any) {
-	// 获取日志器实例
-	log := logger.GetLogger()
+	if err == nil {
+		return
+	}
 
-	// 构建日志字段
-	logFields := []any{"context", context}
+	if logger.Logger == nil {
+		return
+	}
 
-	if appErr, ok := IsAppError(err); ok {
-		// 添加应用错误字段
-		logFields = append(logFields,
-			"code", appErr.Code,
-			"message", appErr.Message,
-			"detail", appErr.Detail,
-			"cause", appErr.Cause,
-		)
+	// 合并字段
+	allFields := make(map[string]any)
+	if fields != nil {
+		for k, v := range fields {
+			allFields[k] = v
+		}
+	}
+
+	if appErr, ok := err.(*AppError); ok {
+		allFields["context"] = context
+		allFields["code"] = appErr.Code
+		allFields["message"] = appErr.Message
+		allFields["detail"] = appErr.Detail
+		if appErr.Cause != nil {
+			allFields["cause"] = appErr.Cause.Error()
+		} else {
+			allFields["cause"] = nil
+		}
+		logger.Logger.Errorw("应用错误", fieldsToArgs(allFields)...)
 	} else {
-		// 添加系统错误字段
-		logFields = append(logFields, "error", err.Error())
+		allFields["context"] = context
+		allFields["error"] = err.Error()
+		logger.Logger.Errorw("系统错误", fieldsToArgs(allFields)...)
 	}
-
-	// 添加自定义字段
-	for k, v := range fields {
-		logFields = append(logFields, k, v)
-	}
-
-	log.Errorw("错误详情", logFields...)
 }
 
 // LogErrorf 记录格式化的错误日志
@@ -70,52 +92,61 @@ func LogErrorWithFields(err error, context string, fields map[string]any) {
 //   - format: 格式化字符串
 //   - args: 格式化参数
 func LogErrorf(err error, format string, args ...any) {
-	// 获取日志器实例
-	log := logger.GetLogger()
-
-	if appErr, ok := IsAppError(err); ok {
-		// 记录应用错误
-		log.Errorw("应用错误",
-			"message", format,
-			"args", args,
-			"code", appErr.Code,
-			"error_message", appErr.Message,
-			"detail", appErr.Detail,
-			"cause", appErr.Cause,
-		)
-	} else {
-		// 记录系统错误
-		log.Errorw("系统错误",
-			"message", format,
-			"args", args,
-			"error", err.Error(),
-		)
+	if err == nil {
+		return
 	}
-}
 
-// LogWarn 记录警告日志
-// 参数:
-//   - message: 警告消息
-//   - fields: 日志字段
-func LogWarn(message string, fields ...any) {
-	log := logger.GetLogger()
-	log.Warnw(message, fields...)
-}
+	if logger.Logger == nil {
+		return
+	}
 
-// LogInfo 记录信息日志
-// 参数:
-//   - message: 信息消息
-//   - fields: 日志字段
-func LogInfo(message string, fields ...any) {
-	log := logger.GetLogger()
-	log.Infow(message, fields...)
+	message := fmt.Sprintf(format, args...)
+	LogError(err, message)
 }
 
 // LogDebug 记录调试日志
 // 参数:
-//   - message: 调试消息
-//   - fields: 日志字段
-func LogDebug(message string, fields ...any) {
-	log := logger.GetLogger()
-	log.Debugw(message, fields...)
+//   - msg: 日志消息
+//   - keysAndValues: 键值对参数
+func LogDebug(msg string, keysAndValues ...any) {
+	if logger.Logger == nil {
+		return
+	}
+	logger.Logger.Debugw(msg, keysAndValues...)
+}
+
+// LogInfo 记录信息日志
+// 参数:
+//   - msg: 日志消息
+//   - keysAndValues: 键值对参数
+func LogInfo(msg string, keysAndValues ...any) {
+	if logger.Logger == nil {
+		return
+	}
+	logger.Logger.Infow(msg, keysAndValues...)
+}
+
+// LogWarn 记录警告日志
+// 参数:
+//   - msg: 日志消息
+//   - keysAndValues: 键值对参数
+func LogWarn(msg string, keysAndValues ...any) {
+	if logger.Logger == nil {
+		return
+	}
+	logger.Logger.Warnw(msg, keysAndValues...)
+}
+
+// fieldsToArgs 将字段映射转换为参数列表
+// 参数:
+//   - fields: 字段映射
+//
+// 返回:
+//   - []any: 参数列表
+func fieldsToArgs(fields map[string]any) []any {
+	args := make([]any, 0, len(fields)*2)
+	for k, v := range fields {
+		args = append(args, k, v)
+	}
+	return args
 }

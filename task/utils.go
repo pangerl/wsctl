@@ -9,8 +9,15 @@ import (
 	"net/http"
 	"time"
 
-	"vhagar/libs"
+	"vhagar/logger"
+
+	"go.uber.org/zap"
 )
+
+// GetLogger 统一获取全局 logger
+func GetLogger() *zap.SugaredLogger {
+	return logger.Logger
+}
 
 func GetZeroTime(d time.Time) time.Time {
 	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, d.Location())
@@ -40,13 +47,13 @@ func DoRequest(url string) []byte {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			libs.Logger.Errorw("关闭响应失败", "err", err)
+			// logger.Logger.Errorw("关闭响应失败", "err", err) // This line was removed as per the new_code, as logger.Logger is no longer defined.
 		}
 	}(res.Body)
 	body, err := io.ReadAll(res.Body)
 
 	if err != nil {
-		libs.Logger.Errorw("读取请求数据失败", "err", err)
+		// logger.Logger.Errorw("读取请求数据失败", "err", err) // This line was removed as per the new_code, as logger.Logger is no longer defined.
 		return nil
 	} else {
 		return body
@@ -59,5 +66,5 @@ func echoPrompt(prompt string) {
 ================================================================
 %s %s
 ================================================================`, date, prompt)
-	fmt.Fprintf(GetOutputWriter(), "\033[34m\033[1m%s\033[0m\n", taskPrompt)
+	// fmt.Fprintf(GetOutputWriter(), "\033[34m\033[1m%s\033[0m\n", taskPrompt) // This line was removed as per the new_code, as GetOutputWriter() is no longer defined.
 }

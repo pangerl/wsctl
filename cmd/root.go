@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/tomasen/realip"
@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 	Short: "微盛运维部署工具",
 	Long:  `A longer description that vhagar`,
 	Run: func(cmd *cobra.Command, args []string) {
-		libs.Logger.Warnw("wsctl go go go！！！")
+		logger.Logger.Warnw("wsctl go go go！！！")
 		startWeb(port)
 
 	},
@@ -61,16 +61,19 @@ func preFunc() {
 	if _, err := config.InitConfig(cfgFile); err != nil {
 		panic("初始化配置失败: " + err.Error())
 	}
-	libs.InitLoggerWithConfig(config.Config.LogLevel, config.Config.LogToFile)
+	logger.InitLogger(logger.Config{
+		Level:  config.Config.Global.LogLevel,
+		ToFile: config.Config.Global.LogToFile,
+	})
 }
 
 func startWeb(port string) {
 	Hostname, _ = os.Hostname()
 	http.HandleFunc("/", ping)
-	libs.Logger.Warnw("启动 Web 服务", "url", fmt.Sprintf("http://%s:%s/", getClientIp(), port))
+	logger.Logger.Warnw("启动 Web 服务", "url", fmt.Sprintf("http://%s:%s/", getClientIp(), port))
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
-		libs.Logger.Fatalw("Web 服务启动失败", "err", err)
+		logger.Logger.Fatalw("Web 服务启动失败", "err", err)
 	}
 }
 
@@ -96,7 +99,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
 	bytejson, _ := json.MarshalIndent(&responseJson, "", "  ")
 	_, err := fmt.Fprintln(w, string(bytejson))
 	if err != nil {
-		libs.Logger.Errorw("响应输出失败", "err", err)
+		logger.Logger.Errorw("响应输出失败", "err", err)
 		return
 	}
 }
@@ -104,7 +107,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
 func getClientIp() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		libs.Logger.Errorw("获取本机 IP 地址失败", "err", err)
+		logger.Logger.Errorw("获取本机 IP 地址失败", "err", err)
 	}
 
 	for _, addr := range addrs {

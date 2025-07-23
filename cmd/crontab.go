@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/logger"
 	"vhagar/metric"
 	"vhagar/task"
 
@@ -25,7 +25,7 @@ var crontabCmd = &cobra.Command{
 			go metric.StartMetric()
 		}
 		// 启动定时任务
-		libs.Logger.Warnw("启动任务调度")
+		logger.Logger.Warnw("启动任务调度")
 		crontabJob()
 	},
 }
@@ -46,12 +46,12 @@ func crontabJob() {
 		// 判断是否是定时任务
 		taskName := name
 		if cronJob.Crontab {
-			libs.Logger.Warnw("添加定时任务", "task", taskName)
+			logger.Logger.Warnw("添加定时任务", "task", taskName)
 			_, err := c.AddFunc(cronJob.Scheducron, func() {
 				task.Do(taskName)
 			})
 			if err != nil {
-				libs.Logger.Fatalw("添加定时任务失败", "err", err)
+				logger.Logger.Fatalw("添加定时任务失败", "err", err)
 			}
 		}
 	}

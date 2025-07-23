@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/errors"
+	"vhagar/logger"
 )
 
 // Tools 变量已移至 tools.go 中的 toolRegistry 统一管理
@@ -21,7 +22,7 @@ func callLLM(ctx context.Context, messages []any) (string, error) {
 		return "", err // buildRequest已经处理了错误日志
 	}
 
-	aiCfg := config.Config.AI
+	aiCfg := config.Config.Services.AI
 	fullModelName := aiCfg.Provider + "/" + aiCfg.Providers[aiCfg.Provider].Model
 
 	start := time.Now()
@@ -30,8 +31,8 @@ func callLLM(ctx context.Context, messages []any) (string, error) {
 	duration := time.Since(start)
 
 	if err != nil {
-		appErr := libs.WrapError(libs.ErrCodeNetworkFailed, "AI HTTP请求失败", err)
-		libs.LogErrorWithFields(appErr, "AI调用", map[string]interface{}{
+		appErr := errors.WrapError(errors.ErrCodeNetworkFailed, "AI HTTP请求失败", err)
+		errors.LogErrorWithFields(appErr, "AI调用", map[string]interface{}{
 			"model":    fullModelName,
 			"duration": duration,
 		})
@@ -40,8 +41,8 @@ func callLLM(ctx context.Context, messages []any) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		appErr := libs.NewErrorWithDetail(libs.ErrCodeAIRequestFailed, "AI接口返回错误状态码", resp.Status)
-		libs.LogErrorWithFields(appErr, "AI调用", map[string]interface{}{
+		appErr := errors.NewErrorWithDetail(errors.ErrCodeAIRequestFailed, "AI接口返回错误状态码", resp.Status)
+		errors.LogErrorWithFields(appErr, "AI调用", map[string]interface{}{
 			"model":       fullModelName,
 			"status_code": resp.StatusCode,
 			"duration":    duration,
@@ -51,8 +52,8 @@ func callLLM(ctx context.Context, messages []any) (string, error) {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		appErr := libs.WrapError(libs.ErrCodeNetworkFailed, "读取AI响应失败", err)
-		libs.LogError(appErr, "AI调用")
+		appErr := errors.WrapError(errors.ErrCodeNetworkFailed, "读取AI响应失败", err)
+		errors.LogError(appErr, "AI调用")
 		return "", appErr
 	}
 
@@ -68,10 +69,10 @@ func callLLM(ctx context.Context, messages []any) (string, error) {
 // ChatWithAI 多轮 function calling 工具调用主流程
 func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 	maxTurns := 5
-	libs.Logger.Infow("开始AI对话", "max_turns", maxTurns, "initial_messages", len(messages))
+	logger.Logger.Infow("开始AI对话", "max_turns", maxTurns, "initial_messages", len(messages))
 
 	for turn := 0; turn < maxTurns; turn++ {
-		libs.Logger.Infow("AI对话轮次", "turn", turn+1, "messages_count", len(messages))
+		logger.Logger.Infow("AI对话轮次", "turn", turn+1, "messages_count", len(messages))
 
 		result, err := callLLM(ctx, messages)
 		if err != nil {
@@ -99,8 +100,8 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 
 		err = json.Unmarshal([]byte(result), &resp)
 		if err != nil || len(resp.Choices) == 0 {
-			appErr := libs.WrapError(libs.ErrCodeAIResponseInvalid, "LLM返回格式错误", err)
-			libs.LogErrorWithFields(appErr, "AI对话", map[string]interface{}{
+			appErr := errors.WrapError(errors.ErrCodeAIResponseInvalid, "LLM返回格式错误", err)
+			errors.LogErrorWithFields(appErr, "AI对话", map[string]interface{}{
 				"turn":     turn + 1,
 				"response": result,
 			})
@@ -111,13 +112,13 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 		msg := choice.Message
 		finishReason := choice.FinishReason
 
-		libs.Logger.Infow("AI响应解析", "turn", turn+1, "finish_reason", finishReason, "tool_calls_count", len(msg.ToolCalls))
+		logger.Logger.Infow("AI响应解析", "turn", turn+1, "finish_reason", finishReason, "tool_calls_count", len(msg.ToolCalls))
 
 		// 2. 根据 finish_reason 处理
 		switch finishReason {
 		case "stop":
 			// 对话完成，返回内容
-			libs.Logger.Infow("AI对话完成", "turn", turn+1, "content_length", len(msg.Content))
+			logger.Logger.Infow("AI对话完成", "turn", turn+1, "content_length", len(msg.Content))
 			return msg.Content, nil
 
 		case "tool_calls":
@@ -132,8 +133,8 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 			messages = append(messages, assistantMessage)
 
 			if len(msg.ToolCalls) == 0 {
-				err := libs.NewError(libs.ErrCodeAIResponseInvalid, "LLM返回tool_calls但内容为空")
-				libs.LogError(err, "AI对话")
+				err := errors.NewError(errors.ErrCodeAIResponseInvalid, "LLM返回tool_calls但内容为空")
+				errors.LogError(err, "AI对话")
 				return "", err
 			}
 
@@ -141,7 +142,7 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 				// 解析 arguments
 				var args map[string]any
 				if err := json.Unmarshal([]byte(tc.Function.Arguments), &args); err != nil {
-					libs.Logger.Warnw("工具参数解析失败", "tool", tc.Function.Name, "args", tc.Function.Arguments, "error", err)
+					logger.Logger.Warnw("工具参数解析失败", "tool", tc.Function.Name, "args", tc.Function.Arguments, "error", err)
 					toolResult := "参数解析失败: " + err.Error()
 					messages = append(messages, map[string]any{
 						"role":         "tool",
@@ -152,10 +153,10 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 					continue
 				}
 
-				libs.Logger.Infow("调用工具", "tool", tc.Function.Name, "args", args)
+				logger.Logger.Infow("调用工具", "tool", tc.Function.Name, "args", args)
 				toolResult, err := CallTool(ctx, tc.Function.Name, args)
 				if err != nil {
-					libs.LogErrorWithFields(err, "工具调用", map[string]interface{}{
+					errors.LogErrorWithFields(err, "工具调用", map[string]interface{}{
 						"tool": tc.Function.Name,
 						"args": args,
 					})
@@ -173,8 +174,8 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 			continue
 
 		default:
-			appErr := libs.NewErrorWithDetail(libs.ErrCodeAIResponseInvalid, "LLM finish_reason异常", finishReason)
-			libs.LogErrorWithFields(appErr, "AI对话", map[string]interface{}{
+			appErr := errors.NewErrorWithDetail(errors.ErrCodeAIResponseInvalid, "LLM finish_reason异常", finishReason)
+			errors.LogErrorWithFields(appErr, "AI对话", map[string]interface{}{
 				"turn":          turn + 1,
 				"finish_reason": finishReason,
 				"response":      result,
@@ -183,16 +184,16 @@ func ChatWithAI(ctx context.Context, messages []any) (string, error) {
 		}
 	}
 
-	err := libs.NewErrorWithDetail(libs.ErrCodeAIRequestFailed, "多轮工具调用超出最大轮数", fmt.Sprintf("max_turns=%d", maxTurns))
-	libs.LogError(err, "AI对话")
+	err := errors.NewErrorWithDetail(errors.ErrCodeAIRequestFailed, "多轮工具调用超出最大轮数", fmt.Sprintf("max_turns=%d", maxTurns))
+	errors.LogError(err, "AI对话")
 	return "", err
 }
 
 // Summarize 对输入内容进行AI总结，突出异常和重点
 func Summarize(ctx context.Context, content string) (string, error) {
 	if content == "" {
-		err := libs.NewError(libs.ErrCodeInvalidParam, "巡检内容不能为空")
-		libs.LogError(err, "AI总结")
+		err := errors.NewError(errors.ErrCodeInvalidParam, "巡检内容不能为空")
+		errors.LogError(err, "AI总结")
 		return "", err
 	}
 
@@ -204,15 +205,15 @@ func Summarize(ctx context.Context, content string) (string, error) {
 		},
 	}
 
-	libs.Logger.Infow("开始AI总结", "content_length", len(content))
+	logger.Logger.Infow("开始AI总结", "content_length", len(content))
 	result, err := ChatWithAI(ctx, messages)
 	if err != nil {
-		libs.LogErrorWithFields(err, "AI总结", map[string]interface{}{
+		errors.LogErrorWithFields(err, "AI总结", map[string]interface{}{
 			"content_length": len(content),
 		})
 		return "", err
 	}
 
-	libs.Logger.Infow("AI总结完成", "result_length", len(result))
+	logger.Logger.Infow("AI总结完成", "result_length", len(result))
 	return result, nil
 }

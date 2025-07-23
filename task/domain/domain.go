@@ -27,13 +27,13 @@ var isalert = false
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewDomainer(config.Config, logger.GetLogger())
+		return NewDomainer(config.Config, task.GetLogger())
 	})
 }
 
 // Check 实现Tasker接口，检查并展示结果
 func (d *Domainer) Check() {
-	if d.Config.Report {
+	if d.Config.Global.Report {
 		d.ReportRobot()
 		return
 	}
@@ -181,12 +181,12 @@ func testConnection(domain string, port int) bool {
 	retryDelay := 1 * time.Second
 
 	// 如果有代理配置，使用代理连接
-	if config.Config.ProxyURL != "" {
+	if config.Config.Global.ProxyURL != "" {
 		dialer := &net.Dialer{
 			Timeout:   5 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}
-		proxyUrl, err := url.Parse(config.Config.ProxyURL)
+		proxyUrl, err := url.Parse(config.Config.Global.ProxyURL)
 		if err != nil {
 			logger.GetLogger().Errorf("Invalid proxy URL: %s", err)
 			return false
@@ -277,7 +277,7 @@ func domainMarkdown(headString string, d *Domainer) *notify.WeChatMarkdown {
 	}
 
 	if isalert {
-		builder.WriteString("\n<font color='red'>**注意！域名连通性检测异常！**</font>" + task.CallUser(config.Config.Notify.Userlist))
+		builder.WriteString("\n<font color='red'>**注意！域名连通性检测异常！**</font>" + task.CallUser(config.Config.Global.Notify.Userlist))
 	}
 
 	markdown := &notify.WeChatMarkdown{
@@ -295,7 +295,7 @@ func headString() string {
 	var builder strings.Builder
 	// 组装巡检内容
 	builder.WriteString("# 域名连通性检测" + "\n")
-	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.Global.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02 15:04:05") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n")
 

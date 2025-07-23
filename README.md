@@ -113,33 +113,33 @@ api_key = "your_qweather_api_key"
 
 项目采用统一的错误处理机制：
 
-- **错误码分类**：通用错误(10xxx)、AI错误(20xxx)、工具错误(30xxx)、配置错误(40xxx)、网络错误(50xxx)
+- **错误码分类**：通用错误(10xxx)、AI错误(20xxx)、工具错误(30xxx)、配置错误(40xxx)、网络错误(50xxx)、数据库错误(60xxx)
 - **结构化日志**：所有错误都会记录详细的上下文信息
 - **错误包装**：支持错误链追踪，便于问题定位
 
 示例错误处理：
 ```go
 // 创建应用错误
-err := libs.NewError(libs.ErrCodeInvalidParam, "参数错误")
+err := errors.New(errors.ErrCodeInvalidParam, "参数错误")
 
 // 包装已有错误
-err := libs.WrapError(libs.ErrCodeNetworkFailed, "网络请求失败", originalErr)
+err := errors.Wrap(errors.ErrCodeNetworkFailed, "网络请求失败", originalErr)
 
 // 记录错误日志
-libs.LogError(err, "操作上下文")
+errors.LogError(err, "操作上下文")
 ```
 
 日志系统
 --------
 本项目集成 [zap](https://github.com/uber-go/zap) 作为全局日志框架，所有日志输出均通过 zap 统一管理。
 
-- 日志初始化：程序启动时自动完成（见 `main.go`、`libs/logger.go`）
+- 日志初始化：程序启动时自动完成（见 `main.go`、`logger/logger.go`）
 - 推荐调用方式：
   ```go
-  libs.Logger.Infow("启动服务", "port", 8080)
-  libs.Logger.Errorw("数据库连接失败", "err", err)
+  logger.Logger.Infow("启动服务", "port", 8080)
+  logger.Logger.Errorw("数据库连接失败", "err", err)
   ```
-- 日志级别、格式、输出位置可在 `libs/logger.go` 中自定义
+- 日志级别、格式、输出位置可在配置文件中自定义
 
 调试建议
 --------
@@ -197,13 +197,15 @@ chat/        # AI聊天和工具系统
 └── tools/          # 具体工具实现
     └── weather.go  # 天气查询工具
 cmd/         # 命令行入口
-config/      # 配置文件与结构体
-libs/        # 公共库（日志、数据库、缓存、错误处理等）
-├── errors.go       # 统一错误处理
-└── logger.go       # 日志系统
+config/      # 配置管理
+database/    # 数据库连接工具
+errors/      # 统一错误处理
+logger/      # 日志系统
 metric/      # 监控指标采集
+models/      # 业务模型
 notify/      # 通知模块
 task/        # 各类巡检任务
+utils/       # 通用工具函数
 main.go      # 程序主入口
 config.toml  # 配置文件
 ```

@@ -11,7 +11,8 @@ import (
 	"strings"
 	"time"
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/errors"
+	"vhagar/logger"
 )
 
 // 和风天气 API 响应结构体（只保留常用字段）
@@ -61,28 +62,28 @@ func queryLocationID(apiHost, apiKey, city string, client *http.Client) (string,
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
-		return "", libs.WrapError(libs.ErrCodeNetworkFailed, "创建城市查询请求失败", err)
+		return "", errors.WrapError(errors.ErrCodeNetworkFailed, "创建城市查询请求失败", err)
 	}
 
 	req.Header.Set("X-QW-Api-Key", apiKey)
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", libs.WrapError(libs.ErrCodeNetworkFailed, "城市查询请求失败", err)
+		return "", errors.WrapError(errors.ErrCodeNetworkFailed, "城市查询请求失败", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", libs.WrapError(libs.ErrCodeNetworkFailed, "读取城市查询响应失败", err)
+		return "", errors.WrapError(errors.ErrCodeNetworkFailed, "读取城市查询响应失败", err)
 	}
 
 	var lookup QWeatherCityLookupResp
 	if err := json.Unmarshal(body, &lookup); err != nil {
-		return "", libs.WrapError(libs.ErrCodeAIResponseInvalid, "城市查询响应解析失败", err)
+		return "", errors.WrapError(errors.ErrCodeAIResponseInvalid, "城市查询响应解析失败", err)
 	}
 
 	if lookup.Code != "200" || len(lookup.Location) == 0 {
-		return "", libs.NewErrorWithDetail(libs.ErrCodeNotFound, "城市查询失败",
+		return "", errors.NewErrorWithDetail(errors.ErrCodeNotFound, "城市查询失败",
 			fmt.Sprintf("code=%s, body=%s", lookup.Code, string(body)))
 	}
 
@@ -95,28 +96,28 @@ func queryQWeatherNow(apiHost, apiKey, location string, client *http.Client) (*Q
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
-		return nil, libs.WrapError(libs.ErrCodeNetworkFailed, "创建天气查询请求失败", err)
+		return nil, errors.WrapError(errors.ErrCodeNetworkFailed, "创建天气查询请求失败", err)
 	}
 
 	req.Header.Set("X-QW-Api-Key", apiKey)
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, libs.WrapError(libs.ErrCodeNetworkFailed, "天气查询请求失败", err)
+		return nil, errors.WrapError(errors.ErrCodeNetworkFailed, "天气查询请求失败", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, libs.WrapError(libs.ErrCodeNetworkFailed, "读取天气查询响应失败", err)
+		return nil, errors.WrapError(errors.ErrCodeNetworkFailed, "读取天气查询响应失败", err)
 	}
 
 	var now QWeatherNowResp
 	if err := json.Unmarshal(body, &now); err != nil {
-		return nil, libs.WrapError(libs.ErrCodeAIResponseInvalid, "天气响应解析失败", err)
+		return nil, errors.WrapError(errors.ErrCodeAIResponseInvalid, "天气响应解析失败", err)
 	}
 
 	if now.Code != "200" {
-		return nil, libs.NewErrorWithDetail(libs.ErrCodeNotFound, "天气查询失败",
+		return nil, errors.NewErrorWithDetail(errors.ErrCodeNotFound, "天气查询失败",
 			fmt.Sprintf("code=%s, body=%s", now.Code, string(body)))
 	}
 
@@ -128,28 +129,28 @@ func CallWeatherTool(ctx context.Context, args map[string]any) (string, error) {
 	// 参数验证
 	location, ok := args["location"].(string)
 	if !ok || location == "" {
-		err := libs.NewError(libs.ErrCodeInvalidParam, "缺少或无效的 location 参数")
-		libs.LogError(err, "天气工具调用")
+		err := errors.NewError(errors.ErrCodeInvalidParam, "缺少或无效的 location 参数")
+		errors.LogError(err, "天气工具调用")
 		return "", err
 	}
 
 	// 配置验证
 	if config.Config == nil {
-		err := libs.NewError(libs.ErrCodeConfigNotFound, "系统配置未初始化")
-		libs.LogError(err, "天气工具调用")
+		err := errors.NewError(errors.ErrCodeConfigNotFound, "系统配置未初始化")
+		errors.LogError(err, "天气工具调用")
 		return "", err
 	}
 
-	apiHost := config.Config.Weather.ApiHost
-	apiKey := config.Config.Weather.ApiKey
+	apiHost := config.Config.Services.Weather.ApiHost
+	apiKey := config.Config.Services.Weather.ApiKey
 
 	if apiHost == "" || apiKey == "" {
-		err := libs.NewError(libs.ErrCodeConfigInvalid, "天气API主机或密钥未配置")
-		libs.LogError(err, "天气工具调用")
+		err := errors.NewError(errors.ErrCodeConfigInvalid, "天气API主机或密钥未配置")
+		errors.LogError(err, "天气工具调用")
 		return "", err
 	}
 
-	libs.Logger.Infow("开始查询天气", "location", location)
+	logger.Logger.Infow("开始查询天气", "location", location)
 
 	client := &http.Client{Timeout: 8 * time.Second}
 	var locationID string
@@ -158,22 +159,22 @@ func CallWeatherTool(ctx context.Context, args map[string]any) (string, error) {
 	// 判断输入类型并获取LocationID
 	if isLocationIDOrLatLon(location) {
 		locationID = location
-		libs.Logger.Infow("使用LocationID或经纬度", "location_id", locationID)
+		logger.Logger.Infow("使用LocationID或经纬度", "location_id", locationID)
 	} else {
 		locationID, err = queryLocationID(apiHost, apiKey, location, client)
 		if err != nil {
-			libs.LogErrorWithFields(err, "城市ID查询", map[string]interface{}{
+			errors.LogErrorWithFields(err, "城市ID查询", map[string]interface{}{
 				"city": location,
 			})
 			return "", err
 		}
-		libs.Logger.Infow("城市ID查询成功", "city", location, "location_id", locationID)
+		logger.Logger.Infow("城市ID查询成功", "city", location, "location_id", locationID)
 	}
 
 	// 查询天气
 	weather, err := queryQWeatherNow(apiHost, apiKey, locationID, client)
 	if err != nil {
-		libs.LogErrorWithFields(err, "天气查询", map[string]interface{}{
+		errors.LogErrorWithFields(err, "天气查询", map[string]interface{}{
 			"location_id": locationID,
 		})
 		return "", err
@@ -188,11 +189,11 @@ func CallWeatherTool(ctx context.Context, args map[string]any) (string, error) {
 
 	jsonBytes, err := json.Marshal(resp)
 	if err != nil {
-		appErr := libs.WrapError(libs.ErrCodeInternalErr, "结果序列化失败", err)
-		libs.LogError(appErr, "天气工具调用")
+		appErr := errors.WrapError(errors.ErrCodeInternalErr, "结果序列化失败", err)
+		errors.LogError(appErr, "天气工具调用")
 		return "", appErr
 	}
 
-	libs.Logger.Infow("天气查询完成", "location", location, "temp", weather.Now.Temp)
+	logger.Logger.Infow("天气查询完成", "location", location, "temp", weather.Now.Temp)
 	return string(jsonBytes), nil
 }

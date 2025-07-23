@@ -32,7 +32,7 @@ func init() {
 
 func (rocketmq *RocketMQ) Check() {
 	//task.EchoPrompt("开始巡检 RocketMQ 信息")
-	if rocketmq.Config.Report {
+	if rocketmq.Config.Global.Report {
 		rocketmq.ReportRobot()
 		return
 	}
@@ -45,7 +45,7 @@ func (rocketmq *RocketMQ) ReportRobot() {
 
 	// 组装巡检内容
 	builder.WriteString("# RocketMQ 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.Global.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n\n")
 	builder.WriteString("**Broker 健康数：**<font color='info'>" + strconv.Itoa(len(brokerList)) + "</font>\n")

@@ -50,7 +50,7 @@ func (s *Server) TableRender() {
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewServer(config.Config, libs.Logger)
+		return NewServer(config.Config, task.GetLogger())
 	})
 }
 
@@ -61,7 +61,7 @@ func (s *Server) ReportRobot() {
 
 func (s *Server) Check() {
 	//task.EchoPrompt("开始巡检服务器状态")
-	if config.Config.Report {
+	if config.Config.Global.Report {
 		// 发送机器人
 		s.ReportRobot()
 		return

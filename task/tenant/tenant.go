@@ -24,12 +24,12 @@ import (
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewTenanter(config.Config, libs.Logger)
+		return NewTenanter(config.Config, task.GetLogger())
 	})
 }
 
 func (tenant *Tenanter) Check() {
-	if tenant.Config.Report {
+	if config.Config.Global.Report {
 		tenant.ReportRobot()
 		return
 	}
@@ -79,32 +79,27 @@ func (tenant *Tenanter) ReportWshoto() {
 }
 
 func (tenant *Tenanter) Gather() {
-	// 创建ESClient，PGClienter
-	//esClient, err := libs.NewESClient(config.Config.ES)
-	//if err != nil {
-	//	log.Printf("Failed info: %s \n", err)
-	//	return
-	//}
 	// 创建 mysqlClinet，PGCliente
-	mysqlClinet, err := libs.NewMysqlClient(config.Config.Doris.DB, "wshoto")
+	mysqlClinet, err := libs.NewMysqlClient(config.Config.Database.Doris.DB, "wshoto")
 	if err != nil {
 		libs.Logger.Errorw("Failed to create mysql client", "err", err)
 		return
 	}
-	pgClient, err := libs.NewPGClienter(config.Config.PG)
+	pgClient, err := libs.NewPGClienter(config.Config.Database.PG)
 	if err != nil {
 		log.Printf("Failed info: %s \n", err)
 		return
 	}
-	if config.Config.Customer.HasValue() {
-		libs.Logger.Info("读取新的customer库")
-		conn, err := libs.NewPGClient(config.Config.Customer, "customer")
-		if err != nil {
-			log.Printf("Failed info: %s \n", err)
-			return
-		}
-		pgClient.Conn["customer"] = conn
-	}
+	// 注释掉 Customer 相关逻辑
+	// if config.Config.Customer.HasValue() {
+	// 	libs.Logger.Info("读取新的customer库")
+	// 	conn, err := libs.NewPGClient(config.Config.Customer, "customer")
+	// 	if err != nil {
+	// 		log.Printf("Failed info: %s \n", err)
+	// 		return
+	// 	}
+	// 	pgClient.Conn["customer"] = conn
+	// }
 	defer func() {
 		if pgClient != nil {
 			pgClient.Close()
@@ -204,7 +199,7 @@ func headCorpString() string {
 	var builder strings.Builder
 	// 组装巡检内容
 	builder.WriteString("# 每日巡检报告 " + version + "\n")
-	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.Global.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**巡检内容：**\n")
 

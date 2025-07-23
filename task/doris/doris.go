@@ -30,7 +30,7 @@ import (
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewDoris(config.Config, libs.Logger)
+		return NewDoris(config.Config, task.GetLogger())
 	})
 }
 
@@ -39,7 +39,7 @@ func (doris *Doris) Name() string {
 }
 
 func (doris *Doris) Check() {
-	if doris.Config.Report {
+	if doris.Config.Global.Report {
 		doris.ReportRobot()
 		return
 	}
@@ -102,7 +102,7 @@ func (doris *Doris) ReportRobot() {
 	failedJobCount := len(doris.FailedJobs)
 	// 组装巡检内容
 	builder.WriteString("# Doris 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.Global.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**BE节点总数：**<font color='info'>" + strconv.Itoa(doris.TotalBackendNum) + "</font>\n")
 	builder.WriteString("**在线节点数：**<font color='info'>" + strconv.Itoa(doris.OnlineBackendNum) + "</font>\n")

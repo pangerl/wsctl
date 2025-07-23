@@ -9,7 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"vhagar/libs"
+	"vhagar/logger"
 )
 
 type WeChatMarkdown struct {
@@ -47,16 +47,16 @@ func sendWecom(markdown *WeChatMarkdown, robotKey, proxyURL string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		libs.Logger.Errorw("推送企微机器人失败", "err", err)
+		logger.Logger.Errorw("推送企微机器人失败", "err", err)
 		return err
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			libs.Logger.Errorw("Failed info", "err", err)
+			logger.Logger.Errorw("Failed info", "err", err)
 		}
 	}(resp.Body)
-	libs.Logger.Warnw("推送企微机器人 response Status", "status", resp.Status)
+	logger.Logger.Warnw("推送企微机器人 response Status", "status", resp.Status)
 	//log.Print("response Headers:", resp.Header)
 	return nil
 }

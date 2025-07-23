@@ -25,13 +25,13 @@ type ServiceConfig interface {
 // AIServiceConfig AI服务详细配置
 // 扩展了基本的AIConfig，提供更多配置选项
 type AIServiceConfig struct {
-	Enable      bool                      `toml:"enable"`      // 是否启用AI功能
-	Provider    string                    `toml:"provider"`    // 当前使用的提供商
-	Providers   map[string]ProviderConfig `toml:"providers"`   // 提供商配置映射
-	Timeout     time.Duration             `toml:"timeout"`     // 请求超时时间
-	MaxRetries  int                       `toml:"max_retries"` // 最大重试次数
-	Temperature float64                   `toml:"temperature"` // 生成温度参数
-	MaxTokens   int                       `toml:"max_tokens"`  // 最大令牌数
+	Enable      bool                        `toml:"enable"`      // 是否启用AI功能
+	Provider    string                      `toml:"provider"`    // 当前使用的提供商
+	Providers   map[string]AIProviderConfig `toml:"providers"`   // 提供商配置映射
+	Timeout     time.Duration               `toml:"timeout"`     // 请求超时时间
+	MaxRetries  int                         `toml:"max_retries"` // 最大重试次数
+	Temperature float64                     `toml:"temperature"` // 生成温度参数
+	MaxTokens   int                         `toml:"max_tokens"`  // 最大令牌数
 }
 
 // Validate 验证AI服务配置
@@ -80,14 +80,14 @@ func (a *AIServiceConfig) IsEnabled() bool {
 }
 
 // GetCurrentProvider 获取当前AI提供商配置
-func (a *AIServiceConfig) GetCurrentProvider() (ProviderConfig, error) {
+func (a *AIServiceConfig) GetCurrentProvider() (AIProviderConfig, error) {
 	if !a.Enable {
-		return ProviderConfig{}, errors.New(errors.ErrCodeConfigInvalid, "AI服务未启用")
+		return AIProviderConfig{}, errors.New(errors.ErrCodeConfigInvalid, "AI服务未启用")
 	}
 
 	provider, exists := a.Providers[a.Provider]
 	if !exists {
-		return ProviderConfig{}, errors.NewWithDetail(
+		return AIProviderConfig{}, errors.NewWithDetail(
 			errors.ErrCodeConfigInvalid,
 			"AI提供商不存在",
 			fmt.Sprintf("提供商: %s", a.Provider),
@@ -97,8 +97,9 @@ func (a *AIServiceConfig) GetCurrentProvider() (ProviderConfig, error) {
 	return provider, nil
 }
 
-// ProviderConfig LLM服务商详细配置
-type ProviderConfig struct {
+// AIProviderConfig LLM服务商详细配置
+// 扩展了基本的ProviderConfig，提供更多配置选项
+type AIProviderConfig struct {
 	ApiKey      string            `toml:"api_key"`     // API密钥
 	ApiUrl      string            `toml:"api_url"`     // API地址
 	Model       string            `toml:"model"`       // 模型名称
@@ -110,7 +111,7 @@ type ProviderConfig struct {
 }
 
 // Validate 验证提供商配置
-func (p *ProviderConfig) Validate() error {
+func (p *AIProviderConfig) Validate() error {
 	if p.ApiKey == "" {
 		return errors.New(errors.ErrCodeConfigInvalid, "API密钥不能为空")
 	}

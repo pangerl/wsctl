@@ -17,14 +17,14 @@ import (
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewRedis(config.Config, libs.Logger)
+		return NewRedis(config.Config, task.GetLogger())
 	})
 }
 
 func (redis *Redis) Check() {
 	//task.EchoPrompt("开始巡检 Redis 状态信息")
 	redis.Gather()
-	if config.Config.Report {
+	if redis.Config.Global.Report {
 		// 发送机器人
 		redis.ReportRobot()
 		return
@@ -121,7 +121,7 @@ func (redis *Redis) ReportRobot() {
 	var builder strings.Builder
 	// 组装巡检内容
 	builder.WriteString("# Redis 巡检 \n")
-	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.ProjectName + "</font>\n")
+	builder.WriteString("**项目名称：**<font color='info'>" + config.Config.Global.ProjectName + "</font>\n")
 	builder.WriteString("**巡检时间：**<font color='info'>" + time.Now().Format("2006-01-02") + "</font>\n")
 	builder.WriteString("**版本：**<font color='info'>" + redis.Version + "</font>\n")
 	builder.WriteString("**角色：**<font color='info'>" + redis.Role + "</font>\n")

@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/jackc/pgx/v5 v5.7.5

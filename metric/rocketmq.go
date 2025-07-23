@@ -6,7 +6,7 @@ package metric
 import (
 	"time"
 	"vhagar/config"
-	"vhagar/libs"
+	"vhagar/logger"
 	"vhagar/task/rocketmq"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,12 +28,12 @@ func init() {
 func setBrokerCount() {
 	// 不再在此注册指标，避免重复注册
 	// prometheus.MustRegister(brokerCount)
-	rocket := rocketmq.NewRocketMQ(config.Config, libs.Logger)
+	rocket := rocketmq.NewRocketMQ(config.Config, logger.Logger)
 	for {
 		rocket.Gather()
 		conut := len(rocket.BrokerMap)
 		brokerCount.Set(float64(conut))
-		libs.Logger.Infow("brokercount", "count", conut)
+		logger.Logger.Infow("brokercount", "count", conut)
 		time.Sleep(60 * time.Second) // 每30秒探测一次
 	}
 

@@ -200,8 +200,8 @@ func InitConfig(cfgFile string) (*AppConfig, error) {
 
 	// 初始化日志器
 	loggerConfig := logger.Config{
-		Level:  Config.LogLevel,
-		ToFile: Config.LogToFile,
+		Level:  Config.Global.LogLevel,
+		ToFile: Config.Global.LogToFile,
 		Format: "console",
 	}
 	if err := logger.InitLogger(loggerConfig); err != nil {
@@ -217,7 +217,7 @@ func InitConfig(cfgFile string) (*AppConfig, error) {
 // Validate 验证配置的完整性和正确性
 func (c *AppConfig) Validate() error {
 	// 验证项目名称
-	if c.ProjectName == "" {
+	if c.Global.ProjectName == "" {
 		return errors.New(errors.ErrCodeConfigInvalid, "项目名称不能为空")
 	}
 
@@ -225,7 +225,7 @@ func (c *AppConfig) Validate() error {
 	validLogLevels := []string{"debug", "info", "warn", "error"}
 	isValidLevel := false
 	for _, level := range validLogLevels {
-		if c.LogLevel == level {
+		if c.Global.LogLevel == level {
 			isValidLevel = true
 			break
 		}
@@ -301,7 +301,7 @@ func (c *AppConfig) IsMetricEnabled() bool {
 
 // GetNotifierConfig 获取指定通知器的配置
 func (c *AppConfig) GetNotifierConfig(name string) (NotifierConfig, bool) {
-	notifier, exists := c.Notify.Notifier[name]
+	notifier, exists := c.Global.Notify.Notifier[name]
 	return notifier, exists
 }
 
