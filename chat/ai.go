@@ -61,7 +61,7 @@ func callLLM(ctx context.Context, messages []any) (string, error) {
 		return "", err // parseResponse已经处理了错误日志
 	}
 
-	fmt.Println("AI调用成功", "model", fullModelName, "duration", duration)
+	// fmt.Println("AI调用成功", "model", fullModelName, "duration", duration)
 	return result, nil
 }
 
