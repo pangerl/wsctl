@@ -1,2 +1,3 @@
 #!/usr/bin/env sh
-/app/wsctl "$@"
+chmod +x /app/wsctl
+exec /app/wsctl "$@"
