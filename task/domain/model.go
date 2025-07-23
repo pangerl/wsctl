@@ -20,7 +20,7 @@ type Domain struct {
 
 // Domainer 域名检测任务结构体
 type Domainer struct {
-	Config      *config.AppConfig
+	Config      *config.CfgType
 	Logger      *zap.SugaredLogger
 	Domains     []*Domain // 域名列表
 	TotalCount  int       // 总域名数
@@ -28,7 +28,7 @@ type Domainer struct {
 	FailedCount int       // 不通域名数
 }
 
-func NewDomainer(cfg *config.AppConfig, logger *zap.SugaredLogger) *Domainer {
+func NewDomainer(cfg *config.CfgType, logger *zap.SugaredLogger) *Domainer {
 	return &Domainer{
 		Config: cfg,
 		Logger: logger,

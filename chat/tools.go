@@ -4,8 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"vhagar/chat/tools"
-	"vhagar/errors"
-	"vhagar/logger"
+	"vhagar/libs"
 )
 
 // ToolInputSchema 工具输入参数结构
@@ -63,16 +62,16 @@ func NewTool(name string, opts ...ToolOption) Tool {
 // RegisterTool 注册工具到全局注册表
 func RegisterTool(meta ToolMeta) error {
 	if meta.Name == "" {
-		return errors.WrapError(errors.ErrCodeToolRegFailed, "工具注册失败", errors.NewError(errors.ErrCodeInvalidParam, "工具名称不能为空"))
+		return libs.WrapError(libs.ErrCodeToolRegFailed, "工具注册失败", libs.NewError(libs.ErrCodeInvalidParam, "工具名称不能为空"))
 	}
 	if meta.Handler == nil {
-		return errors.WrapError(errors.ErrCodeToolRegFailed, "工具注册失败", errors.NewError(errors.ErrCodeInvalidParam, "工具处理函数不能为空"))
+		return libs.WrapError(libs.ErrCodeToolRegFailed, "工具注册失败", libs.NewError(libs.ErrCodeInvalidParam, "工具处理函数不能为空"))
 	}
 
 	toolRegistry[meta.Name] = meta
 	// 只有在Logger已初始化时才记录日志
-	if logger.Logger != nil {
-		logger.Logger.Infow("工具注册成功", "name", meta.Name, "description", meta.Description)
+	if libs.Logger != nil {
+		libs.Logger.Infow("工具注册成功", "name", meta.Name, "description", meta.Description)
 	}
 	return nil
 }
@@ -98,23 +97,23 @@ func GetToolsForAI() []map[string]any {
 		// 序列化工具为map
 		b, err := json.Marshal(tool)
 		if err != nil {
-			if logger.Logger != nil {
-				logger.Logger.Warnw("工具序列化失败", "tool", meta.Name, "error", err)
+			if libs.Logger != nil {
+				libs.Logger.Warnw("工具序列化失败", "tool", meta.Name, "error", err)
 			}
 			continue
 		}
 		var m map[string]any
 		if err := json.Unmarshal(b, &m); err != nil {
-			if logger.Logger != nil {
-				logger.Logger.Warnw("工具反序列化失败", "tool", meta.Name, "error", err)
+			if libs.Logger != nil {
+				libs.Logger.Warnw("工具反序列化失败", "tool", meta.Name, "error", err)
 			}
 			continue
 		}
 		toolsArr = append(toolsArr, m)
 	}
 
-	if logger.Logger != nil {
-		logger.Logger.Infow("构建AI工具数组", "count", len(toolsArr))
+	if libs.Logger != nil {
+		libs.Logger.Infow("构建AI工具数组", "count", len(toolsArr))
 	}
 	return toolsArr
 }
@@ -123,21 +122,21 @@ func GetToolsForAI() []map[string]any {
 func CallTool(ctx context.Context, toolName string, params map[string]any) (string, error) {
 	meta, ok := toolRegistry[toolName]
 	if !ok {
-		err := errors.NewErrorWithDetail(errors.ErrCodeToolNotFound, "工具未找到", toolName)
-		if logger.Logger != nil {
-			errors.LogError(err, "工具调用")
+		err := libs.NewErrorWithDetail(libs.ErrCodeToolNotFound, "工具未找到", toolName)
+		if libs.Logger != nil {
+			libs.LogError(err, "工具调用")
 		}
 		return "", err
 	}
 
-	if logger.Logger != nil {
-		logger.Logger.Infow("开始调用工具", "name", toolName, "params", params)
+	if libs.Logger != nil {
+		libs.Logger.Infow("开始调用工具", "name", toolName, "params", params)
 	}
 	result, err := meta.Handler(ctx, params)
 	if err != nil {
-		appErr := errors.WrapError(errors.ErrCodeToolCallFailed, "工具调用失败", err)
-		if logger.Logger != nil {
-			errors.LogErrorWithFields(appErr, "工具调用", map[string]interface{}{
+		appErr := libs.WrapError(libs.ErrCodeToolCallFailed, "工具调用失败", err)
+		if libs.Logger != nil {
+			libs.LogErrorWithFields(appErr, "工具调用", map[string]interface{}{
 				"tool_name": toolName,
 				"params":    params,
 			})
@@ -145,8 +144,8 @@ func CallTool(ctx context.Context, toolName string, params map[string]any) (stri
 		return "", appErr
 	}
 
-	if logger.Logger != nil {
-		logger.Logger.Infow("工具调用成功", "name", toolName)
+	if libs.Logger != nil {
+		libs.Logger.Infow("工具调用成功", "name", toolName)
 	}
 	return result, nil
 }

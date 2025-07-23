@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 	"vhagar/config"
-	"vhagar/logger"
+	"vhagar/libs"
 	"vhagar/notify"
 	"vhagar/task"
 
@@ -27,7 +27,7 @@ var isalert = false
 
 func init() {
 	task.Add(taskName, func() task.Tasker {
-		return NewDomainer(config.Config, logger.GetLogger())
+		return NewDomainer(config.Config, libs.Logger)
 	})
 }
 
@@ -150,7 +150,7 @@ func readDomainListFile(filePath string) ([]*Domain, error) {
 			for _, portStr := range parts[1:] {
 				port, err := strconv.Atoi(portStr)
 				if err != nil {
-					logger.GetLogger().Errorf("Invalid port for domain %s: %s", domainName, portStr)
+					libs.Logger.Errorf("Invalid port for domain %s: %s", domainName, portStr)
 					continue
 				}
 				ports = append(ports, port)
@@ -188,7 +188,7 @@ func testConnection(domain string, port int) bool {
 		}
 		proxyUrl, err := url.Parse(config.Config.ProxyURL)
 		if err != nil {
-			logger.GetLogger().Errorf("Invalid proxy URL: %s", err)
+			libs.Logger.Errorf("Invalid proxy URL: %s", err)
 			return false
 		}
 		transport := &http.Transport{
@@ -215,7 +215,7 @@ func testConnection(domain string, port int) bool {
 				}
 				return true
 			}
-			logger.GetLogger().Errorf("Proxy connection attempt %d failed for %s: %v", i+1, address, err)
+			libs.Logger.Errorf("Proxy connection attempt %d failed for %s: %v", i+1, address, err)
 			if i < maxRetries-1 {
 				time.Sleep(retryDelay)
 			}
@@ -230,12 +230,12 @@ func testConnection(domain string, port int) bool {
 			defer func(conn net.Conn) {
 				err := conn.Close()
 				if err != nil {
-					logger.GetLogger().Errorf("Failed to close connection: %s", err)
+					libs.Logger.Errorf("Failed to close connection: %s", err)
 				}
 			}(conn)
 			return true
 		}
-		logger.GetLogger().Errorf("Direct connection attempt %d failed for %s: %v", i+1, address, err)
+		libs.Logger.Errorf("Direct connection attempt %d failed for %s: %v", i+1, address, err)
 		if i < maxRetries-1 {
 			time.Sleep(retryDelay)
 		}
