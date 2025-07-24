@@ -17,6 +17,20 @@
 - **统一日志**：集成 zap 日志框架，支持多级别、结构化日志输出
 - **统一错误处理**：标准化错误码和错误处理机制，便于问题定位
 
+## 功能演示
+
+### AI 聊天
+
+<video src="docs/ai-chat.mp4" controls width="600">
+  您的浏览器不支持视频播放。
+</video>
+
+### AI 巡检
+
+<video src="docs/ai-inspect.mp4" controls width="600">
+  您的浏览器不支持视频播放。
+</video>
+
 ## 安装与部署
 
 ### 1. 二进制包运行
