@@ -21,11 +21,11 @@
 
 ### AI 聊天
 
-![聊天演示](.github/readme/ai-chat.gif)
+![聊天演示](.github/readme/ai_chat.gif)
 
 ### AI 巡检
 
-![巡检演示](.github/readme/ai-inspect.gif)
+![巡检演示](.github/readme/ai_inspect.gif)
 
 ## 安装与部署
 
