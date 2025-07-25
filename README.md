@@ -21,15 +21,11 @@
 
 ### AI 聊天
 
-<video src="docs/ai-chat.mp4" controls width="600">
-  您的浏览器不支持视频播放。
-</video>
+![聊天演示](.github/readme/ai-chat.gif)
 
 ### AI 巡检
 
-<video src="docs/ai-inspect.mp4" controls width="600">
-  您的浏览器不支持视频播放。
-</video>
+![巡检演示](.github/readme/ai-inspect.gif)
 
 ## 安装与部署
 
