@@ -173,14 +173,6 @@ func init() {
 		panic("工具系统初始化失败: " + err.Error())
 	}
 
-	// 注册系统信息工具
-	if err := RegisterTool(ToolMeta{
-		Name:        "sysinfo",
-		Description: "获取系统信息，支持CPU、内存、磁盘使用情况查询",
-		Handler:     tools.CallSystemInfoTool,
-	}); err != nil {
-		panic("系统信息工具注册失败: " + err.Error())
-	}
 
 	// 在init阶段不记录日志，避免Logger未初始化的问题
 	// 工具注册成功的日志会在RegisterTool中记录（如果Logger已初始化）
